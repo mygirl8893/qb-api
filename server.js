@@ -80,6 +80,4 @@ app.use((req, res, next) => {
 
 app.listen(port)
 
-console.log(
-  `Running API in ${  Config.getEnv()  }mode. Listening on port: ${  port}`
-)
+console.log(`Running API in ${Config.getEnv()} mode. Listening on port: ${port}`)

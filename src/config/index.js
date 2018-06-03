@@ -5,8 +5,8 @@ import SwaggerConfig from './swagger'
 
 const env = process.env.NODE_ENV || 'development',
   envtConfig = Config[env],
-  web3Private = new Web3(envtConfig.rpc.public),
-  web3Public = new Web3(envtConfig.rpc.private)
+  web3Private = new Web3(envtConfig.rpc.private),
+  web3Public = new Web3(envtConfig.rpc.public)
 
 web3Private.eth.net
   .isListening()
@@ -16,7 +16,7 @@ web3Private.eth.net
     process.exit()
   })
 
-web3Private.eth.net
+web3Public.eth.net
   .isListening()
   .then(() => console.log('Web3 (public) is connected'))
   .catch(() => {

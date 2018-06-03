@@ -22,7 +22,7 @@ const getTokens = async (req, res) => {
   privateBalance = await User.getBalances(req.query.from)
 
   if (req.query.public) {
-    publicBalance = await User.getPublicBalances(req.query.from)
+    publicBalance = await User.getPublicBalance(req.query.from)
   }
 
   return res.json({

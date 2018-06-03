@@ -8,12 +8,12 @@ const Config = {
       public: 'https://mainnet.infura.io/ZG3IjHbiNde01eIh5SCC'
     },
     tokenDB: '0x7c21ac5994ea0c2dc965f6cd998f38a8a896de3c',
-    chainID: 29746197
+    chainID: 29746197,
   },
   staging: {
     rpc: {
       private: '',
-      public: ''
+      public: 'https://mainnet.infura.io/ZG3IjHbiNde01eIh5SCC'
     },
     tokenDB: '',
     port: 3000
@@ -21,7 +21,7 @@ const Config = {
   development: {
     rpc: {
       private: 'http://localhost:8545',
-      public: 'http://localhost:8545'
+      public: 'https://mainnet.infura.io/ZG3IjHbiNde01eIh5SCC'
     },
     tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
     port: 3000

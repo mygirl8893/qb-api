@@ -7,7 +7,7 @@
 > **Disclaimer**: this a PoC of the qiibee API, it's development is a work in progress and may not pass all quality tests. We welcome bug reports and/or contributions
 
 ## API documentation
-Click [here](https://api.qiibee.com/) to go our documentation
+Click [here](https://api.qiibee.com/) to get our documentation
 
 ## Requirements
 

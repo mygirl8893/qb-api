@@ -1,0 +1,25 @@
+{
+  
+  "extends": [ "airbnb-base", "prettier" ],
+  "plugins": [
+    "prettier"
+  ],
+  "env": {
+    "node": true,
+    "es6": true,
+    "mocha": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 8,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "arrowFunctions": true,
+      "binaryLiterals": true,
+      "blockBindings": true,
+      "classes": true
+    }
+  },
+  "rules": {
+    "one-var": [1, "always"]
+  }
+}

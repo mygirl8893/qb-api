@@ -1,0 +1,14 @@
+image: node:8.9.4
+
+pipelines:
+  branches:
+    production:
+    - step:
+        script: # Modify the commands below to build your repository.
+          - npm install --production
+          - apt-get update && apt-get install -y python-dev
+          - curl -O https://bootstrap.pypa.io/get-pip.py
+          - python get-pip.py
+          - pip install awsebcli --upgrade
+          - eb init "qbAPI" -r eu-central-1 -p Node.js
+          - eb deploy Qbapi-env2

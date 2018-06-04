@@ -114,11 +114,12 @@ const getHistory = async (req, res) => {
 }
 
 const transfer = async (req, res) => {
+  abiDecoder.addABI(Config.getTokenABI())
+
   const { txData } = unsign(req.body.data),
     decodedTx = abiDecoder.decodeMethod(txData.data),
     Token = TokenController.tokenDB(),
     loyaltyToken = await Token.getToken(txData.to).call()
-  abiDecoder.addABI(Config.getTokenABI())
 
   if (
     typeof loyaltyToken[0] === 'undefined' ||

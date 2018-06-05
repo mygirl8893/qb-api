@@ -17,16 +17,22 @@ Click [here](https://api.qiibee.com/) to get our documentation
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-**starting the project**
+* Clone the project
+```console
+git clone https://github.com/qiibee/qb-api.git
+cd qb-api
 ```
-$ git clone https://github.com/qiibee/qb-api.git
-$ cd to the root of the project
-$ npm install
-$ npm start
+
+* Edit config
+- Add your infura token in the placeholder in src/config/config.js
+
+* Start
+```console
+npm install
+npm start
 ```
-```
-access http://localhost:3000
-```
+
+Go to [localhost:3000](http://localhost:3000)
 
 ## License
 

@@ -16,8 +16,8 @@ import tokensRouter from './src/tokens/router'
 import usersRouter from './src/users/router'
 
 const app = express(),
-      port = process.env.PORT || Config.getPort(),
-      swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
+  port = process.env.PORT || Config.getPort(),
+  swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
 
 // app.use(Config.getEnv() === 'development' ? logger('dev') : logger('combined'));
 app.use(cors())

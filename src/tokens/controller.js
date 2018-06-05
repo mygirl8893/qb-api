@@ -4,20 +4,20 @@ import Config from '../config'
 const web3 = Config.getPrivateWeb3()
 
 const tokenDB = () => new web3.eth.Contract(
-    Config.getTokenDBABI(),
-    Config.getTokenDBAddress(),
-    {}
-  ).methods
+  Config.getTokenDBABI(),
+  Config.getTokenDBAddress(),
+  {}
+).methods
 
 const loyaltyToken = (contractAddress) => new web3.eth.Contract(
-    Config.getTokenABI(),
-    contractAddress,
-    {}
-  ).methods
+  Config.getTokenABI(),
+  contractAddress,
+  {}
+).methods
 
 const getTokens = async (req, res) => {
   let publicBalance = 0,
-      privateBalance = 0
+    privateBalance = 0
 
   privateBalance = await User.getBalances(req.query.from)
 

@@ -27,7 +27,7 @@ const getBalanceOnContract = async (from = null, contractAddress) => {
 
 const getBalances = async from => {
   const TokenDB = TokenController.tokenDB(),
-        tokens = await TokenDB.getTokens().call()
+    tokens = await TokenDB.getTokens().call()
   const balances = []
   for (const token of tokens) { // eslint-disable-line no-restricted-syntax
     balances.push(await getBalanceOnContract(from, token)) // eslint-disable-line no-await-in-loop
@@ -39,7 +39,7 @@ const getPublicBalance = async (from = null) => {
   const QiibeeToken = new web3Pub.eth.Contract(Config.getTokenABI(), Config.getQBXAddress(), {}).methods
   const totalSupply = await QiibeeToken.totalSupply().call()
   let balance = 0
-    // ethBalance = 0
+  // ethBalance = 0
   if (from) {
     // ethBalance = await web3Pub.eth.getBalance(from.toLowerCase())
     balance = await QiibeeToken.balanceOf(from.toLowerCase()).call()
@@ -64,7 +64,7 @@ const getPublicBalance = async (from = null) => {
   ]
 }
 
-const getInfo = async function(req, res) {
+const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
   // TODO: validate input. If from is false should throw an error.
   const address = req.params.from,

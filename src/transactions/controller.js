@@ -10,7 +10,7 @@ const web3 = Config.getPrivateWeb3()
 
 const getTx = async (txHash) => {
   const endBlockNumber = await web3.eth.getBlock('latest'),
-        transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
+    transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
 
   const transaction = await web3.eth.getTransaction(txHash.toLowerCase())
 
@@ -47,14 +47,14 @@ const getTx = async (txHash) => {
   delete toBalance.balance
 
   transaction.token = toBalance || null
-  return transaction  
+  return transaction
 }
 
 const txBelongsTo = (address, tx, decodedTx) => (
-    tx.from.toLowerCase() === address ||
-    tx.to.toLowerCase() === address ||
-    decodedTx.params[0].value.toLowerCase() === address
-  )
+  tx.from.toLowerCase() === address ||
+  tx.to.toLowerCase() === address ||
+  decodedTx.params[0].value.toLowerCase() === address
+)
 
 const getTransaction = async (req, res) => {
   const tx = await getTx(req.params.hash)
@@ -70,13 +70,13 @@ const getTransaction = async (req, res) => {
  */
 const getHistory = async (req, res) => {
   const defaultBlocks = 200, // TODO: make it a constant
-        address = req.params.address.toLowerCase(),
-        latestBlock = await web3.eth.getBlock('latest'),
-        startBlock = req.query.startBlock >= 0 ? req.query.startBlock : 0,
-        endBlock = req.query.endBlock > 0 ? req.query.endBlock : 0,
-        historyArray = []   
+    address = req.params.address.toLowerCase(),
+    latestBlock = await web3.eth.getBlock('latest'),
+    startBlock = req.query.startBlock >= 0 ? req.query.startBlock : 0,
+    endBlock = req.query.endBlock > 0 ? req.query.endBlock : 0,
+    historyArray = []
   let endBlockNumber = endBlock || latestBlock.number,
-      startBlockNumber = startBlock || endBlockNumber - defaultBlocks
+    startBlockNumber = startBlock || endBlockNumber - defaultBlocks
 
   abiDecoder.addABI(Config.getTokenABI())
 
@@ -126,28 +126,28 @@ const transfer = async (req, res) => {
     (decodedTx && decodedTx.name !== 'transfer')
   ) {
     return res.json({ error: 'Loyalty Token not found' }) // TODO: use Error object
-  } 
-    const txHash = await web3.utils.sha3(req.body.data, { encoding: 'hex' })
-    const result = await web3.eth.sendSignedTransaction(req.body.data).then(
-      receipt => ({ hash: txHash, status: 'pending', tx: receipt }),
-      error => ({ hash: txHash, status: error.toString() }) // TODO: fix, not sending bback error
-    )
-    return res.json(result)
-  
+  }
+  const txHash = await web3.utils.sha3(req.body.data, { encoding: 'hex' })
+  const result = await web3.eth.sendSignedTransaction(req.body.data).then(
+    receipt => ({ hash: txHash, status: 'pending', tx: receipt }),
+    error => ({ hash: txHash, status: error.toString() }) // TODO: fix, not sending bback error
+  )
+  return res.json(result)
+
 }
 
 // TODO: should be POST maybe
 const buildRawTransaction = async (req, res) => {
   const { from, to, contractAddress, transferAmount } = req.query
   const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
-      from
-    }).methods,
+    from
+  }).methods,
     txCount = (await web3.eth.getTransactionCount(from)).toString(16)
 
   // TODO: return a real unsigned transaction and not just a JSON file.
   return res.json({
     from,
-    nonce: `0x${  txCount}`,
+    nonce: `0x${txCount}`,
     gasPrice: web3.utils.toHex(0),
     gasLimit: web3.utils.toHex(1000000),
     to: contractAddress,

@@ -24,7 +24,7 @@ cd qb-api
 ```
 
 * Edit config
-- Add your infura token in the placeholder in src/config/config.js
+  - Add your infura token in the placeholder in src/config/config.js
 
 * Start
 ```console

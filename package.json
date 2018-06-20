@@ -9,10 +9,10 @@
   "scripts": {
     "test": "node_modules/jest/bin/jest.js test/*.test.js",
     "start": "./node_modules/.bin/babel-node server.js",
-    "build": "webpack --config webpack.config.js",
     "startmon": "nodemon server.js",
     "precommit": "lint-staged",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "build": "./node_modules/babel-cli/bin/babel.js app.js server.js src test -d dist --source-maps"
   },
   "lint-staged": {
     "*.js": [
@@ -40,19 +40,21 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.4",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-airbnb": "^2.4.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2018": "^1.0.0",
+    "chai": "^4.1.2",
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-import": "^2.12.0",
+    "jest": "^23.1.0",
     "lint-staged": "^4.0.3",
     "nodemon": "^1.14.11",
     "pre-commit": "^1.2.2",
     "prettier": "^1.13.4",
-    "supertest": "^3.1.0",
-    "chai": "^4.1.2"
+    "supertest": "^3.1.0"
   },
   "dependencies": {
     "@warren-bank/ethereumjs-tx-unsign": "^2.0.0",

@@ -7,7 +7,7 @@
   "private": true,
   "main": "server.js",
   "scripts": {
-    "test": "node_modules/jest/bin/jest.js test/*.test.js",
+    "test": "node_modules/jest/bin/jest.js __tests__/*.test.js",
     "start": "./node_modules/.bin/babel-node server.js",
     "startmon": "nodemon server.js",
     "precommit": "lint-staged",
@@ -39,6 +39,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
+    "babel-jest": "^23.0.1",
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-airbnb": "^2.4.0",
@@ -78,6 +79,7 @@
     "swagger-ui-express": "^2.0.15",
     "url": "^0.11.0",
     "web3": "^1.0.0-beta.29",
-    "web3-eth-personal": "^1.0.0-beta.30"
+    "web3-eth-personal": "^1.0.0-beta.30",
+    "jest": "^23.1.0"
   }
 }

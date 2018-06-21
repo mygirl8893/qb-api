@@ -10,12 +10,8 @@ const TEST_USER_TRANSACTION_COUNT = 99
 
 const publicWeb3Rpc = APITesting.getBaseWeb3Mock(1234)
 const privateWeb3Rpc = APITesting.getBaseWeb3Mock(9876)
-privateWeb3Rpc.eth.getTransactionCount = async (address) => {
-  if (address === TEST_USER_ADDRESS) {
-    return TEST_USER_TRANSACTION_COUNT
-  }
-  throw Error(`Unexpected user address ${TEST_USER_ADDRESS}`)
-}
+/* eslint-disable-next-line no-undef */
+privateWeb3Rpc.eth.getTransactionCount = jest.fn()
 
 Web3.mockImplementation((url) => {
 
@@ -37,16 +33,19 @@ jest.mock('web3')
  */
 const app = require('../app')
 
-const { expect } = chai
-
 describe('Users API', () => {
 
-  it('returns user info succesfully', async () => {
+  it('returns user info successfully', async () => {
+    privateWeb3Rpc.eth.getTransactionCount.mockImplementation(async () => TEST_USER_TRANSACTION_COUNT)
+
     const r = await request(app).get(`/users/${TEST_USER_ADDRESS}`)
 
-    expect(r.status).to.equal(HttpStatus.OK)
+    chai.expect(r.status).to.equal(HttpStatus.OK)
 
-    expect(r.body.address).to.equal(TEST_USER_ADDRESS)
-    expect(r.body.transactionCount).to.equal(TEST_USER_TRANSACTION_COUNT)
+    /* eslint-disable-next-line no-undef */
+    expect(privateWeb3Rpc.eth.getTransactionCount).toHaveBeenCalled()
+
+    chai.expect(r.body.address).to.equal(TEST_USER_ADDRESS)
+    chai.expect(r.body.transactionCount).to.equal(TEST_USER_TRANSACTION_COUNT)
   })
 })

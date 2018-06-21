@@ -47,7 +47,7 @@ describe('Network API', () => {
       chai.expect(r.status).to.equal(HttpStatus.OK)
 
       /* eslint-disable no-undef */
-      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalledWith()
+      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalled()
       expect(privateWeb3Rpc.eth.getBlock).toHaveBeenCalledWith(LATEST_BLOCK_NUMBER)
       /* eslint-enable no-undef */
 
@@ -65,7 +65,7 @@ describe('Network API', () => {
       chai.expect(r.status).to.equal(HttpStatus.BAD_REQUEST)
 
       /* eslint-disable no-undef */
-      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalledWith()
+      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalled()
       /* eslint-enable no-undef */
     })
 })

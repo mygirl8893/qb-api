@@ -41,7 +41,6 @@ const latestBlock =  {
   "uncles": []
 }
 
-
 const publicWeb3Rpc = {
   eth: {
     net: {
@@ -95,8 +94,6 @@ describe('Network API', () => {
 
     it('returns network info succesfully', async () => {
       const r = await request(app).get('/net/')
-
-      delete latestBlock.gasUsed
 
       expect(r.status).to.equal(HttpStatus.OK)
 

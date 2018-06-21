@@ -48,4 +48,17 @@ describe('Users API', () => {
     chai.expect(r.body.address).to.equal(TEST_USER_ADDRESS)
     chai.expect(r.body.transactionCount).to.equal(TEST_USER_TRANSACTION_COUNT)
   })
+
+  it('fails to return user info when web3.eth.getTransactionCount fails', async () => {
+    privateWeb3Rpc.eth.getTransactionCount.mockImplementation(async () => {
+      throw new Error("Failed to get transaction count")
+    })
+
+    const r = await request(app).get(`/users/${TEST_USER_ADDRESS}`)
+
+    chai.expect(r.status).to.equal(HttpStatus.BAD_REQUEST)
+
+    /* eslint-disable-next-line no-undef */
+    expect(privateWeb3Rpc.eth.getTransactionCount).toHaveBeenCalled()
+  })
 })

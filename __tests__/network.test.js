@@ -2,20 +2,7 @@ import chai from 'chai'
 import HttpStatus from 'http-status-codes'
 import request from 'supertest'
 import Web3 from 'web3'
-
-
-// patch the Config module to have a test configuration
-const TEST_CONFIGURATION = {
-  rpc: {
-    private: 'http://testprivatechain.com',
-    public: 'https://testpublicchain.com'
-  },
-  tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
-  port: 3000
-}
-const Config = require('../src/config/config.js')
-
-Config.default.test = TEST_CONFIGURATION
+import APITesting from './apiTesting'
 
 const LATEST_BLOCK_NUMBER = 3100
 const LATEST_BLOCK =  {
@@ -41,42 +28,27 @@ const LATEST_BLOCK =  {
   "uncles": []
 }
 
-const publicWeb3Rpc = {
-  eth: {
-    net: {
-      isListening: async () => null,
-      getId: async () => 1234
-    }
-  }
-}
+const publicWeb3Rpc = APITesting.getBaseWeb3Mock(1234)
 
-const privateWeb3Rpc = {
-  eth: {
-    net: {
-      isListening: async () => null,
-      getId: async () => 9876
-    },
-    getBlockNumber: async () => LATEST_BLOCK_NUMBER,
-    getBlock: async (blockNumber) => {
-      if (blockNumber === LATEST_BLOCK_NUMBER) {
-        return LATEST_BLOCK
-      }
-      throw Error(`Unexpected block number ${blockNumber}`)
-    }
+const privateWeb3Rpc = APITesting.getBaseWeb3Mock(9876)
+privateWeb3Rpc.eth.getBlockNumber = async () => LATEST_BLOCK_NUMBER
+privateWeb3Rpc.eth.getBlock =  async (blockNumber) => {
+  if (blockNumber === LATEST_BLOCK_NUMBER) {
+    return LATEST_BLOCK
   }
+  throw Error(`Unexpected block number ${blockNumber}`)
 }
 
 Web3.mockImplementation((url) => {
 
-  if (url === TEST_CONFIGURATION.rpc.public) {
+  if (url === APITesting.TEST_CONFIGURATION.rpc.public) {
     return publicWeb3Rpc
-  } else if (url === TEST_CONFIGURATION.rpc.private) {
+  } else if (url === APITesting.TEST_CONFIGURATION.rpc.private) {
     return privateWeb3Rpc
   }
   throw new Error(`Unexpected web3 url ${url}`)
 
 })
-
 
 /* eslint-disable-next-line no-undef */
 jest.genMockFromModule('web3')

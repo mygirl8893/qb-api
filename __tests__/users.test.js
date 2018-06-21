@@ -2,53 +2,26 @@ import chai from 'chai'
 import HttpStatus from 'http-status-codes'
 import request from "supertest"
 import Web3 from 'web3'
+import APITesting from "./apiTesting"
 
-
-// patch the Config module to have a test configuration
-const testConfiguration = {
-  rpc: {
-    private: 'http://testprivatechain.com',
-    public: 'https://testpublicchain.com'
-  },
-  tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
-  port: 3000
-}
-const Config = require('../src/config/config.js')
-
-Config.default.test = testConfiguration
 
 const TEST_USER_ADDRESS = "fakeuseraddress"
 const TEST_USER_TRANSACTION_COUNT = 99
 
-const publicWeb3Rpc = {
-  eth: {
-    net: {
-      isListening: async () => null,
-      getId: async () => 1234
-    }
+const publicWeb3Rpc = APITesting.getBaseWeb3Mock(1234)
+const privateWeb3Rpc = APITesting.getBaseWeb3Mock(9876)
+privateWeb3Rpc.eth.getTransactionCount = async (address) => {
+  if (address === TEST_USER_ADDRESS) {
+    return TEST_USER_TRANSACTION_COUNT
   }
-}
-
-const privateWeb3Rpc = {
-  eth: {
-    net: {
-      isListening: async () => null,
-      getId: async () => 9876
-    },
-    getTransactionCount: async (address) => {
-      if (address === TEST_USER_ADDRESS) {
-        return TEST_USER_TRANSACTION_COUNT
-      }
-      throw Error(`Unexpected user address ${TEST_USER_ADDRESS}`)
-    }
-  }
+  throw Error(`Unexpected user address ${TEST_USER_ADDRESS}`)
 }
 
 Web3.mockImplementation((url) => {
 
-  if (url === testConfiguration.rpc.public) {
+  if (url === APITesting.TEST_CONFIGURATION.rpc.public) {
     return publicWeb3Rpc
-  } else if (url === testConfiguration.rpc.private) {
+  } else if (url === APITesting.TEST_CONFIGURATION.rpc.private) {
     return privateWeb3Rpc
   }
   throw new Error(`Unexpected web3 url ${url}`)

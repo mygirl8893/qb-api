@@ -1,5 +1,6 @@
 import * as express from 'express'
 import Controller from './controller'
+import LibAPI from '../lib/api'
 
 const router = express.Router()
 
@@ -39,7 +40,7 @@ const router = express.Router()
  *       400:
  *          description: Request failed, see error message.
  */
-router.get('/raw', Controller.buildRawTransaction)
+router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
 
 /**
  * @swagger
@@ -62,7 +63,7 @@ router.get('/raw', Controller.buildRawTransaction)
  *       400:
  *          description: Request failed, see error message.
  */
-router.get('/:hash', Controller.getTransaction)
+router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
 
 /**
  * @swagger
@@ -95,7 +96,7 @@ router.get('/:hash', Controller.getTransaction)
  *       400:
  *          description: Request failed, see error message.
  */
-router.get('/:address/history', Controller.getHistory)
+router.get('/:address/history', LibAPI.wrap(Controller.getHistory))
 
 /**
  * @swagger
@@ -116,6 +117,6 @@ router.get('/:address/history', Controller.getHistory)
  *       200:
  *          description: desc
  */
-router.post('/', Controller.transfer)
+router.post('/', LibAPI.wrap(Controller.transfer))
 
 module.exports = router

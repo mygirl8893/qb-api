@@ -1,5 +1,6 @@
 import * as express from 'express'
 import Controller from './controller'
+import LibAPI from '../lib/api'
 
 const router = express.Router()
 
@@ -29,7 +30,7 @@ const router = express.Router()
  *       400:
  *          description: Request failed, see error message.
  */
-router.get('/:contract', Controller.getToken)
+router.get('/:contract', LibAPI.wrap(Controller.getToken))
 
 /**
  * @swagger
@@ -57,6 +58,6 @@ router.get('/:contract', Controller.getToken)
  *       400:
  *          description: Request failed, see error message.
  */
-router.get('/', Controller.getTokens)
+router.get('/', LibAPI.wrap(Controller.getTokens))
 
 module.exports = router

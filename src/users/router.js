@@ -1,5 +1,6 @@
 import * as express from 'express'
 import Controller from './controller'
+import LibAPI from '../lib/api'
 
 const router = express.Router()
 
@@ -21,9 +22,9 @@ const router = express.Router()
  *     responses:
  *       200:
  *          description: Returns information about the user on the qiibee chain
- *       400:Í
+ *       400:
  *          description: Request failed, see error message.
  */
-router.get('/:from', Controller.getInfo)
+router.get('/:from', LibAPI.wrap(Controller.getInfo))
 
 module.exports = router

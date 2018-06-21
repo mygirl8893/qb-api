@@ -1,0 +1,12 @@
+dist: trusty
+language: node_js
+service_name: travis-pro
+node_js:
+  - "9"
+
+cache:
+  directories:
+    - "node_modules"
+script:
+  - yarn lint
+  - npm test

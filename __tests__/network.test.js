@@ -5,7 +5,7 @@ import Web3 from 'web3'
 
 
 // patch the Config module to have a test configuration
-const testConfiguration = {
+const TEST_CONFIGURATION = {
   rpc: {
     private: 'http://testprivatechain.com',
     public: 'https://testpublicchain.com'
@@ -15,11 +15,11 @@ const testConfiguration = {
 }
 const Config = require('../src/config/config.js')
 
-Config.default.test = testConfiguration
+Config.default.test = TEST_CONFIGURATION
 
-const latestBlockNumber = 3100
-const latestBlock =  {
-  "number": latestBlockNumber,
+const LATEST_BLOCK_NUMBER = 3100
+const LATEST_BLOCK =  {
+  "number": LATEST_BLOCK_NUMBER,
   "hash": "0xef95f2f1ed3ca60b048b4bf67cde2195961e0bba6f70bcbea9a2c4e133e34b46",
   "parentHash": "0x2302e1c0b972d00932deb5dab9eb2982f570597d9d42504c05d9c2147eaf9c88",
   "nonce": "0xfb6e1a62d119228b",
@@ -56,10 +56,10 @@ const privateWeb3Rpc = {
       isListening: async () => null,
       getId: async () => 9876
     },
-    getBlockNumber: async () => latestBlockNumber,
+    getBlockNumber: async () => LATEST_BLOCK_NUMBER,
     getBlock: async (blockNumber) => {
-      if (blockNumber === latestBlockNumber) {
-        return latestBlock
+      if (blockNumber === LATEST_BLOCK_NUMBER) {
+        return LATEST_BLOCK
       }
       throw Error(`Unexpected block number ${blockNumber}`)
     }
@@ -68,9 +68,9 @@ const privateWeb3Rpc = {
 
 Web3.mockImplementation((url) => {
 
-  if (url === testConfiguration.rpc.public) {
+  if (url === TEST_CONFIGURATION.rpc.public) {
     return publicWeb3Rpc
-  } else if (url === testConfiguration.rpc.private) {
+  } else if (url === TEST_CONFIGURATION.rpc.private) {
     return privateWeb3Rpc
   }
   throw new Error(`Unexpected web3 url ${url}`)
@@ -97,7 +97,7 @@ describe('Network API', () => {
 
       expect(r.status).to.equal(HttpStatus.OK)
 
-      expect(r.body.hash).to.equal(latestBlock.hash)
-      expect(r.body.number).to.equal(latestBlock.number)
+      expect(r.body.hash).to.equal(LATEST_BLOCK.hash)
+      expect(r.body.number).to.equal(LATEST_BLOCK.number)
     })
 })

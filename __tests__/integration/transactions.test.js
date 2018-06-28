@@ -82,14 +82,14 @@ describe('Transactions API Integration', () => {
 
     console.log('Compiling loyalty token contract..')
 
-    const contract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
+    const loyaltyTokenContract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
 
-    contract.options.from = ACCOUNTS[0].address
-    contract.options.gas = 900000
+    loyaltyTokenContract.options.from = ACCOUNTS[0].address
+    loyaltyTokenContract.options.gas = 900000
 
     console.log('Deploying the loyalty token contract..')
 
-    const loyaltyTokenContractInstance = await contract.deploy({
+    const loyaltyTokenContractInstance = await loyaltyTokenContract.deploy({
       arguments: ["FreeCoffee", "FCF", 5]
     }).send({
       from: ACCOUNTS[0].address,
@@ -99,13 +99,23 @@ describe('Transactions API Integration', () => {
 
     const loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
 
-    console.log(`Contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
+    console.log(`Loyalty Token contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
 
-    // const tokenDBCode = fs.readFileSync('./src/contracts/tokenDB.sol')
-    //
-    // const compiledTokenDB = solc.compile(tokenDBCode.toString(), 1)
-    // let { bytecode } = compiledTokenDB.contracts[':TokenDB']
+    console.log("Compiling token DB contract..")
 
+    const tokenDBContract = getContract(privateWeb3, './src/contracts/tokenDB.sol', ':TokenDB')
+
+    console.log('Deploying the token DB contract..')
+
+    const tokenDBContractInstance = await tokenDBContract.deploy().send({
+      from: ACCOUNTS[0].address,
+      gas: 1500000,
+      gasPrice: '30'
+    })
+
+    const tokenDBContractAddress = tokenDBContractInstance.options.address
+
+    console.log(`Token DB contract deployed successfully. The address is ${tokenDBContractAddress}`)
   })
 
   /* eslint-disable-next-line no-undef */

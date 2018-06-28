@@ -27,6 +27,13 @@ const INTEGRATION_TEST_CONFIGURATION = {
   port: 3000
 }
 
+const TOKEN = {
+  name: "MagicCarpetsWorld",
+  symbol: "MCW",
+  decimals: 10,
+  rate: 100
+}
+
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
 
@@ -80,6 +87,9 @@ describe('Transactions API Integration', () => {
 
     console.log(`Connection successful. Address ${ACCOUNTS[0].address} has ${transactionCount} transactions.`)
 
+    // const isUnlocked = await privateWeb3.eth.personal.unlockAccount(ACCOUNTS[0].address, ACCOUNTS[0].secretKey, 3600)
+    // chai.expect(isUnlocked).to.equal(true)
+
     console.log('Compiling loyalty token contract..')
 
     const loyaltyTokenContract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
@@ -90,7 +100,7 @@ describe('Transactions API Integration', () => {
     console.log('Deploying the loyalty token contract..')
 
     const loyaltyTokenContractInstance = await loyaltyTokenContract.deploy({
-      arguments: ["FreeCoffee", "FCF", 5]
+      arguments: [TOKEN.name, TOKEN.symbol, TOKEN.decimals]
     }).send({
       from: ACCOUNTS[0].address,
       gas: 1500000,
@@ -98,7 +108,7 @@ describe('Transactions API Integration', () => {
     })
 
     const loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
-
+    loyaltyTokenContract.options.address = loyaltyTokenContractAddress
     console.log(`Loyalty Token contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
 
     console.log("Compiling token DB contract..")
@@ -114,8 +124,18 @@ describe('Transactions API Integration', () => {
     })
 
     const tokenDBContractAddress = tokenDBContractInstance.options.address
-
+    tokenDBContract.options.address = tokenDBContractAddress
     console.log(`Token DB contract deployed successfully. The address is ${tokenDBContractAddress}`)
+
+    const r = await tokenDBContract.methods.setToken(loyaltyTokenContractAddress, TOKEN.symbol, TOKEN.name, TOKEN.rate).send({
+      from: ACCOUNTS[0].address,
+      gas: 1500000,
+      gasPrice: '30'
+    })
+
+    console.log(r)
+
+    // tokenDBContractInstance
   })
 
   /* eslint-disable-next-line no-undef */

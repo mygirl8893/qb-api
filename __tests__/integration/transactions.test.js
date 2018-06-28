@@ -3,6 +3,13 @@ import Web3 from 'web3'
 import ChildProcess from 'child_process'
 import fs from 'fs'
 import solc from 'solc'
+import request from 'supertest'
+import HttpStatus from 'http-status-codes'
+import unsign from '@warren-bank/ethereumjs-tx-unsign'
+import Tx from "ethereumjs-tx"
+
+import APITesting from '../apiTesting'
+
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -10,20 +17,20 @@ const START_BALANCE = 10 ** 20
 
 const ACCOUNTS = [{
   address: '0x87265a62c60247f862b9149423061b36b460f4bb',
-  secretKey: '0xe8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
+  secretKey: 'e8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
   balance: START_BALANCE
 }, {
   address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
-  secretKey: '0xed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
+  secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
   balance: START_BALANCE
 }]
 
 const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
-    public: 'https://testpublicchain.com'
+    public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
+  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -47,11 +54,14 @@ function getContract(web3, sourceFile, contractName) {
   return contract
 }
 
+APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
+
 /* eslint-disable-next-line no-undef */
 jest.setTimeout(30000)
 
 describe('Transactions API Integration', () => {
   let ganacheChildProcess = null
+  let app = null
 
   /* eslint-disable-next-line no-undef */
   beforeAll(async () => {
@@ -61,7 +71,9 @@ describe('Transactions API Integration', () => {
     let accountsArguments = ''
 
     ACCOUNTS.forEach((account) => {
-      accountsArguments += ` --account="${account.secretKey},${account.balance}"`
+
+      // NOTE the prepending of 0x to indicate hex
+      accountsArguments += ` --account="0x${account.secretKey},${account.balance}"`
     })
 
     const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${PRIVATE_WEB3_PORT} ${accountsArguments}`
@@ -125,17 +137,66 @@ describe('Transactions API Integration', () => {
 
     const tokenDBContractAddress = tokenDBContractInstance.options.address
     tokenDBContract.options.address = tokenDBContractAddress
+    INTEGRATION_TEST_CONFIGURATION.tokenDB = tokenDBContractAddress
+
     console.log(`Token DB contract deployed successfully. The address is ${tokenDBContractAddress}`)
 
-    const r = await tokenDBContract.methods.setToken(loyaltyTokenContractAddress, TOKEN.symbol, TOKEN.name, TOKEN.rate).send({
+    const setTokenReceipt = await tokenDBContract.methods
+      .setToken(loyaltyTokenContractAddress, TOKEN.symbol, TOKEN.name, TOKEN.rate).send({
       from: ACCOUNTS[0].address,
       gas: 1500000,
       gasPrice: '30'
     })
 
+    console.log(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
+
+    const initialLoyaltyTokenAmount = 1000000
+
+    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(ACCOUNTS[0].address, initialLoyaltyTokenAmount).send({
+      from: ACCOUNTS[0].address,
+      gas: 1500000,
+      gasPrice: '30'
+    })
+
+    console.log(issueTokensReceipt)
+
+    /* eslint-disable-next-line global-require */
+    app = require('../../app')
+
+    const swaggerResponse = await request(app).get('/')
+
+    chai.expect(swaggerResponse.status).to.equal(HttpStatus.OK)
+
+    const transactions = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+
+    console.log(transactions.body)
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    console.log(rawTransactionResponse.body)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransactionResponse.body)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const r = unsign(serializedTx)
     console.log(r)
 
-    // tokenDBContractInstance
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    console.log(sendTransactionResponse)
   })
 
   /* eslint-disable-next-line no-undef */

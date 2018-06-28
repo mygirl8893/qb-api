@@ -1,5 +1,4 @@
-// patch the Config module to have a test configuration
-const TEST_CONFIGURATION = {
+const UNIT_TEST_CONFIGURATION = {
   rpc: {
     private: 'http://testprivatechain.com',
     public: 'https://testpublicchain.com'
@@ -7,9 +6,15 @@ const TEST_CONFIGURATION = {
   tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
   port: 3000
 }
-const Config = require('../src/config/config.js')
 
-Config.default.test = TEST_CONFIGURATION
+const setupTestConfiguration = (testConfiguration) => {
+  // patch the Config module to have a test configuration
+
+  /* eslint-disable-next-line global-require */
+  const Config = require('../src/config/config.js')
+
+  Config.default.test = testConfiguration
+}
 
 const getBaseWeb3Mock = (chainId) => ({
   eth: {
@@ -44,7 +49,8 @@ const getSampleBlock = (blockNumber) => ({
   })
 
 export default {
-  TEST_CONFIGURATION,
+  setupTestConfiguration,
+  UNIT_TEST_CONFIGURATION,
   getBaseWeb3Mock,
   getSampleBlock
 }

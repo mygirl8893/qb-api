@@ -4,6 +4,7 @@ import request from "supertest"
 import Web3 from 'web3'
 import APITesting from "./apiTesting"
 
+APITesting.setupTestConfiguration(APITesting.UNIT_TEST_CONFIGURATION)
 
 const TEST_USER_ADDRESS = "fakeuseraddress"
 const TEST_USER_TRANSACTION_COUNT = 99
@@ -15,9 +16,9 @@ privateWeb3Rpc.eth.getTransactionCount = jest.fn()
 
 Web3.mockImplementation((url) => {
 
-  if (url === APITesting.TEST_CONFIGURATION.rpc.public) {
+  if (url === APITesting.UNIT_TEST_CONFIGURATION.rpc.public) {
     return publicWeb3Rpc
-  } else if (url === APITesting.TEST_CONFIGURATION.rpc.private) {
+  } else if (url === APITesting.UNIT_TEST_CONFIGURATION.rpc.private) {
     return privateWeb3Rpc
   }
   throw new Error(`Unexpected web3 url ${url}`)

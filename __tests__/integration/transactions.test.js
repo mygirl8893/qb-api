@@ -5,7 +5,6 @@ import fs from 'fs'
 import solc from 'solc'
 import request from 'supertest'
 import HttpStatus from 'http-status-codes'
-import unsign from '@warren-bank/ethereumjs-tx-unsign'
 import Tx from "ethereumjs-tx"
 
 import APITesting from '../apiTesting'
@@ -62,6 +61,7 @@ jest.setTimeout(30000)
 describe('Transactions API Integration', () => {
   let ganacheChildProcess = null
   let app = null
+  let loyaltyTokenContractAddress = null
 
   /* eslint-disable-next-line no-undef */
   beforeAll(async () => {
@@ -99,9 +99,6 @@ describe('Transactions API Integration', () => {
 
     console.log(`Connection successful. Address ${ACCOUNTS[0].address} has ${transactionCount} transactions.`)
 
-    // const isUnlocked = await privateWeb3.eth.personal.unlockAccount(ACCOUNTS[0].address, ACCOUNTS[0].secretKey, 3600)
-    // chai.expect(isUnlocked).to.equal(true)
-
     console.log('Compiling loyalty token contract..')
 
     const loyaltyTokenContract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
@@ -119,7 +116,7 @@ describe('Transactions API Integration', () => {
       gasPrice: '30'
     })
 
-    const loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
+    loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
     loyaltyTokenContract.options.address = loyaltyTokenContractAddress
     console.log(`Loyalty Token contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
 
@@ -162,41 +159,6 @@ describe('Transactions API Integration', () => {
 
     /* eslint-disable-next-line global-require */
     app = require('../../app')
-
-    const swaggerResponse = await request(app).get('/')
-
-    chai.expect(swaggerResponse.status).to.equal(HttpStatus.OK)
-
-    const transactions = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
-
-    console.log(transactions.body)
-
-    const rawTransactionParams = {
-      from: ACCOUNTS[0].address,
-      to: ACCOUNTS[1].address,
-      transferAmount: 10,
-      contractAddress: loyaltyTokenContractAddress
-    }
-
-    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
-
-    console.log(rawTransactionResponse.body)
-
-    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
-    const transaction = new Tx(rawTransactionResponse.body)
-    transaction.sign(privateKey)
-    const serializedTx = transaction.serialize().toString('hex')
-
-    const r = unsign(serializedTx)
-    console.log(r)
-
-    const postTransferParams = {
-      data: serializedTx
-    }
-
-    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
-
-    console.log(sendTransactionResponse)
   })
 
   /* eslint-disable-next-line no-undef */
@@ -211,8 +173,55 @@ describe('Transactions API Integration', () => {
     })
   })
 
-  it('Gets transactions succesfully', async () => {
-    chai.expect(1).to.equal(1)
+  it('Gets empty transactions history successfully', async () => {
+    const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+
+    chai.expect(transactionsResponse.status).to.equal(HttpStatus.OK)
+    chai.expect(transactionsResponse.body.length).to.equal(0)
+  })
+
+  it('Executes 1 transaction and the history now has 1 transaction', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    chai.expect(rawTransactionResponse.status).to.equal(HttpStatus.OK)
+    const rawTransaction = rawTransactionResponse.body
+
+    chai.expect(rawTransaction.from).to.equal(ACCOUNTS[0].address)
+    chai.expect(rawTransaction.to).to.equal(loyaltyTokenContractAddress)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    chai.expect(sendTransactionResponse.status).to.equal(HttpStatus.OK)
+
+    console.log(sendTransactionResponse)
+
+    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+
+    chai.expect(transactionsAfterResponse.status).to.equal(HttpStatus.OK)
+    const transactions = transactionsAfterResponse.body
+
+    chai.expect(transactions.length).to.equal(1)
+    const singleTransaction = transactions[0]
+    chai.expect(singleTransaction.contract).to.equal(loyaltyTokenContractAddress)
+    chai.expect(singleTransaction.value).to.equal(`${rawTransactionParams.transferAmount}`)
+    chai.expect(singleTransaction.from.toLowerCase()).to.equal(ACCOUNTS[0].address)
+    chai.expect(singleTransaction.to.toLowerCase()).to.equal(ACCOUNTS[1].address)
   })
 })
 

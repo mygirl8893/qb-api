@@ -48,7 +48,6 @@
     "babel-preset-airbnb": "^2.4.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2018": "^1.0.0",
-    "chai": "^4.1.2",
     "child_process": "^1.0.2",
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",

@@ -1,4 +1,3 @@
-import chai from 'chai'
 import Web3 from 'web3'
 import ChildProcess from 'child_process'
 import fs from 'fs'
@@ -55,15 +54,13 @@ function getContract(web3, sourceFile, contractName) {
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
-/* eslint-disable-next-line no-undef */
-jest.setTimeout(30000)
+jest.setTimeout(30000000)
 
 describe('Transactions API Integration', () => {
   let ganacheChildProcess = null
   let app = null
   let loyaltyTokenContractAddress = null
 
-  /* eslint-disable-next-line no-undef */
   beforeAll(async () => {
 
     console.log('Setting up test environment..')
@@ -161,7 +158,6 @@ describe('Transactions API Integration', () => {
     app = require('../../app')
   })
 
-  /* eslint-disable-next-line no-undef */
   afterAll(async () => {
 
     // kill test network
@@ -176,8 +172,8 @@ describe('Transactions API Integration', () => {
   it('Gets empty transactions history successfully', async () => {
     const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
-    chai.expect(transactionsResponse.status).to.equal(HttpStatus.OK)
-    chai.expect(transactionsResponse.body.length).to.equal(0)
+    expect(transactionsResponse.status).toBe(HttpStatus.OK)
+    expect(transactionsResponse.body).toHaveLength(0)
   })
 
   it('Executes 1 transaction and the history now has 1 transaction', async () => {
@@ -190,11 +186,11 @@ describe('Transactions API Integration', () => {
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
-    chai.expect(rawTransactionResponse.status).to.equal(HttpStatus.OK)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
     const rawTransaction = rawTransactionResponse.body
 
-    chai.expect(rawTransaction.from).to.equal(ACCOUNTS[0].address)
-    chai.expect(rawTransaction.to).to.equal(loyaltyTokenContractAddress)
+    expect(rawTransaction.from).toBe(ACCOUNTS[0].address)
+    expect(rawTransaction.to).toBe(loyaltyTokenContractAddress)
 
     const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
     const transaction = new Tx(rawTransaction)
@@ -207,21 +203,21 @@ describe('Transactions API Integration', () => {
 
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
-    chai.expect(sendTransactionResponse.status).to.equal(HttpStatus.OK)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
     console.log(sendTransactionResponse)
 
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
-    chai.expect(transactionsAfterResponse.status).to.equal(HttpStatus.OK)
+    expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
     const transactions = transactionsAfterResponse.body
 
-    chai.expect(transactions.length).to.equal(1)
+    expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
-    chai.expect(singleTransaction.contract).to.equal(loyaltyTokenContractAddress)
-    chai.expect(singleTransaction.value).to.equal(`${rawTransactionParams.transferAmount}`)
-    chai.expect(singleTransaction.from.toLowerCase()).to.equal(ACCOUNTS[0].address)
-    chai.expect(singleTransaction.to.toLowerCase()).to.equal(ACCOUNTS[1].address)
+    expect(singleTransaction.contract).toBe(loyaltyTokenContractAddress)
+    expect(singleTransaction.value).toBe(`${rawTransactionParams.transferAmount}`)
+    expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
+    expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
   })
 })
 

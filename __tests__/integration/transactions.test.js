@@ -1,12 +1,9 @@
-import Web3 from 'web3'
-import ChildProcess from 'child_process'
-import fs from 'fs'
-import solc from 'solc'
 import request from 'supertest'
 import HttpStatus from 'http-status-codes'
 import Tx from "ethereumjs-tx"
 
 import APITesting from '../apiTesting'
+import TestPrivateChain from "./testPrivateChain";
 
 
 const PRIVATE_WEB3_PORT = 8545
@@ -39,134 +36,28 @@ const TOKEN = {
   rate: 100
 }
 
-function getContract(web3, sourceFile, contractName) {
-  const loyaltyTokenCode = fs.readFileSync(sourceFile)
-
-  const compiledLoyaltyToken = solc.compile(loyaltyTokenCode.toString(), 1)
-  const { bytecode } = compiledLoyaltyToken.contracts[contractName]
-
-  const abi = JSON.parse(compiledLoyaltyToken.contracts[contractName].interface)
-
-  const contract = new web3.eth.Contract(abi)
-  contract.options.data = `0x${  bytecode}`
-  return contract
-}
-
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.setTimeout(30000000)
 
 describe('Transactions API Integration', () => {
-  let ganacheChildProcess = null
   let app = null
-  let loyaltyTokenContractAddress = null
+  let privateChain = null
 
   beforeAll(async () => {
 
-    console.log('Setting up test environment..')
+    privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
-    let accountsArguments = ''
-
-    ACCOUNTS.forEach((account) => {
-
-      // NOTE the prepending of 0x to indicate hex
-      accountsArguments += ` --account="0x${account.secretKey},${account.balance}"`
-    })
-
-    const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${PRIVATE_WEB3_PORT} ${accountsArguments}`
-
-    console.log(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
-
-    ganacheChildProcess = ChildProcess.exec(launchGanacheCmd)
-
-    // wait for it to start by waiting for some stdout output
-    // if it never returns data, jest will eventually timeout
-    await new Promise((resolve) => {
-      ganacheChildProcess.stdout.on('data', (data) => {
-        resolve(data)
-      })
-    })
-
-    console.log('Test network launched. Connecting to it with Web3..')
-
-    const privateWeb3 = new Web3(INTEGRATION_TEST_CONFIGURATION.rpc.private)
-    await privateWeb3.eth.net.isListening()
-
-    const transactionCount = await privateWeb3.eth.getTransactionCount(ACCOUNTS[0].address)
-
-    console.log(`Connection successful. Address ${ACCOUNTS[0].address} has ${transactionCount} transactions.`)
-
-    console.log('Compiling loyalty token contract..')
-
-    const loyaltyTokenContract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
-
-    loyaltyTokenContract.options.from = ACCOUNTS[0].address
-    loyaltyTokenContract.options.gas = 900000
-
-    console.log('Deploying the loyalty token contract..')
-
-    const loyaltyTokenContractInstance = await loyaltyTokenContract.deploy({
-      arguments: [TOKEN.name, TOKEN.symbol, TOKEN.decimals]
-    }).send({
-      from: ACCOUNTS[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
-    loyaltyTokenContract.options.address = loyaltyTokenContractAddress
-    console.log(`Loyalty Token contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
-
-    console.log("Compiling token DB contract..")
-
-    const tokenDBContract = getContract(privateWeb3, './src/contracts/tokenDB.sol', ':TokenDB')
-
-    console.log('Deploying the token DB contract..')
-
-    const tokenDBContractInstance = await tokenDBContract.deploy().send({
-      from: ACCOUNTS[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    const tokenDBContractAddress = tokenDBContractInstance.options.address
-    tokenDBContract.options.address = tokenDBContractAddress
-    INTEGRATION_TEST_CONFIGURATION.tokenDB = tokenDBContractAddress
-
-    console.log(`Token DB contract deployed successfully. The address is ${tokenDBContractAddress}`)
-
-    const setTokenReceipt = await tokenDBContract.methods
-      .setToken(loyaltyTokenContractAddress, TOKEN.symbol, TOKEN.name, TOKEN.rate).send({
-      from: ACCOUNTS[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    console.log(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
-
-    const initialLoyaltyTokenAmount = 1000000
-
-    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(ACCOUNTS[0].address, initialLoyaltyTokenAmount).send({
-      from: ACCOUNTS[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    console.log(issueTokensReceipt)
+    await privateChain.setup()
+    INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
     /* eslint-disable-next-line global-require */
     app = require('../../app')
   })
 
   afterAll(async () => {
+    await privateChain.tearDown()
 
-    // kill test network
-    ganacheChildProcess.kill('SIGINT')
-    await new Promise((resolve) => {
-      ganacheChildProcess.on('close', () => {
-        resolve()
-      })
-    })
   })
 
   it('Gets empty transactions history successfully', async () => {
@@ -181,7 +72,7 @@ describe('Transactions API Integration', () => {
       from: ACCOUNTS[0].address,
       to: ACCOUNTS[1].address,
       transferAmount: 10,
-      contractAddress: loyaltyTokenContractAddress
+      contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
@@ -190,7 +81,7 @@ describe('Transactions API Integration', () => {
     const rawTransaction = rawTransactionResponse.body
 
     expect(rawTransaction.from).toBe(ACCOUNTS[0].address)
-    expect(rawTransaction.to).toBe(loyaltyTokenContractAddress)
+    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
 
     const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
     const transaction = new Tx(rawTransaction)
@@ -214,7 +105,7 @@ describe('Transactions API Integration', () => {
 
     expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
-    expect(singleTransaction.contract).toBe(loyaltyTokenContractAddress)
+    expect(singleTransaction.contract).toBe(privateChain.loyaltyTokenContractAddress)
     expect(singleTransaction.value).toBe(`${rawTransactionParams.transferAmount}`)
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)

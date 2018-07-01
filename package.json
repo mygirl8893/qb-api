@@ -5,7 +5,7 @@
   "author": "qiibee Foundation",
   "license": "ISC",
   "private": true,
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "test": "node_modules/jest/bin/jest.js __tests__/*.test.js",
     "start": "./node_modules/.bin/babel-node server.js",

@@ -122,7 +122,7 @@ class TestPrivateChain {
       gasPrice: '30'
     })
 
-    console.log(issueTokensReceipt)
+    console.log(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
 
   }
 

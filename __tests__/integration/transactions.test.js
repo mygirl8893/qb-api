@@ -1,9 +1,9 @@
 import request from 'supertest'
 import HttpStatus from 'http-status-codes'
-import Tx from "ethereumjs-tx"
+import Tx from 'ethereumjs-tx'
 
 import APITesting from '../apiTesting'
-import TestPrivateChain from "./testPrivateChain"
+import TestPrivateChain from './testPrivateChain'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -96,8 +96,6 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
-
-    console.log(sendTransactionResponse)
 
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 

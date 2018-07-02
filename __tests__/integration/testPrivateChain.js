@@ -2,6 +2,7 @@ import Web3 from 'web3'
 import ChildProcess from 'child_process'
 import solc from 'solc'
 import fs from 'fs'
+import path from 'path'
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -63,7 +64,9 @@ class TestPrivateChain {
 
     console.log('Compiling loyalty token contract..')
 
-    const loyaltyTokenContract = getContract(privateWeb3, './src/contracts/loyaltyToken.sol', ':SmartToken')
+    const loyaltyTokenContract = getContract(privateWeb3,
+      path.resolve(__dirname, '../../src/contracts/loyaltyToken.sol'),
+      ':SmartToken')
 
     loyaltyTokenContract.options.from = this.accounts[0].address
     loyaltyTokenContract.options.gas = 900000
@@ -84,7 +87,9 @@ class TestPrivateChain {
 
     console.log("Compiling token DB contract..")
 
-    const tokenDBContract = getContract(privateWeb3, './src/contracts/tokenDB.sol', ':TokenDB')
+    const tokenDBContract = getContract(privateWeb3,
+      path.resolve(__dirname, '../../src/contracts/tokenDB.sol'),
+      ':TokenDB')
 
     console.log('Deploying the token DB contract..')
 

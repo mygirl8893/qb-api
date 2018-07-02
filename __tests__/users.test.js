@@ -33,6 +33,10 @@ const app = require('../app')
 
 describe('Users API', () => {
 
+  beforeAll(async () => {
+    await APITesting.waitForAppToBeReady(app)
+  })
+
   it('returns user info successfully', async () => {
     privateWeb3Rpc.eth.getTransactionCount.mockImplementation(async () => TEST_USER_TRANSACTION_COUNT)
 

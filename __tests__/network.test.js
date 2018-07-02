@@ -35,6 +35,10 @@ const app = require('../app')
 
 describe('Network API', () => {
 
+    beforeAll(async () => {
+      await APITesting.waitForAppToBeReady(app)
+    })
+
     it('returns network info successfully', async () => {
 
       privateWeb3Rpc.eth.getBlockNumber.mockImplementation(async () => LATEST_BLOCK_NUMBER)

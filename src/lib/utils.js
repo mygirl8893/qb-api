@@ -7,6 +7,13 @@
  */
 const wrap = fn => (...args) => fn(...args).catch(args[2])
 
+function sleep(ms){
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}
+
 export default {
-  wrap
+  wrap,
+  sleep
 }

@@ -1,16 +1,16 @@
 import * as express from 'express'
-import Controller from './controller'
-import LibAPI from '../lib/utils'
+import Controller from "./controller"
+import LibAPI from "../lib/utils"
 
 const router = express.Router()
 
 /**
  * @swagger
- * /net:
+ * /health:
  *   get:
  *     tags:
- *       - Network
- *     description: Gets network information
+ *       - Health
+ *     description: Gets information on the current health state of the app.
  *     produces:
  *       - application/json
  *     parameters:
@@ -19,7 +19,10 @@ const router = express.Router()
  *          description: Returns the network information
  *       400:
  *          description: Request failed, see error message.
+ *       500:
+ *          description: Application is unhealthy.
  */
-router.get('/', LibAPI.wrap(Controller.getInfo))
+router.get('/', LibAPI.wrap(Controller.getHealth))
 
 module.exports = router
+

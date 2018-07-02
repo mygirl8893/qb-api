@@ -3,8 +3,7 @@ import HttpStatus from 'http-status-codes'
 import Tx from "ethereumjs-tx"
 
 import APITesting from '../apiTesting'
-import TestPrivateChain from "./testPrivateChain";
-
+import TestPrivateChain from "./testPrivateChain"
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -38,7 +37,7 @@ const TOKEN = {
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
-jest.setTimeout(30000000)
+jest.setTimeout(30000)
 
 describe('Transactions API Integration', () => {
   let app = null
@@ -53,6 +52,8 @@ describe('Transactions API Integration', () => {
 
     /* eslint-disable-next-line global-require */
     app = require('../../app')
+
+    await APITesting.waitForAppToBeReady(app)
   })
 
   afterAll(async () => {

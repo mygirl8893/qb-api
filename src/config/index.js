@@ -8,26 +8,25 @@ const env = process.env.NODE_ENV || 'development',
   web3Private = new Web3(envtConfig.rpc.private),
   web3Public = new Web3(envtConfig.rpc.public)
 
-web3Private.eth.net
-  .isListening()
-  .then(() => console.log('Web3 (private) is connected'))
-  .catch(() => {
-    console.log('ERROR: Could not connect to Web3 (private)')
-    process.exit()
-  })
+;(async () => {
+    await Promise.all([
+      web3Private.eth.net.isListening().catch(() => {
+        throw new Error('Could not connect to Web3 (private)')
+      }),
+      web3Public.eth.net.isListening().catch(() => {
+        throw new Error('Could not connect to Web3 (public)')
+      })])
 
-web3Public.eth.net
-  .isListening()
-  .then(() => console.log('Web3 (public) is connected'))
-  .catch(() => {
-    console.log('ERROR: Could not connect to Web3 (public)')
-    process.exit()
-  })
+    const chainID = await web3Private.eth.net.getId().catch(() => {
+      throw new Error('Could not fetch private chainID')
+    })
 
-web3Private.eth.net.getId()
-  .then(id => {
-    envtConfig.chainID = id
-  })
+    envtConfig.chainID = chainID
+})().catch((e) => {
+  console.log(`${e}`)
+  process.exit(1)
+})
+
 
 export default {
   getPort: () => envtConfig.port,

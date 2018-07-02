@@ -1,3 +1,7 @@
+import request from 'supertest'
+import HttpStatus from 'http-status-codes'
+import utils from '../src/lib/utils'
+
 const UNIT_TEST_CONFIGURATION = {
   rpc: {
     private: 'http://testprivatechain.com',
@@ -48,9 +52,25 @@ const getSampleBlock = (blockNumber) => ({
     "uncles": []
   })
 
+
+const waitForAppToBeReady = async (app) => {
+
+  while (true) {
+    /* eslint-disable-next-line no-await-in-loop */
+    const r = await request(app).get('/health/')
+    if (r.status === HttpStatus.OK) {
+      break
+    }
+
+    /* eslint-disable-next-line no-await-in-loop */
+    await utils.sleep(100)
+  }
+}
+
 export default {
   setupTestConfiguration,
   UNIT_TEST_CONFIGURATION,
   getBaseWeb3Mock,
-  getSampleBlock
+  getSampleBlock,
+  waitForAppToBeReady
 }

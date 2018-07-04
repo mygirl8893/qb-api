@@ -15,7 +15,7 @@ const getTransactionHistory = async (address) => {
 
   const transactions = await conn.query(`SELECT * from transactions
     JOIN tokens ON transactions.contractAddress = tokens.contractAddress
-    WHERE 'to'=${escapedAddress} OR 'from'=${escapedAddress}`)
+    WHERE toAddress=${escapedAddress} OR fromAddress=${escapedAddress}`)
   return transactions
 }
 

@@ -69,7 +69,7 @@ async function launch() {
   (
     hash  CHAR(66) PRIMARY KEY,
     nonce BIGINT UNSIGNED,
-    blockHash VARCHAR(64),
+    blockHash VARCHAR(66),
     blockNumber BIGINT UNSIGNED,
     transactionIndex BIGINT UNSIGNED,
     fromAddress CHAR(42),

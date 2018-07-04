@@ -119,6 +119,34 @@ const getHistoryFromPrivateChain = async (req, res) => {
 const getHistory = async (req, res) => {
   const address = req.params.address.toLowerCase()
   const history = await database.getTransactionHistory(address)
+
+
+  /* eslint-disable no-param-reassign */
+  history.forEach((t) => {
+    t.to = t.toAddress
+    delete t.toAddress
+
+    t.from = t.fromAddress
+    delete t.fromAddress
+
+    t.token = {
+      contractAddress: t.contractAddress,
+      name: t.name,
+      rate: t.rate,
+      symbol: t.symbol,
+      totalSupply: t.totalSupply,
+      decimals: t.decimals
+    }
+
+    delete t.contractAddress
+    delete t.name
+    delete t.rate
+    delete t.symbol
+    delete t.totalSupply
+    delete t.decimals
+  })
+  /* eslint-enable no-param-reassign */
+
   return res.json(history)
 }
 
@@ -126,7 +154,7 @@ const transfer = async (req, res) => {
   abiDecoder.addABI(Config.getTokenABI())
 
   const signedTransaction = new EthereumTx(req.body.data)
-  const sender = signedTransaction.getSenderAddress().toString('hex')
+  const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
   const { txData } = unsign(req.body.data),
     decodedTx = abiDecoder.decodeMethod(txData.data),
@@ -150,8 +178,8 @@ const transfer = async (req, res) => {
     blockNumber: result.tx.blockNumber,
     status: result.tx.status,
     transactionIndex: result.tx.transactionIndex,
-    from: sender,
-    to: decodedTx.params[0].value,
+    fromAddress: sender,
+    toAddress: decodedTx.params[0].value,
     contractAddress: txData.to
   }
 

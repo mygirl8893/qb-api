@@ -3,6 +3,8 @@ import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import apiTesting from '../__tests__/apiTesting'
 import qbAPI from '../index'
 import utils from '../src/lib/utils'
+import Tx from "ethereumjs-tx"
+import axios from "axios/index"
 
 /*
  *  This script creates a local dev environment to experiment with the API
@@ -31,8 +33,7 @@ const TOKEN = {
     rate: 100
   }
 
-;(async () => {
-
+async function getMysqlConnection() {
   const mysqlConn = await mysql.createConnection({
     host     : 'localhost',
     user     : 'root',
@@ -41,6 +42,12 @@ const TOKEN = {
   })
 
   console.log('Successfully connected to mysql.')
+
+  return mysqlConn
+}
+
+async function launch() {
+  const mysqlConn = await getMysqlConnection()
 
   console.log('Clear out existing tables, and set up new tables..')
 
@@ -88,20 +95,65 @@ const TOKEN = {
     decimals: TOKEN.decimals,
   })
 
-  const r = await mysqlConn.query('SELECT * FROM tokens')
+  console.log("Local dev environment is setup and running.")
+}
 
-  // console.log(`Launching qb-api app on ${API_PORT} ..`)
-  //
-  // const app = qbAPI.getApp()
-  //
-  // app.listen(API_PORT)
-  //
-  // await apiTesting.waitForAppToBeReady(app)
-  //
-  // console.log('qb-api is ready.')
+async function seed() {
+  const mysqlConn = await getMysqlConnection()
 
+  console.log("Get raw transaction.")
 
-  await utils.sleep(10000000000)
+  let request = {
+    params: {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B'
+    }
+  }
+
+  const baseUrl = `http://localhost:${API_PORT}`
+
+  const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, request)
+
+  console.log(rawTransactionResponse.data)
+
+  const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
+  const transaction = new Tx(rawTransactionResponse.data)
+  transaction.sign(privateKey)
+  const serializedTx = transaction.serialize().toString('hex')
+
+  request = {
+    data: serializedTx
+  }
+
+  console.log('POST signed transaction..')
+
+  const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, request)
+
+  console.log(sendTransactionResponse)
+
+  console.log("Query transaction history again.")
+
+  const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
+
+  console.log(newRawHistoryResponse.data)
+}
+
+;(async () => {
+
+  const command = process.argv[2]
+  switch(command) {
+    case 'launch':
+      await launch()
+      break;
+
+    case 'seed':
+      await seed()
+      break;
+    default:
+      console.log(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)
+  }
 
 })().catch(e => {
   console.log(`ERROR ${e}`)

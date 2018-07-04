@@ -11,7 +11,8 @@
     "start": "./node_modules/.bin/babel-node server.js",
     "startmon": "nodemon server.js",
     "precommit": "lint-staged",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "localenv": "./node_modules/.bin/babel-node scripts/runLocalDev.js"
   },
   "lint-staged": {
     "*.js": [

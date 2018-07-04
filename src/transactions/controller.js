@@ -168,22 +168,19 @@ const transfer = async (req, res) => {
     return res.json({ error: 'Loyalty Token not found' }) // TODO: use Error object
   }
   const txHash = await web3.utils.sha3(req.body.data, { encoding: 'hex' })
-  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
-
-  const result = { hash: txHash, status: 'pending', tx: receipt }
 
   const storeableTransaction = {
     hash: txHash,
-    blockHash: result.tx.blockHash,
-    blockNumber: result.tx.blockNumber,
-    status: result.tx.status,
-    transactionIndex: result.tx.transactionIndex,
     fromAddress: sender,
     toAddress: decodedTx.params[0].value,
-    contractAddress: txData.to
+    contractAddress: txData.to,
+    state: 'pending'
   }
-
   await database.addPendingTransaction(storeableTransaction)
+
+  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
+
+  const result = { hash: txHash, status: 'pending', tx: receipt }
 
   return res.json(result)
 }

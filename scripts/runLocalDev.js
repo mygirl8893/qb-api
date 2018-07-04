@@ -79,7 +79,8 @@ async function launch() {
     status VARCHAR(3),
     timestamp BIGINT UNSIGNED,
     confirms BIGINT UNSIGNED,
-    contractAddress CHAR(42)
+    contractAddress CHAR(42),
+    state VARCHAR(50)
   );`)
 
   const testPrivateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)

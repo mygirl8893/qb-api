@@ -1,10 +1,12 @@
 import abiDecoder from 'abi-decoder'
 import unsign from '@warren-bank/ethereumjs-tx-unsign'
+import EthereumTx from 'ethereumjs-tx'
 import BigNumber from 'bignumber.js'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import User from '../users/controller'
+import database from '../database'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -68,7 +70,8 @@ const getTransaction = async (req, res) => {
  * We also have to take into considerations transactions happening
  * on the public chain.
  */
-const getHistory = async (req, res) => {
+/* eslint-disable-next-line no-unused-vars */
+const getHistoryFromPrivateChain = async (req, res) => {
   const defaultBlocks = 200, // TODO: make it a constant
     address = req.params.address.toLowerCase(),
     latestBlock = await web3.eth.getBlock('latest'),
@@ -113,8 +116,17 @@ const getHistory = async (req, res) => {
   return res.json(historyArray)
 }
 
+const getHistory = async (req, res) => {
+  const address = req.params.address.toLowerCase()
+  const history = await database.getTransactionHistory(address)
+  return res.json(history)
+}
+
 const transfer = async (req, res) => {
   abiDecoder.addABI(Config.getTokenABI())
+
+  const signedTransaction = new EthereumTx(req.body.data)
+  const sender = signedTransaction.getSenderAddress().toString('hex')
 
   const { txData } = unsign(req.body.data),
     decodedTx = abiDecoder.decodeMethod(txData.data),
@@ -128,12 +140,24 @@ const transfer = async (req, res) => {
     return res.json({ error: 'Loyalty Token not found' }) // TODO: use Error object
   }
   const txHash = await web3.utils.sha3(req.body.data, { encoding: 'hex' })
-  const result = await web3.eth.sendSignedTransaction(req.body.data).then(
-    receipt => ({ hash: txHash, status: 'pending', tx: receipt }),
-    error => ({ hash: txHash, status: error.toString() }) // TODO: fix, not sending bback error
-  )
-  return res.json(result)
+  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
 
+  const result = { hash: txHash, status: 'pending', tx: receipt }
+
+  const storeableTransaction = {
+    hash: txHash,
+    blockHash: result.tx.blockHash,
+    blockNumber: result.tx.blockNumber,
+    status: result.tx.status,
+    transactionIndex: result.tx.transactionIndex,
+    from: sender,
+    to: decodedTx.params[0].value,
+    contractAddress: txData.to
+  }
+
+  await database.addPendingTransaction(storeableTransaction)
+
+  return res.json(result)
 }
 
 // TODO: should be POST maybe
@@ -161,5 +185,5 @@ export default {
   buildRawTransaction,
   getTransaction,
   getHistory,
-  transfer
+  transfer,
 }

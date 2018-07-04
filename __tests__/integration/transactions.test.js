@@ -4,6 +4,7 @@ import Tx from 'ethereumjs-tx'
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
+import database from '../../src/database'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -37,7 +38,12 @@ const TOKEN = {
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
-jest.setTimeout(30000)
+jest.mock('../../src/database', () => ({
+    getTransactionHistory: jest.fn(),
+    addPendingTransaction: jest.fn()
+  }))
+
+jest.setTimeout(180000)
 
 describe('Transactions API Integration', () => {
   let app = null
@@ -62,6 +68,8 @@ describe('Transactions API Integration', () => {
   })
 
   it('Gets empty transactions history successfully', async () => {
+
+    database.getTransactionHistory.mockImplementation(async () => [])
     const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsResponse.status).toBe(HttpStatus.OK)
@@ -75,6 +83,15 @@ describe('Transactions API Integration', () => {
       transferAmount: 10,
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
+
+    database.getTransactionHistory.mockImplementation(async () => [{
+      from: rawTransactionParams.from,
+      to: rawTransactionParams.to,
+      value: rawTransactionParams.transferAmount.toString(),
+      contract: rawTransactionParams.contractAddress
+    }])
+
+    database.addPendingTransaction.mockImplementation(async () => null)
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
@@ -105,7 +122,7 @@ describe('Transactions API Integration', () => {
     expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
     expect(singleTransaction.contract).toBe(privateChain.loyaltyTokenContractAddress)
-    expect(singleTransaction.value).toBe(`${rawTransactionParams.transferAmount}`)
+    expect(singleTransaction.value).toBe(rawTransactionParams.transferAmount.toString())
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
   })

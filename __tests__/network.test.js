@@ -28,6 +28,11 @@ Web3.mockImplementation((url) => {
 jest.genMockFromModule('web3')
 jest.mock('web3')
 
+jest.mock('../src/database', () => ({
+    getTransactionHistory: jest.fn(),
+    addPendingTransaction: jest.fn()
+  }))
+
 /* using require for the app in order to allow the mocks to take effect
    before the module is actually loaded
  */

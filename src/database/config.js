@@ -4,7 +4,7 @@ const Config = {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOSTNAME,
-    connectionLimit: 10,
+    connectionLimit: process.env.DB_CONNECTION_LIMIT,
     debug: false
   },
   development: {

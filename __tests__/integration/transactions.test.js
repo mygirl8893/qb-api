@@ -85,8 +85,8 @@ describe('Transactions API Integration', () => {
     }
 
     database.getTransactionHistory.mockImplementation(async () => [{
-      from: rawTransactionParams.from,
-      to: rawTransactionParams.to,
+      fromAddress: rawTransactionParams.from,
+      toAddress: rawTransactionParams.to,
       value: rawTransactionParams.transferAmount.toString(),
       contract: rawTransactionParams.contractAddress
     }])

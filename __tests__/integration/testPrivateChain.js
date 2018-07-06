@@ -38,7 +38,7 @@ class TestPrivateChain {
       accountsArguments += ` --account="0x${account.secretKey},${account.balance}"`
     })
 
-    const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --blockTime 1 --port ${this.port} ${accountsArguments}`
+    const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${this.port} ${accountsArguments}`
 
     console.log(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 

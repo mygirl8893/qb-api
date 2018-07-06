@@ -8,6 +8,9 @@ const env = process.env.NODE_ENV || 'development',
   web3Private = new Web3(envtConfig.rpc.private),
   web3Public = new Web3(envtConfig.rpc.public)
 
+
+let web3ConnectionsAreReady = false
+
 ;(async () => {
     await Promise.all([
       web3Private.eth.net.isListening().catch(() => {
@@ -22,6 +25,7 @@ const env = process.env.NODE_ENV || 'development',
     })
 
     envtConfig.chainID = chainID
+    web3ConnectionsAreReady = true
 })().catch((e) => {
   console.log(`${e}`)
   process.exit(1)
@@ -41,5 +45,6 @@ export default {
   getTokenDBABI: () => Config.tokenDBABI,
   getEnv: () => env,
   getStatusMessage: (code) => Config.statusMsgs[code],
-  getSwaggerConfig: () => SwaggerConfig
+  getSwaggerConfig: () => SwaggerConfig,
+  getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
 }

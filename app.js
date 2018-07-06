@@ -14,7 +14,6 @@ import networkRouter from './src/network/router'
 import transactionsRouter from './src/transactions/router'
 import tokensRouter from './src/tokens/router'
 import usersRouter from './src/users/router'
-import healthRouter from './src/health/router'
 
 const app = express(),
   swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
@@ -29,7 +28,6 @@ app.use('/net', networkRouter)
 app.use('/transactions', transactionsRouter)
 app.use('/tokens', tokensRouter)
 app.use('/users', usersRouter)
-app.use('/health', healthRouter)
 app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use((req, res, next) => {

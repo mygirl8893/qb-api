@@ -35,11 +35,12 @@ jest.mock('../src/database', () => ({
    before the module is actually loaded
  */
 const app = require('../app')
+const Config = require('../src/config')
 
 describe('Users API', () => {
 
   beforeAll(async () => {
-    await APITesting.waitForAppToBeReady(app)
+    await APITesting.waitForAppToBeReady(Config)
   })
 
   it('returns user info successfully', async () => {

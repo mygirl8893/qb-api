@@ -58,8 +58,10 @@ describe('Transactions API Integration', () => {
 
     /* eslint-disable-next-line global-require */
     app = require('../../app')
+    /* eslint-disable-next-line global-require */
+    const Config = require('../../src/config')
 
-    await APITesting.waitForAppToBeReady(app)
+    await APITesting.waitForAppToBeReady(Config)
   })
 
   afterAll(async () => {

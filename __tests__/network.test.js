@@ -37,11 +37,12 @@ jest.mock('../src/database', () => ({
    before the module is actually loaded
  */
 const app = require('../app')
+const Config = require('../src/config')
 
 describe('Network API', () => {
 
     beforeAll(async () => {
-      await APITesting.waitForAppToBeReady(app)
+      await APITesting.waitForAppToBeReady(Config)
     })
 
     it('returns network info successfully', async () => {

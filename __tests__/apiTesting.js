@@ -1,5 +1,3 @@
-import request from 'supertest'
-import HttpStatus from 'http-status-codes'
 import utils from '../src/lib/utils'
 
 const UNIT_TEST_CONFIGURATION = {
@@ -53,12 +51,11 @@ const getSampleBlock = (blockNumber) => ({
   })
 
 
-const waitForAppToBeReady = async (app) => {
+const waitForAppToBeReady = async (config) => {
 
   while (true) {
     /* eslint-disable-next-line no-await-in-loop */
-    const r = await request(app).get('/health/')
-    if (r.status === HttpStatus.OK) {
+    if (config.default.getWeb3ConnectionsAreReady()) {
       break
     }
 

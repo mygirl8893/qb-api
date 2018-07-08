@@ -41,9 +41,8 @@ cd qb-api
 
 ```console
 npm install
-# start dependencies locally
-npm localdev start
-npm start
+# start dependencies locally and an instance of qb-api
+npm run localdev launch
 ```
 
 Go to [localhost:3000](http://localhost:3000)

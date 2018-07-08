@@ -169,6 +169,8 @@ const transfer = async (req, res) => {
   }
   const txHash = await web3.utils.sha3(req.body.data, { encoding: 'hex' })
 
+  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
+
   const storeableTransaction = {
     hash: txHash,
     fromAddress: sender,
@@ -177,8 +179,6 @@ const transfer = async (req, res) => {
     state: 'pending'
   }
   await database.addPendingTransaction(storeableTransaction)
-
-  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
 
   const result = { hash: txHash, status: 'pending', tx: receipt }
 

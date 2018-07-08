@@ -23,7 +23,6 @@ const Config = {
       private: 'http://localhost:8545',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: '0xF0847D4DE6BBAFf2849384E11fC1eA2FbA004a9f',
     port: 3000
   },
   qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',

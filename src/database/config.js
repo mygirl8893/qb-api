@@ -12,7 +12,7 @@ const Config = {
     password: 'a12345678$X',
     database: 'qiibee',
     host: 'localhost',
-    connectionLimit: 2,
+    connectionLimit: 3,
     debug: true
   }
 }

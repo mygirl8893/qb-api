@@ -1,8 +1,6 @@
 import mysql from 'promise-mysql'
 import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import apiTesting from '../__tests__/apiTesting'
-import qbAPI from '../index'
-import utils from '../src/lib/utils'
 import Tx from "ethereumjs-tx"
 import axios from "axios/index"
 
@@ -96,7 +94,24 @@ async function launch() {
     decimals: TOKEN.decimals,
   })
 
-  console.log("Local dev environment is setup and running.")
+  console.log('Local test chain is setup and running.')
+
+  const configValues = require('../src/config/config.js')
+
+  configValues.default.development.tokenDB = testPrivateChain.tokenDBContractAddress
+
+  const app = require('../app')
+  const Config = require('../src/config')
+
+  const port = process.env.PORT || Config.default.getPort()
+  app.listen(port)
+
+  console.log(`Running API in ${Config.default.getEnv()} mode. Listening on port: ${port}`)
+
+  await apiTesting.waitForAppToBeReady(Config)
+
+  console.log('API is ready.')
+
 }
 
 async function seed() {

@@ -14,7 +14,7 @@ Click [here](https://api.qiibee.com/) to get our documentation
 
 ## Requirements
 
-- Node v8 or higher
+- Node v8
 
 ## Getting Started
 

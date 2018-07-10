@@ -37,7 +37,8 @@
     "testEnvironment": "node"
   },
   "engines": {
-    "node": ">= 8.0"
+    "node": ">= 8.11 <9",
+    "npm": ">= 5.6 <5.7"
   },
   "devDependencies": {
     "@types/jest": "^23.1.3",

@@ -4,7 +4,7 @@ import fs from 'fs'
 const Config = {
   production: {
     rpc: {
-      private: 'http://10.0.10.250:28002',
+      private: process.env.RPC_HOST || 'http://10.0.10.250:28002',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     tokenDB: '0x7c21ac5994ea0c2dc965f6cd998f38a8a896de3c',
@@ -12,10 +12,10 @@ const Config = {
   },
   staging: {
     rpc: {
-      private: '',
+      private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: '',
+    tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
     port: 3000
   },
   development: {

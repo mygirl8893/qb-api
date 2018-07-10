@@ -1,8 +1,9 @@
 import mysql from 'promise-mysql'
 import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import apiTesting from '../__tests__/apiTesting'
-import Tx from "ethereumjs-tx"
-import axios from "axios/index"
+import Tx from 'ethereumjs-tx'
+import axios from 'axios/index'
+import log from '../src/logging'
 
 /*
  *  This script creates a local dev environment to experiment with the API
@@ -39,7 +40,7 @@ async function getMysqlConnection() {
     database : 'qiibee'
   })
 
-  console.log('Successfully connected to mysql.')
+  log.info('Successfully connected to mysql.')
 
   return mysqlConn
 }
@@ -47,7 +48,7 @@ async function getMysqlConnection() {
 async function launch() {
   const mysqlConn = await getMysqlConnection()
 
-  console.log('Clear out existing tables, and set up new tables..')
+  log.info('Clear out existing tables, and set up new tables..')
 
   await mysqlConn.query('DROP TABLE IF EXISTS tokens')
   await mysqlConn.query(`
@@ -94,7 +95,7 @@ async function launch() {
     decimals: TOKEN.decimals,
   })
 
-  console.log('Local test chain is setup and running.')
+  log.info('Local test chain is setup and running.')
 
   const configValues = require('../src/config/config.js')
 
@@ -106,18 +107,18 @@ async function launch() {
   const port = process.env.PORT || Config.default.getPort()
   app.listen(port)
 
-  console.log(`Running API in ${Config.default.getEnv()} mode. Listening on port: ${port}`)
+  log.info(`Running API in ${Config.default.getEnv()} mode. Listening on port: ${port}`)
 
   await apiTesting.waitForAppToBeReady(Config)
 
-  console.log('API is ready.')
+  log.info('API is ready.')
 
 }
 
 async function seed() {
   const mysqlConn = await getMysqlConnection()
 
-  console.log("Get raw transaction.")
+  log.info("Get raw transaction.")
 
   let request = {
     params: {
@@ -132,7 +133,7 @@ async function seed() {
 
   const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, request)
 
-  console.log(rawTransactionResponse.data)
+  log.info(rawTransactionResponse.data)
 
   const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
   const transaction = new Tx(rawTransactionResponse.data)
@@ -143,17 +144,17 @@ async function seed() {
     data: serializedTx
   }
 
-  console.log('POST signed transaction..')
+  log.info('POST signed transaction..')
 
   const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, request)
 
-  console.log(sendTransactionResponse)
+  log.info(sendTransactionResponse)
 
-  console.log("Query transaction history again.")
+  log.info("Query transaction history again.")
 
   const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
 
-  console.log(newRawHistoryResponse.data)
+  log.info(newRawHistoryResponse.data)
 }
 
 ;(async () => {
@@ -168,9 +169,9 @@ async function seed() {
       await seed()
       break;
     default:
-      console.log(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)
+      log.error(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)
   }
 
 })().catch(e => {
-  console.log(`ERROR ${e}`)
+  log.error(`${e}`)
 })

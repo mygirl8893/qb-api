@@ -3,6 +3,7 @@ import ChildProcess from 'child_process'
 import solc from 'solc'
 import fs from 'fs'
 import path from 'path'
+import log from '../../src/logging'
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -28,7 +29,7 @@ class TestPrivateChain {
 
   async setup() {
 
-    console.log('Setting up test environment..')
+    log.info('Setting up test environment..')
 
     let accountsArguments = ''
 
@@ -40,7 +41,7 @@ class TestPrivateChain {
 
     const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${this.port} ${accountsArguments}`
 
-    console.log(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
+    log.info(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 
     this.ganacheChildProcess = ChildProcess.exec(launchGanacheCmd)
 
@@ -52,7 +53,7 @@ class TestPrivateChain {
       })
     })
 
-    console.log('Test network launched. Connecting to it with Web3..')
+    log.info('Test network launched. Connecting to it with Web3..')
 
     const chainUrl = `http://localhost:${this.port}`
     const privateWeb3 = new Web3(chainUrl)
@@ -60,9 +61,9 @@ class TestPrivateChain {
 
     const transactionCount = await privateWeb3.eth.getTransactionCount(this.accounts[0].address)
 
-    console.log(`Connection successful. Address ${this.accounts[0].address} has ${transactionCount} transactions.`)
+    log.info(`Connection successful. Address ${this.accounts[0].address} has ${transactionCount} transactions.`)
 
-    console.log('Compiling loyalty token contract..')
+    log.info('Compiling loyalty token contract..')
 
     const loyaltyTokenContract = getContract(privateWeb3,
       path.resolve(__dirname, '../../src/contracts/loyaltyToken.sol'),
@@ -71,7 +72,7 @@ class TestPrivateChain {
     loyaltyTokenContract.options.from = this.accounts[0].address
     loyaltyTokenContract.options.gas = 900000
 
-    console.log('Deploying the loyalty token contract..')
+    log.info('Deploying the loyalty token contract..')
 
     const loyaltyTokenContractInstance = await loyaltyTokenContract.deploy({
       arguments: [this.token.name, this.token.symbol, this.token.decimals]
@@ -83,15 +84,15 @@ class TestPrivateChain {
 
     this.loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
     loyaltyTokenContract.options.address = this.loyaltyTokenContractAddress
-    console.log(`Loyalty Token contract deployed successfully. The address is ${this.loyaltyTokenContractAddress}`)
+    log.info(`Loyalty Token contract deployed successfully. The address is ${this.loyaltyTokenContractAddress}`)
 
-    console.log("Compiling token DB contract..")
+    log.info("Compiling token DB contract..")
 
     const tokenDBContract = getContract(privateWeb3,
       path.resolve(__dirname, '../../src/contracts/tokenDB.sol'),
       ':TokenDB')
 
-    console.log('Deploying the token DB contract..')
+    log.info('Deploying the token DB contract..')
 
     const tokenDBContractInstance = await tokenDBContract.deploy().send({
       from: this.accounts[0].address,
@@ -103,7 +104,7 @@ class TestPrivateChain {
     tokenDBContract.options.address = tokenDBContractAddress
     this.tokenDBContractAddress = tokenDBContractAddress
 
-    console.log(`Token DB contract deployed successfully. The address is ${this.tokenDBContractAddress}`)
+    log.info(`Token DB contract deployed successfully. The address is ${this.tokenDBContractAddress}`)
 
     const setTokenReceipt = await tokenDBContract.methods
       .setToken(this.loyaltyTokenContractAddress, this.token.symbol, this.token.name, this.token.rate).send({
@@ -112,7 +113,7 @@ class TestPrivateChain {
         gasPrice: '30'
       })
 
-    console.log(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
+    log.info(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
 
     const initialLoyaltyTokenAmount = 1000000
 
@@ -122,7 +123,7 @@ class TestPrivateChain {
       gasPrice: '30'
     })
 
-    console.log(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
+    log.info(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
 
   }
 

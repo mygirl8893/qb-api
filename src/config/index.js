@@ -2,6 +2,7 @@
 import Web3 from 'web3'
 import Config from './config'
 import SwaggerConfig from './swagger'
+import log from '../logging'
 
 const env = process.env.NODE_ENV || 'development',
   envtConfig = Config[env],
@@ -27,7 +28,7 @@ let web3ConnectionsAreReady = false
     envtConfig.chainID = chainID
     web3ConnectionsAreReady = true
 })().catch((e) => {
-  console.log(`${e}`)
+  log.error(`${e}`)
   process.exit(1)
 })
 

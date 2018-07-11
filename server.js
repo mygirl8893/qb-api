@@ -2,7 +2,7 @@ import app from './app'
 import Config from './src/config'
 import log from './src/logging'
 
-const port = process.env.PORT || Config.getPort()
+const port = Config.getPort()
 
 app.listen(port)
 

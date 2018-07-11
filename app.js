@@ -3,10 +3,10 @@ import express from 'express'
 import pretty from 'express-prettify'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-// import * as logger from 'morgan'
 
 import swaggerUi from 'swagger-ui-express'
 import swaggerJSDoc from 'swagger-jsdoc'
+import morgan from 'morgan'
 
 import Config from './src/config'
 
@@ -14,15 +14,23 @@ import networkRouter from './src/network/router'
 import transactionsRouter from './src/transactions/router'
 import tokensRouter from './src/tokens/router'
 import usersRouter from './src/users/router'
+import log from './src/logging'
 
 const app = express(),
   swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
 
-// app.use(Config.getEnv() === 'development' ? logger('dev') : logger('combined'));
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(pretty({ query: 'pretty' }))
+
+
+log.stream = {
+  write: (message) => {
+    log.info(message)
+  }
+}
+app.use(morgan("combined", { "stream": log.stream }))
 
 app.use('/net', networkRouter)
 app.use('/transactions', transactionsRouter)

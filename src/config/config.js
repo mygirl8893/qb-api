@@ -4,26 +4,34 @@ import fs from 'fs'
 const Config = {
   production: {
     rpc: {
-      private: 'http://10.0.10.250:28002',
+      private: process.env.RPC_HOST || 'http://10.0.10.250:28002',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     tokenDB: '0x7c21ac5994ea0c2dc965f6cd998f38a8a896de3c',
     chainID: 29746197,
+    port: process.env.PORT
   },
   staging: {
     rpc: {
-      private: '',
+      private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: '',
-    port: 3000
+    tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
+    port: process.env.PORT
+  },
+  testing: {
+    rpc: {
+      private: process.env.RPC_HOST,
+      public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+    },
+    tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
+    port: process.env.PORT
   },
   development: {
     rpc: {
       private: 'http://localhost:8545',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b',
     port: 3000
   },
   qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',

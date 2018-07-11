@@ -1,6 +1,6 @@
 import * as express from 'express'
 import Controller from './controller'
-import LibAPI from '../lib/api'
+import LibAPI from '../lib/utils'
 
 const router = express.Router()
 

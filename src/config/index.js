@@ -2,32 +2,36 @@
 import Web3 from 'web3'
 import Config from './config'
 import SwaggerConfig from './swagger'
+import log from '../logging'
 
 const env = process.env.NODE_ENV || 'development',
   envtConfig = Config[env],
   web3Private = new Web3(envtConfig.rpc.private),
   web3Public = new Web3(envtConfig.rpc.public)
 
-web3Private.eth.net
-  .isListening()
-  .then(() => console.log('Web3 (private) is connected'))
-  .catch(() => {
-    console.log('ERROR: Could not connect to Web3 (private)')
-    process.exit()
-  })
 
-web3Public.eth.net
-  .isListening()
-  .then(() => console.log('Web3 (public) is connected'))
-  .catch(() => {
-    console.log('ERROR: Could not connect to Web3 (public)')
-    process.exit()
-  })
+let web3ConnectionsAreReady = false
 
-web3Private.eth.net.getId()
-  .then(id => {
-    envtConfig.chainID = id
-  })
+;(async () => {
+    await Promise.all([
+      web3Private.eth.net.isListening().catch(() => {
+        throw new Error('Could not connect to Web3 (private)')
+      }),
+      web3Public.eth.net.isListening().catch(() => {
+        throw new Error('Could not connect to Web3 (public)')
+      })])
+
+    const chainID = await web3Private.eth.net.getId().catch(() => {
+      throw new Error('Could not fetch private chainID')
+    })
+
+    envtConfig.chainID = chainID
+    web3ConnectionsAreReady = true
+})().catch((e) => {
+  log.error(`${e}`)
+  process.exit(1)
+})
+
 
 export default {
   getPort: () => envtConfig.port,
@@ -42,5 +46,6 @@ export default {
   getTokenDBABI: () => Config.tokenDBABI,
   getEnv: () => env,
   getStatusMessage: (code) => Config.statusMsgs[code],
-  getSwaggerConfig: () => SwaggerConfig
+  getSwaggerConfig: () => SwaggerConfig,
+  getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
 }

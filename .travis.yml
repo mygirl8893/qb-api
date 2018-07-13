@@ -2,11 +2,26 @@ dist: trusty
 language: node_js
 service_name: travis-pro
 node_js:
-  - "8"
-
+- '8'
 cache:
   directories:
-    - "node_modules"
+  - node_modules
 script:
-  - yarn lint
-  - npm test
+- yarn lint
+- npm test
+- npm run build
+before_deploy:
+- git add -f ./dist
+deploy:
+  skip_cleanup: true
+  provider: elasticbeanstalk
+  access_key_id: AKIAIE4NIBVBAKOTWSQQ
+  secret_access_key:
+    secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+  region: eu-central-1
+  app: qbAPI
+  env: qb-api-testing
+  bucket_name: elasticbeanstalk-eu-central-1-233816796838
+  on:
+    repo: qiibee/qb-api
+    branch: testing

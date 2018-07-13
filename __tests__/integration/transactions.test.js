@@ -49,7 +49,7 @@ describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
 
-  beforeAll(async () => {
+  beforeEach(async () => {
 
     privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
@@ -64,9 +64,8 @@ describe('Transactions API Integration', () => {
     await APITesting.waitForAppToBeReady(Config)
   })
 
-  afterAll(async () => {
+  afterEach(async () => {
     await privateChain.tearDown()
-
   })
 
   it('Gets empty transactions history successfully', async () => {

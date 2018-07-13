@@ -45,11 +45,13 @@ class TestPrivateChain {
 
     this.ganacheChildProcess = ChildProcess.exec(launchGanacheCmd)
 
-    // wait for it to start by waiting for some stdout output
+    // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
     await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
-        resolve(data)
+        if (data.indexOf('Listening on') > -1) {
+          resolve(data)
+        }
       })
     })
 
@@ -131,7 +133,7 @@ class TestPrivateChain {
     // kill test network
     this.ganacheChildProcess.kill('SIGINT')
     await new Promise((resolve) => {
-      this.ganacheChildProcess.on('close', () => {
+      this.ganacheChildProcess.on('exit', () => {
         resolve()
       })
     })

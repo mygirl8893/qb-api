@@ -50,7 +50,7 @@ describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
 
-  beforeEach(async () => {
+  beforeAll(async () => {
 
     try {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
@@ -69,7 +69,7 @@ describe('Transactions API Integration', () => {
     }
   })
 
-  afterEach(async () => {
+  afterAll(async () => {
     try {
       await privateChain.tearDown()
     } catch (e) {

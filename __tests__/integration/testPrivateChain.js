@@ -4,7 +4,6 @@ import solc from 'solc'
 import fs from 'fs'
 import path from 'path'
 import log from '../../src/logging'
-import utils from '../../src/lib/utils'
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -44,13 +43,14 @@ class TestPrivateChain {
 
     log.info(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 
-    this.ganacheChildProcess = ChildProcess.exec(launchGanacheCmd)
+    this.ganacheChildProcess = ChildProcess.spawn(launchGanacheCmd, [], {shell: true})
 
     // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
     await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
-        if (data.indexOf('Listening on') > -1) {
+        const dataString = data.toString('utf8')
+        if (dataString.indexOf('Listening on') > -1) {
           resolve(data)
         }
       })
@@ -135,7 +135,11 @@ class TestPrivateChain {
     log.info('Killing the test chain..')
     // kill test network
     this.ganacheChildProcess.kill('SIGINT')
-    await utils.sleep(1000)
+    await new Promise((resolve) => {
+      this.ganacheChildProcess.on('exit', () => {
+        resolve()
+      })
+    })
     log.info('Done with sending a kill signal.')
   }
 }

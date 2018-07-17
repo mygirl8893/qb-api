@@ -4,6 +4,7 @@ import solc from 'solc'
 import fs from 'fs'
 import path from 'path'
 import log from '../../src/logging'
+import utils from '../../src/lib/utils'
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -130,14 +131,14 @@ class TestPrivateChain {
   }
 
   async tearDown() {
+
+    log.info('Killing the test chain..')
     // kill test network
     this.ganacheChildProcess.kill('SIGINT')
-    await new Promise((resolve) => {
-      this.ganacheChildProcess.on('exit', () => {
-        resolve()
-      })
-    })
+    await utils.sleep(1000)
+    log.info('Done with sending a kill signal.')
   }
 }
+
 
 export default TestPrivateChain

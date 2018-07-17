@@ -5,6 +5,7 @@ import Tx from 'ethereumjs-tx'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import database from '../../src/database'
+import log from '../../src/logging'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -49,23 +50,33 @@ describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
 
-  beforeEach(async () => {
+  beforeAll(async () => {
 
-    privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
+    try {
+      privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
-    await privateChain.setup()
-    INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
+      await privateChain.setup()
+      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
-    /* eslint-disable-next-line global-require */
-    app = require('../../app')
-    /* eslint-disable-next-line global-require */
-    const Config = require('../../src/config')
+      /* eslint-disable-next-line global-require */
+      app = require('../../app')
+      /* eslint-disable-next-line global-require */
+      const Config = require('../../src/config')
 
-    await APITesting.waitForAppToBeReady(Config)
+      await APITesting.waitForAppToBeReady(Config)
+    } catch (e) {
+      log.error(`Failed setting up the test context ${e}`)
+      throw e
+    }
   })
 
-  afterEach(async () => {
-    await privateChain.tearDown()
+  afterAll(async () => {
+    try {
+      await privateChain.tearDown()
+    } catch (e) {
+      log.error(`Failed to tear down the test context ${e}`)
+      throw e
+    }
   })
 
   it('Gets empty transactions history successfully', async () => {

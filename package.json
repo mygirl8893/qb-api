@@ -1,20 +1,21 @@
 {
   "name": "qb-api",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "qiibee API",
   "author": "qiibee Foundation",
   "license": "ISC",
-  "private": true,
-  "main": "index.js",
+  "private": false,
+  "main": "dist/index.js",
   "scripts": {
     "test": "node_modules/jest/bin/jest.js __tests__/*.test.js __tests__/integration/*.test.js",
     "start": "./node_modules/.bin/babel-node server.js",
-    "build": "rm -rf dist && ./node_modules/.bin/babel . --ignore node_modules,__tests__,dist --out-dir dist --copy-files",
+    "build": "rm -rf dist && ./node_modules/.bin/babel . --ignore node_modules,dist --out-dir dist --copy-files",
     "serve": "node dist/server.js",
     "startmon": "nodemon server.js",
     "precommit": "lint-staged",
     "lint": "eslint . --fix",
-    "localenv": "./node_modules/.bin/babel-node scripts/runLocalDev.js"
+    "localenv": "./node_modules/.bin/babel-node scripts/runLocalDev.js",
+    "prepublish": "npm run build"
   },
   "lint-staged": {
     "*.js": [

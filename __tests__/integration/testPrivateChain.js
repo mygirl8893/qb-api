@@ -136,7 +136,7 @@ class TestPrivateChain {
     log.info('Killing the test chain..')
     // kill test network
     this.ganacheChildProcess.kill('SIGINT')
-    await utils.sleep(1000)
+    await utils.sleep(3000)
     log.info('Done with sending a kill signal.')
   }
 }

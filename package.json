@@ -37,7 +37,8 @@
     ]
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": ["dist"]
   },
   "engines": {
     "node": ">= 8.11 <9",

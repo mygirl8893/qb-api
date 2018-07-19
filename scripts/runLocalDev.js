@@ -58,7 +58,7 @@ async function launch() {
       symbol VARCHAR(64),
       name VARCHAR(256),
       rate BIGINT UNSIGNED,
-      totalSupply DECIMAL(36,18),
+      totalSupply DECIMAL(36,0),
       decimals INT UNSIGNED
     );`)
 
@@ -73,7 +73,7 @@ async function launch() {
     transactionIndex BIGINT UNSIGNED,
     fromAddress CHAR(42),
     toAddress CHAR(42),
-    value DECIMAL(36,18),
+    value DECIMAL(36,0),
     input TEXT,
     status VARCHAR(3),
     timestamp BIGINT UNSIGNED,
@@ -91,7 +91,7 @@ async function launch() {
     symbol: TOKEN.symbol,
     name: TOKEN.name,
     rate: TOKEN.rate,
-    totalSupply: 12345678.7777777, // this is innacurate pick a valid value from the actual chain
+    totalSupply: 12345678, // this is innacurate pick a valid value from the actual chain
     decimals: TOKEN.decimals,
   })
 

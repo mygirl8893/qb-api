@@ -13,18 +13,30 @@ script:
 before_deploy:
 - git add -f ./dist
 deploy:
-  skip_cleanup: true
-  provider: elasticbeanstalk
-  access_key_id: AKIAIE4NIBVBAKOTWSQQ
-  secret_access_key:
-    secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
-  region: eu-central-1
-  app: qbAPI
-  env: qb-api-testing
-  bucket_name: elasticbeanstalk-eu-central-1-233816796838
-  on:
-    repo: qiibee/qb-api
-    branch: testing
+  - provider: elasticbeanstalk
+    skip_cleanup: true
+    access_key_id: AKIAIE4NIBVBAKOTWSQQ
+    secret_access_key:
+      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+    region: eu-central-1
+    app: qbAPI
+    env: qb-api-testing
+    bucket_name: elasticbeanstalk-eu-central-1-233816796838
+    on:
+      repo: qiibee/qb-api
+      branch: testing
+  - provider: elasticbeanstalk
+    skip_cleanup: true
+    access_key_id: AKIAIE4NIBVBAKOTWSQQ
+    secret_access_key:
+      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+    region: eu-central-1
+    app: qbAPI
+    env: qb-api-production
+    bucket_name: elasticbeanstalk-eu-central-1-233816796838
+    on:
+      repo: qiibee/qb-api
+      branch: production
 notifications:
   slack:
     secure: ZzpOM0BQ2nwrisHjaoELCtcykyc8tMG9qVVQq8SJjoCHlDN9HwTMZZ+VQfAAUr9k5hbxFEir8p+r47a6kyAGA3XJ9KxORUI65TP71IETVlIS+Ud5nZZmte7aGFOi4WRTSbuLzG5hYY+HGiDFZHMybf2ocrQlidqtgw8OB01cLM9e1GkQtg/DL5RNpyzPVzfB2KC6XnZ0B1Pa2uQzxsC+KRFzLXRVN9jqFQewIrtCMtYm7qMy4+pRhNTXHrE6OWj0GKrBrsGj3WizUqTABo2UwF9ovf8yZldifqlZLHfT6anyrK0tMGE+FuMJ2gMN92JsSZt7CHW7Q/cyVEVdib/X0GhpductZmayTEuHnI9UoA162kY4sS5VXELUHUX7netctGeTsHEQrGnRg6Zvx23nkOcisVlenfIAr88suYMkzYQ2FxJD+iW441Wn8k7xx8r3v0wj5pGe/HD3cWtCA9MJsP5M6ctuGXXVQ2PN3H9J33bodqsSfKPjb8OYPUDVQUG4J5HSioopIGh9i3736v3+OMRId7lr778B9WbR1dYXAzbKoeW/thtDcfierMsYQm8kXe22LIHZR1cC3D26lmxtXOYFCemYjDHYV3+H5qebwsANJQF3P+oz/SZSBjHs7RyxYUvf6Qk682cBOoqlc7OZuu23YXhymhXwlyXd4+lXyTo=

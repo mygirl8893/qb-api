@@ -28,7 +28,7 @@ const ACCOUNTS = [{
 const TOKEN = {
     name: "MagicCarpetsWorld",
     symbol: "MCW",
-    decimals: 10,
+    decimals: 18,
     rate: 100
   }
 
@@ -58,7 +58,7 @@ async function launch() {
       symbol VARCHAR(64),
       name VARCHAR(256),
       rate BIGINT UNSIGNED,
-      totalSupply BIGINT UNSIGNED,
+      totalSupply DECIMAL(36,0),
       decimals INT UNSIGNED
     );`)
 
@@ -73,7 +73,7 @@ async function launch() {
     transactionIndex BIGINT UNSIGNED,
     fromAddress CHAR(42),
     toAddress CHAR(42),
-    value BIGINT UNSIGNED,
+    value DECIMAL(36,0),
     input TEXT,
     status VARCHAR(3),
     timestamp BIGINT UNSIGNED,

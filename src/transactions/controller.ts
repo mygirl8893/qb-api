@@ -7,6 +7,7 @@ import Config from '../config'
 import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
+import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -118,6 +119,8 @@ const getHistoryFromPrivateChain = async (req, res) => {
 
 const getHistory = async (req, res) => {
   const address = req.params.address.toLowerCase()
+  log.info(`Fetching transaction history for address ${address}`)
+
   const history = await database.getTransactionHistory(address)
 
 

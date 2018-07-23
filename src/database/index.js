@@ -16,7 +16,8 @@ const getTransactionHistory = async (address) => {
 
     const transactions = await conn.query(`SELECT * from transactions
     JOIN tokens ON transactions.contractAddress = tokens.contractAddress
-    WHERE toAddress=${escapedAddress} OR fromAddress=${escapedAddress}`)
+    WHERE toAddress=${escapedAddress} OR fromAddress=${escapedAddress}
+    ORDER BY blockNumber DESC`)
     return transactions
   } finally {
     conn.release()

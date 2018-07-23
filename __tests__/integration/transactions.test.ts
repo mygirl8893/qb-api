@@ -1,6 +1,6 @@
 import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
-import Tx from 'ethereumjs-tx'
+import Tx = require('ethereumjs-tx')
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'

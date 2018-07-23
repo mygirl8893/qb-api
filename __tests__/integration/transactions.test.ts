@@ -4,8 +4,9 @@ import Tx = require('ethereumjs-tx')
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database = require('../../src/database')
+import database from '../../src/database'
 import log from '../../src/logging'
+
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -40,8 +41,10 @@ const TOKEN = {
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.mock('../../src/database', () => ({
-    getTransactionHistory: jest.fn(),
-    addPendingTransaction: jest.fn()
+    default: {
+      getTransactionHistory: jest.fn(),
+      addPendingTransaction: jest.fn()
+    }
   }))
 
 jest.setTimeout(180000)

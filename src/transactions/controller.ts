@@ -6,7 +6,7 @@ import  {BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import User from '../users/controller'
-import database = require('../database')
+import database from '../database'
 import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()

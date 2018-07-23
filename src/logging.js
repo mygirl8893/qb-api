@@ -18,6 +18,13 @@ if (process.env.NODE_ENV !== 'production') {
     timestamp: true,
     handleExceptions: true
   }))
+} else {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+    level: 'info',
+    timestamp: true,
+    handleExceptions: true
+  }))
 }
 
 module.exports = logger

@@ -61,9 +61,7 @@ describe('Transactions API Integration', () => {
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
-      /* eslint-disable-next-line global-require */
       app = require('../../app').default
-      /* eslint-disable-next-line global-require */
       const Config = require('../../src/config').default
 
       await APITesting.waitForAppToBeReady(Config)

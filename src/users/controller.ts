@@ -29,8 +29,8 @@ const getBalances = async from => {
   const TokenDB = TokenController.tokenDB(),
     tokens = await TokenDB.getTokens().call()
   const balances = []
-  for (const token of tokens) { // eslint-disable-line no-restricted-syntax
-    balances.push(await getBalanceOnContract(from, token)) // eslint-disable-line no-await-in-loop
+  for (const token of tokens) {
+    balances.push(await getBalanceOnContract(from, token))
   }
   return balances
 }

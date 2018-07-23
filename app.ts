@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import * as express from 'express'
 import * as pretty from 'express-prettify'
 import * as cors from 'cors'
@@ -60,7 +59,6 @@ app.use((req, res, next) => {
   next()
 })
 
-/* eslint-disable-next-line consistent-return */
 app.use((err, req, res, next) => {
   log.error(`Request failed with error ${err}`)
   if (err) {

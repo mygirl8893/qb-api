@@ -82,7 +82,7 @@ describe('Transactions API Integration', () => {
 
   it('Gets empty transactions history successfully', async () => {
 
-    database.getTransactionHistory.mockImplementation(async () => [])
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
     const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsResponse.status).toBe(HttpStatus.OK)
@@ -97,14 +97,14 @@ describe('Transactions API Integration', () => {
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
-    database.getTransactionHistory.mockImplementation(async () => [{
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
       fromAddress: rawTransactionParams.from,
       toAddress: rawTransactionParams.to,
       value: rawTransactionParams.transferAmount.toString(),
       contract: rawTransactionParams.contractAddress
     }])
 
-    database.addPendingTransaction.mockImplementation(async () => null)
+    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 

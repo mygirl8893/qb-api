@@ -1,4 +1,4 @@
-import mysql from 'promise-mysql'
+import * as mysql from 'promise-mysql'
 import Config from './config'
 
 const env = process.env.NODE_ENV || 'development',

@@ -1,10 +1,10 @@
-import request from 'supertest'
-import HttpStatus from 'http-status-codes'
+import * as request from 'supertest'
+import * as HttpStatus from 'http-status-codes'
 import Tx from 'ethereumjs-tx'
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
+import database = require('../../src/database')
 import log from '../../src/logging'
 
 const PRIVATE_WEB3_PORT = 8545
@@ -59,9 +59,9 @@ describe('Transactions API Integration', () => {
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       /* eslint-disable-next-line global-require */
-      app = require('../../app')
+      app = require('../../app').default
       /* eslint-disable-next-line global-require */
-      const Config = require('../../src/config')
+      const Config = require('../../src/config').default
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {

@@ -1,6 +1,6 @@
-import HttpStatus from 'http-status-codes'
-import request from "supertest"
-import Web3 from 'web3'
+import * as HttpStatus from 'http-status-codes'
+import * as request from "supertest"
+const Web3 = require('web3')
 import APITesting from "./apiTesting"
 
 APITesting.setupTestConfiguration(APITesting.UNIT_TEST_CONFIGURATION)
@@ -34,8 +34,8 @@ jest.mock('../src/database', () => ({
 /* using require for the app in order to allow the mocks to take effect
    before the module is actually loaded
  */
-const app = require('../app')
-const Config = require('../src/config')
+const app = require('../app').default
+const Config = require('../src/config').default
 
 describe('Users API', () => {
 

@@ -1,10 +1,11 @@
-import Web3 from 'web3'
-import ChildProcess from 'child_process'
-import solc from 'solc'
-import fs from 'fs'
-import path from 'path'
+const Web3 = require('web3')
+import * as childProcess from 'child_process'
+import * as solc from 'solc'
+import * as fs from 'fs'
+import * as path from 'path'
 import log from '../../src/logging'
 import utils from '../../src/lib/utils'
+import { ChildProcess } from "child_process";
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -20,12 +21,16 @@ function getContract(web3, sourceFile, contractName) {
 }
 
 class TestPrivateChain {
+  public accounts: any
+  public token: any
+  public port: number
+  public loyaltyTokenContractAddress: string = null
+  public tokenDBContractAddress: string = null
+  private ganacheChildProcess: ChildProcess
   constructor(accounts, token, port) {
     this.accounts = accounts
     this.token = token
     this.port = port
-    this.loyaltyTokenContractAddress = null
-    this.tokenDBContractAddress = null
   }
 
   async setup() {
@@ -44,13 +49,13 @@ class TestPrivateChain {
 
     log.info(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 
-    this.ganacheChildProcess = ChildProcess.spawn(launchGanacheCmd, [], {shell: true})
+    this.ganacheChildProcess = childProcess.spawn(launchGanacheCmd, [], {shell: true})
 
     // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
     await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
-        const dataString = data.toString('utf8')
+        const dataString = data.toString()
         if (dataString.indexOf('Listening on') > -1) {
           resolve(data)
         }

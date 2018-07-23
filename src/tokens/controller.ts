@@ -16,10 +16,9 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
 ).methods
 
 const getTokens = async (req, res) => {
-  let publicBalance = 0,
-    privateBalance = 0
+  let publicBalance = undefined
 
-  privateBalance = await User.getBalances(req.query.from)
+  const privateBalance = await User.getBalances(req.query.from)
 
   if (req.query.public) {
     publicBalance = await User.getPublicBalance(req.query.from)
@@ -38,10 +37,9 @@ const getTokens = async (req, res) => {
  * @return {json} The result.
  */
 const getToken = async (req, res) => {
-  let privateBalance = 0
   const publicBalance = 0
 
-  privateBalance = await User.getBalanceOnContract(
+  const privateBalance = await User.getBalanceOnContract(
     req.query.from,
     req.params.contract
   )

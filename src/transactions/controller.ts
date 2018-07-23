@@ -1,7 +1,7 @@
-import abiDecoder from 'abi-decoder'
+import * as abiDecoder from 'abi-decoder'
 import unsign from '@warren-bank/ethereumjs-tx-unsign'
-import EthereumTx from 'ethereumjs-tx'
-import BigNumber from 'bignumber.js'
+import * as EthereumTx from 'ethereumjs-tx'
+import  {BigNumber } from 'bignumber.js'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
@@ -32,7 +32,7 @@ const getTx = async (txHash) => {
       : transaction.to
   transaction.value =
     decoded && decoded.params && decoded.params[1].value
-      ? BigNumber(decoded.params[1].value).toString(10)
+      ? new BigNumber(decoded.params[1].value).toString(10)
       : transaction.value.toString(10)
   transaction.timestamp = blockInfo.timestamp
   transaction.confirms = endBlockNumber.number - transaction.blockNumber

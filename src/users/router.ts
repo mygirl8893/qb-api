@@ -27,4 +27,4 @@ const router = express.Router()
  */
 router.get('/:from', LibAPI.wrap(Controller.getInfo))
 
-module.exports = router
+export default router

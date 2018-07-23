@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js'
+import { BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
 
@@ -7,12 +7,12 @@ const web3Pub = Config.getPublicWeb3()
 
 const getBalanceOnContract = async (from = null, contractAddress) => {
   const Token = TokenController.loyaltyToken(contractAddress.toLowerCase())
-  const totalSupply = BigNumber(await Token.totalSupply().call()).toString(10)
-  let balance = 0
+  const totalSupply = new BigNumber(await Token.totalSupply().call()).toString(10)
+  let balance = '0'
 
   if (from) {
     balance = await Token.balanceOf(from.toLowerCase()).call()
-    balance = BigNumber(balance).toString(10)
+    balance = new BigNumber(balance).toString(10)
   }
 
   return {
@@ -50,7 +50,7 @@ const getPublicBalance = async (from = null) => {
       contractAddress: Config.getQBXAddress(),
       symbol: await QiibeeToken.symbol().call(),
       name: await QiibeeToken.name().call(),
-      balance: BigNumber(balance).toString(10),
+      balance: new BigNumber(balance).toString(10),
       totalSupply,
       decimals: parseInt(await QiibeeToken.decimals().call(), 10)
     }

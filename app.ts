@@ -62,9 +62,9 @@ app.use((req, res, next) => {
 
 /* eslint-disable-next-line consistent-return */
 app.use((err, req, res, next) => {
-  log.error(err)
+  log.error(`Request failed with error ${err}`)
   if (err) {
-    return res
+    res
       .status(err.status || 400)
       .json({ message: err.message, code: err.code || err.status || 400 })
   }

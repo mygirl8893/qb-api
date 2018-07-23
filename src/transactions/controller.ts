@@ -1,6 +1,6 @@
 import * as abiDecoder from 'abi-decoder'
-import unsign from '@warren-bank/ethereumjs-tx-unsign'
-import * as EthereumTx from 'ethereumjs-tx'
+import unsign = require('@warren-bank/ethereumjs-tx-unsign')
+import EthereumTx = require('ethereumjs-tx')
 import  {BigNumber } from 'bignumber.js'
 
 import Config from '../config'

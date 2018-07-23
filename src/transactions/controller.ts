@@ -143,6 +143,7 @@ const getHistory = async (req, res) => {
     delete t.symbol
     delete t.totalSupply
     delete t.decimals
+    delete t.confirms
   })
 
   return res.json(history)

@@ -91,7 +91,7 @@ async function launch() {
     symbol: TOKEN.symbol,
     name: TOKEN.name,
     rate: TOKEN.rate,
-    totalSupply: 12345678, // this is innacurate pick a valid value from the actual chain
+    totalSupply: 10 ** 27, // this is innacurate pick a valid value from the actual chain
     decimals: TOKEN.decimals,
   })
 

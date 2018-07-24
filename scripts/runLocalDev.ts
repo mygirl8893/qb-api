@@ -102,12 +102,12 @@ async function launch() {
   configValues.default.development.tokenDB = testPrivateChain.tokenDBContractAddress
 
   const app = require('../app')
-  const Config = require('../src/config')
+  const Config = require('../src/config').default
 
-  const port = process.env.PORT || Config.default.getPort()
+  const port = process.env.PORT || Config.getPort()
   app.default.listen(port)
 
-  log.info(`Running API in ${Config.default.getEnv()} mode. Listening on port: ${port}`)
+  log.info(`Running API in ${Config.getEnv()} mode. Listening on port: ${port}`)
 
   await apiTesting.waitForAppToBeReady(Config)
 

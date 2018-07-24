@@ -25,6 +25,9 @@ const SwaggerConfig = {
       },
       {
         name: 'Network'
+      },
+      {
+        name: 'Prices'
       }
     ],
     schemes: ['https'],
@@ -35,7 +38,8 @@ const SwaggerConfig = {
     './src/network/router.js',
     './src/tokens/router.js',
     './src/transactions/router.js',
-    './src/users/router.js'
+    './src/users/router.js',
+    './src/prices/router.js'
   ]
 }
 

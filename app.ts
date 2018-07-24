@@ -13,6 +13,8 @@ import networkRouter from './src/network/router'
 import transactionsRouter from './src/transactions/router'
 import tokensRouter from './src/tokens/router'
 import usersRouter from './src/users/router'
+import pricesRouter from './src/prices/router'
+
 import log from './src/logging'
 
 const app = express(),
@@ -38,6 +40,7 @@ app.use('/net', networkRouter)
 app.use('/transactions', transactionsRouter)
 app.use('/tokens', tokensRouter)
 app.use('/users', usersRouter)
+app.use('/prices', pricesRouter)
 app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use((req, res, next) => {

@@ -1,6 +1,6 @@
-import HttpStatus from 'http-status-codes'
-import request from 'supertest'
-import Web3 from 'web3'
+const Web3 = require('web3')
+import * as HttpStatus from 'http-status-codes'
+import * as request from 'supertest'
 import APITesting from './apiTesting'
 
 APITesting.setupTestConfiguration(APITesting.UNIT_TEST_CONFIGURATION)
@@ -12,8 +12,8 @@ const publicWeb3Rpc = APITesting.getBaseWeb3Mock(1234)
 
 const privateWeb3Rpc = APITesting.getBaseWeb3Mock(9876)
 
-privateWeb3Rpc.eth.getBlockNumber = jest.fn()
-privateWeb3Rpc.eth.getBlock = jest.fn()
+;(privateWeb3Rpc.eth as any).getBlockNumber = jest.fn()
+;(privateWeb3Rpc.eth as any).getBlock = jest.fn()
 
 Web3.mockImplementation((url) => {
 
@@ -36,8 +36,8 @@ jest.mock('../src/database', () => ({
 /* using require for the app in order to allow the mocks to take effect
    before the module is actually loaded
  */
-const app = require('../app')
-const Config = require('../src/config')
+const app = require('../app').default
+const Config = require('../src/config').default
 
 describe('Network API', () => {
 
@@ -47,22 +47,22 @@ describe('Network API', () => {
 
     it('returns network info successfully', async () => {
 
-      privateWeb3Rpc.eth.getBlockNumber.mockImplementation(async () => LATEST_BLOCK_NUMBER)
-      privateWeb3Rpc.eth.getBlock.mockImplementation(async () => LATEST_BLOCK)
+      ;(privateWeb3Rpc.eth as any).getBlockNumber.mockImplementation(async () => LATEST_BLOCK_NUMBER)
+      ;(privateWeb3Rpc.eth as any).getBlock.mockImplementation(async () => LATEST_BLOCK)
 
       const r = await request(app).get('/net/')
 
       expect(r.status).toBe(HttpStatus.OK)
 
-      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalled()
-      expect(privateWeb3Rpc.eth.getBlock).toHaveBeenCalledWith(LATEST_BLOCK_NUMBER)
+      expect((privateWeb3Rpc.eth as any).getBlockNumber).toHaveBeenCalled()
+      expect((privateWeb3Rpc.eth as any).getBlock).toHaveBeenCalledWith(LATEST_BLOCK_NUMBER)
 
       expect(r.body.hash).toBe(LATEST_BLOCK.hash)
       expect(r.body.number).toBe(LATEST_BLOCK.number)
     })
 
     it('fails gracefully to return network info when web3.eth.getBlockNumber fails', async () => {
-      privateWeb3Rpc.eth.getBlockNumber.mockImplementation(async () => {
+      ;(privateWeb3Rpc.eth as any).getBlockNumber.mockImplementation(async () => {
         throw new Error("Failed to fetch block number")
       })
 
@@ -70,6 +70,6 @@ describe('Network API', () => {
 
       expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
-      expect(privateWeb3Rpc.eth.getBlockNumber).toHaveBeenCalled()
+      expect((privateWeb3Rpc.eth as any).getBlockNumber).toHaveBeenCalled()
     })
 })

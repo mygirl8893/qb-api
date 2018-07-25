@@ -1,12 +1,13 @@
-import abiDecoder from 'abi-decoder'
-import unsign from '@warren-bank/ethereumjs-tx-unsign'
-import EthereumTx from 'ethereumjs-tx'
-import BigNumber from 'bignumber.js'
+import * as abiDecoder from 'abi-decoder'
+import unsign = require('@warren-bank/ethereumjs-tx-unsign')
+import EthereumTx = require('ethereumjs-tx')
+import  {BigNumber } from 'bignumber.js'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
+import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -32,7 +33,7 @@ const getTx = async (txHash) => {
       : transaction.to
   transaction.value =
     decoded && decoded.params && decoded.params[1].value
-      ? BigNumber(decoded.params[1].value).toString(10)
+      ? new BigNumber(decoded.params[1].value).toString(10)
       : transaction.value.toString(10)
   transaction.timestamp = blockInfo.timestamp
   transaction.confirms = endBlockNumber.number - transaction.blockNumber
@@ -70,7 +71,6 @@ const getTransaction = async (req, res) => {
  * We also have to take into considerations transactions happening
  * on the public chain.
  */
-/* eslint-disable-next-line no-unused-vars */
 const getHistoryFromPrivateChain = async (req, res) => {
   const defaultBlocks = 200, // TODO: make it a constant
     address = req.params.address.toLowerCase(),
@@ -100,13 +100,12 @@ const getHistoryFromPrivateChain = async (req, res) => {
     blockNumber <= endBlockNumber;
     blockNumber += 1
   ) {
-    const block = await web3.eth.getBlock(blockNumber, true) // eslint-disable-line no-await-in-loop
+    const block = await web3.eth.getBlock(blockNumber, true)
     if (block !== null && block.transactions !== null) {
-      for (const tx of block.transactions) { // eslint-disable-line no-restricted-syntax
+      for (const tx of block.transactions) {
         const decodedTx = abiDecoder.decodeMethod(tx.input)
         if (typeof decodedTx !== 'undefined') {
           if (txBelongsTo(address, tx, decodedTx)) {
-            // eslint-disable-next-line no-await-in-loop
             historyArray.push(await getTx(tx.hash)) // TODO: Promise.all()? NO, We want to keep the exact order...
           }
         }
@@ -118,10 +117,10 @@ const getHistoryFromPrivateChain = async (req, res) => {
 
 const getHistory = async (req, res) => {
   const address = req.params.address.toLowerCase()
+  log.info(`Fetching transaction history for address ${address}`)
+
   const history = await database.getTransactionHistory(address)
 
-
-  /* eslint-disable no-param-reassign */
   history.forEach((t) => {
     t.to = t.toAddress
     delete t.toAddress
@@ -146,7 +145,6 @@ const getHistory = async (req, res) => {
     delete t.decimals
     delete t.confirms
   })
-  /* eslint-enable no-param-reassign */
 
   return res.json(history)
 }

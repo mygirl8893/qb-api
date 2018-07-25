@@ -1,12 +1,11 @@
-/* eslint-disable no-console */
-import express from 'express'
-import pretty from 'express-prettify'
-import cors from 'cors'
-import bodyParser from 'body-parser'
+import * as express from 'express'
+import * as pretty from 'express-prettify'
+import * as cors from 'cors'
+import * as bodyParser from 'body-parser'
 
-import swaggerUi from 'swagger-ui-express'
-import swaggerJSDoc from 'swagger-jsdoc'
-import morgan from 'morgan'
+import * as swaggerUi from 'swagger-ui-express'
+import *  as swaggerJSDoc from 'swagger-jsdoc'
+import * as morgan from 'morgan'
 
 import Config from './src/config'
 
@@ -25,12 +24,15 @@ app.use(bodyParser.json())
 app.use(pretty({ query: 'pretty' }))
 
 
-log.stream = {
-  write: (message) => {
+class WinstonStream {
+  write(message: string) {
     log.info(message)
   }
 }
-app.use(morgan("combined", { "stream": log.stream }))
+
+const winstonStream = new WinstonStream()
+
+app.use(morgan("combined", { "stream": winstonStream }))
 
 app.use('/net', networkRouter)
 app.use('/transactions', transactionsRouter)
@@ -57,12 +59,12 @@ app.use((req, res, next) => {
   next()
 })
 
-/* eslint-disable-next-line consistent-return */
 app.use((err, req, res, next) => {
   if (err) {
+    log.error(`Request failed with error ${err}`)
     return res
       .status(err.status || 400)
-      .json({ message: err.message, code: err.code || err.status || 400 })
+      .json({ message: err.message})
   }
 
   res.setHeader('Content-Type', 'application/json')
@@ -85,4 +87,4 @@ app.use((req, res, next) => {
   next()
 })
 
-module.exports = app
+export default app

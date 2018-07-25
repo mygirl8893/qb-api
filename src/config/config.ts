@@ -1,5 +1,5 @@
-import path from 'path'
-import fs from 'fs'
+import * as fs from 'fs'
+import * as path from 'path'
 
 const Config = {
   production: {

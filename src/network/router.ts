@@ -22,4 +22,4 @@ const router = express.Router()
  */
 router.get('/', LibAPI.wrap(Controller.getInfo))
 
-module.exports = router
+export default router

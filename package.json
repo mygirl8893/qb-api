@@ -13,19 +13,8 @@
     "serve": "node dist/server.js",
     "startmon": "nodemon server.js",
     "precommit": "lint-staged",
-    "lint": "eslint . --fix",
     "localenv": "./node_modules/.bin/ts-node scripts/runLocalDev.ts",
     "prepublish": "npm run build"
-  },
-  "lint-staged": {
-    "*.js": [
-      "eslint . --fix",
-      "git add"
-    ]
-  },
-  "pre-commit": {
-    "run": "precommit",
-    "silent": true
   },
   "jest": {
     "testEnvironment": "node",

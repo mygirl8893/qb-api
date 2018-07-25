@@ -64,7 +64,7 @@ app.use((err, req, res, next) => {
   if (err) {
     res
       .status(err.status || 400)
-      .json({ message: err.message, code: err.code || err.status || 400 })
+      .json({ message: err.message})
   }
 
   res.setHeader('Content-Type', 'application/json')

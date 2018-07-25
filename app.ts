@@ -60,9 +60,9 @@ app.use((req, res, next) => {
 })
 
 app.use((err, req, res, next) => {
-  log.error(`Request failed with error ${err}`)
   if (err) {
-    res
+    log.error(`Request failed with error ${err}`)
+    return res
       .status(err.status || 400)
       .json({ message: err.message})
   }

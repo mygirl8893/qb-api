@@ -53,14 +53,21 @@ class TestPrivateChain {
 
     // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
-    await new Promise((resolve) => {
+    let error = ""
+    const result = await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
         const dataString = data.toString()
         if (dataString.indexOf('Listening on') > -1) {
-          resolve(data)
+          resolve(true)
+        }
+        if (dataString.indexOf('Error: listen EADDRINUSE') > -1) {
+          error = dataString
+          resolve(false)
         }
       })
     })
+
+    if (!result) throw `Failed setting up the test context: ${error}`
 
     log.info('Test network launched. Connecting to it with Web3..')
 
@@ -139,9 +146,21 @@ class TestPrivateChain {
   async tearDown() {
 
     log.info('Killing the test chain..')
-    // kill test network
-    this.ganacheChildProcess.kill('SIGINT')
+    log.info(`Killing ganacheChildProcess with PID ${this.ganacheChildProcess.pid}...`)
+    this.ganacheChildProcess.kill()
+    log.info(`ganacheChildProcess killed? ${this.ganacheChildProcess.killed}`)
+
+    // force kill test network on Travis cause ganacheChildProcess PID != pgrep -f ganache-cli
+    const ganacheCliProcess = childProcess.spawn(`pgrep -f ganache-cli`, [], {shell: true})
+    ganacheCliProcess.stdout.on('data', (data) => {
+      const PID = data.toString()
+      log.info(`Killing ganache-cli with PID ${PID}`)
+      const cmd = `kill -9 ${PID}`
+      childProcess.spawn(cmd, [], {shell: true})
+    })
+
     await utils.sleep(3000)
+
     log.info('Done with sending a kill signal.')
   }
 }

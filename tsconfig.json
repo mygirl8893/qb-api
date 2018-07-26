@@ -6,7 +6,7 @@
         "module": "commonjs",
         "target": "es5",
         "moduleResolution": "node",
-        "sourceMap": true,
+        "inlineSourceMap": true,
         "inlineSources": true,
         "lib": [ "es2015" ]
     }

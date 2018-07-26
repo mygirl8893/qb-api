@@ -144,22 +144,42 @@ class TestPrivateChain {
   }
 
   async tearDown() {
-
     log.info('Killing the test chain..')
     log.info(`Killing ganacheChildProcess with PID ${this.ganacheChildProcess.pid}...`)
     this.ganacheChildProcess.kill()
-    log.info(`ganacheChildProcess killed? ${this.ganacheChildProcess.killed}`)
 
-    // force kill test network on Travis cause ganacheChildProcess PID != pgrep -f ganache-cli
-    const ganacheCliProcess = childProcess.spawn(`pgrep -f ganache-cli`, [], {shell: true})
-    ganacheCliProcess.stdout.on('data', (data) => {
-      const PID = data.toString()
-      log.info(`Killing ganache-cli with PID ${PID}`)
-      const cmd = `kill -9 ${PID}`
-      childProcess.spawn(cmd, [], {shell: true})
+    await new Promise((resolve) => {
+      this.ganacheChildProcess.on('exit', (err, signal) => {
+        log.info(`ganacheChildProcess killed? ${this.ganacheChildProcess.killed}`)
+        log.info(`ganacheChildProcess exited with code ${signal}`);
+        resolve(signal)
+      })
     })
 
-    await utils.sleep(3000)
+    // force kill test network on Travis cause ganacheChildProcess PID != pgrep -f ganache-cli
+    const pidProcess = childProcess.spawn(`pgrep -f ganache-cli`, [], {shell: true})
+    let PID;
+    await new Promise((resolve) => {
+      pidProcess.stdout.on('data', async (data) => {
+        PID = data.toString()
+        log.info(`ganache-cli PID is ${PID}`)
+        resolve(true)
+      })
+      pidProcess.stdout.on('close', async () => {
+        resolve(true)
+      })
+    })
+
+    if (PID) {
+      const killProcess = childProcess.spawn(`kill -9 ${PID}`, [], { shell: true })
+      log.info(`Killing ganache-cli with PID ${PID}...`)
+      await new Promise((resolve) => {
+        killProcess.stdout.on('close', (data) => {
+          log.info(`ganache-cli killed`)
+          resolve(true)
+        })
+      })
+    }
 
     log.info('Done with sending a kill signal.')
   }

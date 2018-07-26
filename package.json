@@ -16,22 +16,6 @@
     "localenv": "./node_modules/.bin/ts-node scripts/runLocalDev.ts",
     "prepublish": "npm run build"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "dist"
-    ],
-    "transform": {
-      "^.+\\.ts?$": "ts-jest"
-    },
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(js?|ts?)$",
-    "moduleFileExtensions": [
-      "ts",
-      "js",
-      "json",
-      "node"
-    ]
-  },
   "engines": {
     "node": ">= 8.11 <9",
     "npm": ">= 5.6 <5.7"

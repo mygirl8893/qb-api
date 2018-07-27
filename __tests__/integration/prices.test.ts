@@ -90,7 +90,7 @@ describe('Prices API Integration', () => {
   it('Gets price of LoyaltyToken MCW in USD successfully', async () => {
 
     ;(axios.get as any).mockImplementation(async () => ({
-        status: 200,
+        status: HttpStatus.OK,
         data: {
           'USD': ETH_PRICE_USD,
         }
@@ -111,7 +111,7 @@ describe('Prices API Integration', () => {
   it('Gets price of LoyaltyToken MCW in multiple currencies successfully', async () => {
 
     ;(axios.get as any).mockImplementation(async () => ({
-        status: 200,
+        status: HttpStatus.OK,
         data: {
           'USD': ETH_PRICE_USD,
           'CHF': ETH_PRICE_CHF,
@@ -136,7 +136,7 @@ describe('Prices API Integration', () => {
   it('Gets price of LoyaltyToken MCW should not fail if no currency is given', async () => {
 
     ;(axios.get as any).mockImplementation(async () => ({
-        status: 200,
+        status: HttpStatus.OK,
         data: {
           'USD': ETH_PRICE_USD
         }
@@ -157,7 +157,7 @@ describe('Prices API Integration', () => {
   it('Gets price of LoyaltyToken MCW should not fail if currency unknown', async () => {
     const CURR = 'AAA'
     ;(axios.get as any).mockImplementation(async () => ({
-        status: 200,
+        status: HttpStatus.BAD_REQUEST,
         data: {
           "Response": "Error",
           "Message": "There is no data for any of the toSymbols AAA .",

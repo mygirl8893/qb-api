@@ -1,4 +1,5 @@
 import axios from "axios/index"
+import * as HttpStatus from 'http-status-codes'
 import TokenController from '../tokens/controller'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
@@ -25,12 +26,12 @@ const getPrice = async (req, res) => {
   const { status, data } = await axios.get(api)
   const rate = await tokenRate(from)
 
-  let statusCode = 200
+  let statusCode = HttpStatus.OK
   let results = {}
 
-  if (status !== 200 || data.Response) {
-    statusCode = data.Response ? 400 : status
-    results = {message: data.Message, status: statusCode}
+  if (status !== HttpStatus.OK || data.Response) {
+    statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
+    results = {message: data.Message}
   } else {
     Object.keys(data).forEach((key) => {
       const qbxFiat = QBX_ETH * data[key]

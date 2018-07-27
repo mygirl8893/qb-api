@@ -7,7 +7,7 @@
   "private": false,
   "main": "dist/index.js",
   "scripts": {
-    "test": "node_modules/jest/bin/jest.js __tests__/*.test.ts __tests__/integration/*.test.ts",
+    "test": "node_modules/jest/bin/jest.js __tests__/*.test.ts && node_modules/jest/bin/jest.js __tests__/integration/*.test.ts --runInBand",
     "start": "./node_modules/.bin/ts-node server.ts",
     "build": "rm -rf dist && ./node_modules/.bin/tsc -p ./tsconfig.json && mkdir -p ./dist/src/contracts && cp ./src/contracts/* ./dist/src/contracts/",
     "serve": "node dist/server.js",

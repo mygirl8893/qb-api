@@ -63,7 +63,7 @@ describe('Users API', () => {
 
     const r = await request(app).get(`/users/${TEST_USER_ADDRESS}`)
 
-    expect(r.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(r.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
 
     expect((privateWeb3Rpc.eth as any).getTransactionCount).toHaveBeenCalled()
   })

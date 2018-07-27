@@ -6,6 +6,7 @@ import * as bodyParser from 'body-parser'
 import * as swaggerUi from 'swagger-ui-express'
 import *  as swaggerJSDoc from 'swagger-jsdoc'
 import * as morgan from 'morgan'
+import * as HttpStatus from 'http-status-codes'
 
 import Config from './src/config'
 
@@ -63,7 +64,7 @@ app.use((err, req, res, next) => {
   if (err) {
     log.error(`Request failed with error ${err}`)
     return res
-      .status(err.status || 400)
+      .status(err.status || HttpStatus.INTERNAL_SERVER_ERROR)
       .json({ message: err.message})
   }
 

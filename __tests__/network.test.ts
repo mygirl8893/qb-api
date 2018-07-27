@@ -68,7 +68,7 @@ describe('Network API', () => {
 
       const r = await request(app).get('/net/')
 
-      expect(r.status).toBe(HttpStatus.BAD_REQUEST)
+      expect(r.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
 
       expect((privateWeb3Rpc.eth as any).getBlockNumber).toHaveBeenCalled()
     })

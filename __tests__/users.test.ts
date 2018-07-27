@@ -57,13 +57,16 @@ describe('Users API', () => {
   })
 
   it('fails to return user info when web3.eth.getTransactionCount fails', async () => {
+
+    const errorMessage = "Failed to get transaction count"
     ;(privateWeb3Rpc.eth as any).getTransactionCount.mockImplementation(async () => {
-      throw new Error("Failed to get transaction count")
+      throw new Error(errorMessage)
     })
 
     const r = await request(app).get(`/users/${TEST_USER_ADDRESS}`)
 
     expect(r.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(r.body.message).toBe(errorMessage)
 
     expect((privateWeb3Rpc.eth as any).getTransactionCount).toHaveBeenCalled()
   })

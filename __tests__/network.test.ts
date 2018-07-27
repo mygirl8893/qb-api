@@ -62,13 +62,16 @@ describe('Network API', () => {
     })
 
     it('fails gracefully to return network info when web3.eth.getBlockNumber fails', async () => {
+
+      const errorMessage = "Failed to fetch block number"
       ;(privateWeb3Rpc.eth as any).getBlockNumber.mockImplementation(async () => {
-        throw new Error("Failed to fetch block number")
+        throw new Error(errorMessage)
       })
 
       const r = await request(app).get('/net/')
 
       expect(r.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+      expect(r.body.message).toBe(errorMessage)
 
       expect((privateWeb3Rpc.eth as any).getBlockNumber).toHaveBeenCalled()
     })

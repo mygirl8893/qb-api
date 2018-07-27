@@ -1,6 +1,16 @@
 import axios from "axios/index"
 import TokenController from '../tokens/controller'
 
+const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
+const QBX_ETH = 0.0001
+
+const tokenRate = async (tokenAddress) => {
+  const TokenDB = TokenController.tokenDB()
+  const token = await TokenDB.getToken(tokenAddress).call()
+  const tokenRate = Number(token['2'])
+  return tokenRate
+}
+
 /**
  * Returns the price of a specific Loyalty Token in the private ecosystem
  * in the desired currency
@@ -10,14 +20,11 @@ import TokenController from '../tokens/controller'
  * @return {json} The result.
  */
 const getPrice = async (req, res) => {
-  const QBX_ETH = 0.0001
-  const { from, to } = req.query
-  const TokenDB = TokenController.tokenDB()
-  const token = await TokenDB.getToken(from).call()
-  const tokenRate = token['2']
-  const api =`https://min-api.cryptocompare.com/data/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
+  const { from, to = 'USD' } = req.query
+  const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
-  
+  const rate = await tokenRate(from)
+
   let statusCode = 200
   let results = {}
 
@@ -26,10 +33,9 @@ const getPrice = async (req, res) => {
     results = {message: data.Message, status: statusCode}
   } else {
     Object.keys(data).forEach((key) => {
-      const rate = data[key]
-      const qbxFiat = QBX_ETH * rate
-      const fiat = qbxFiat / tokenRate
-      results[key] = fiat
+      const qbxFiat = QBX_ETH * data[key]
+      const fiat = qbxFiat / rate
+      results[key] = fiat.toFixed(4)
     }); 
   }
   return res.status(statusCode).json(results)

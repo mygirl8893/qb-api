@@ -10,7 +10,7 @@ const router = express.Router()
  *   get:
  *     tags:
  *       - Prices
- *     description: Returns the FIAT price of one unit of a given Loyalty Token. This endpoint uses a third-party provider to get the ETH echange rate. 
+ *     description: Returns the FIAT price of one unit of a given Loyalty Token. This endpoint uses a third-party provider to get the ETH echange rate.
  *     produces:
  *       - application/json
  *     parameters:
@@ -20,9 +20,9 @@ const router = express.Router()
  *         required: true
  *         type: string
  *       - name: to
- *         description: Comma separated currency symbols list to convert into. E.g USD,EUR,CHF
+ *         description: Comma separated currency symbols list to convert into. E.g USD,EUR,CHF. Default value is USD.
  *         in: query
- *         required: true
+ *         required: false
  *         type: string
  *     responses:
  *       200:

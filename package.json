@@ -12,7 +12,6 @@
     "build": "rm -rf dist && ./node_modules/.bin/tsc -p ./tsconfig.json",
     "serve": "node dist/server.js",
     "startmon": "nodemon server.js",
-    "precommit": "lint-staged",
     "localenv": "./node_modules/.bin/ts-node scripts/runLocalDev.ts",
     "prepublish": "npm run build"
   },
@@ -49,7 +48,6 @@
     "jest": "^23.1.0",
     "lint-staged": "^4.0.3",
     "nodemon": "^1.14.11",
-    "pre-commit": "^1.2.2",
     "prettier": "^1.13.4",
     "solc": "^0.4.20",
     "supertest": "^3.1.0",

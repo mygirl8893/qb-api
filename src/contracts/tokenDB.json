@@ -1,16 +1,28 @@
 [
   {
-    "constant": true,
-    "inputs": [],
-    "name": "getTokens",
-    "outputs": [
+    "constant": false,
+    "inputs": [
       {
-        "name": "",
-        "type": "address[]"
+        "name": "_address",
+        "type": "address"
+      },
+      {
+        "name": "_symbol",
+        "type": "string"
+      },
+      {
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "name": "_rate",
+        "type": "uint256"
       }
     ],
+    "name": "setToken",
+    "outputs": [],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -41,9 +53,42 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "i",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeByIndex",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [],
-    "name": "countTokens",
+    "name": "getTokens",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "findToken",
     "outputs": [
       {
         "name": "",
@@ -51,7 +96,21 @@
       }
     ],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "removeByValue",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -74,29 +133,17 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "constant": true,
+    "inputs": [],
+    "name": "countTokens",
+    "outputs": [
       {
-        "name": "_address",
-        "type": "address"
-      },
-      {
-        "name": "_symbol",
-        "type": "string"
-      },
-      {
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "name": "_rate",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "setToken",
-    "outputs": [],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   }
 ]

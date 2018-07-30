@@ -11,7 +11,6 @@ const SwaggerConfig = {
         email: 'tech@qiibee.com'
       }
     },
-    host: 'api.qiibee.com',
     basePath: '/',
     tags: [
       {

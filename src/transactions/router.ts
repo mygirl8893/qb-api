@@ -119,4 +119,4 @@ router.get('/:address/history', LibAPI.wrap(Controller.getHistory))
  */
 router.post('/', LibAPI.wrap(Controller.transfer))
 
-module.exports = router
+export default router

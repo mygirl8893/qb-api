@@ -1,11 +1,12 @@
-import request from 'supertest'
-import HttpStatus from 'http-status-codes'
-import Tx from 'ethereumjs-tx'
+import * as request from 'supertest'
+import * as HttpStatus from 'http-status-codes'
+import Tx = require('ethereumjs-tx')
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import database from '../../src/database'
 import log from '../../src/logging'
+
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -40,8 +41,10 @@ const TOKEN = {
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.mock('../../src/database', () => ({
-    getTransactionHistory: jest.fn(),
-    addPendingTransaction: jest.fn()
+    default: {
+      getTransactionHistory: jest.fn(),
+      addPendingTransaction: jest.fn()
+    }
   }))
 
 jest.setTimeout(180000)
@@ -58,10 +61,8 @@ describe('Transactions API Integration', () => {
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
-      /* eslint-disable-next-line global-require */
-      app = require('../../app')
-      /* eslint-disable-next-line global-require */
-      const Config = require('../../src/config')
+      app = require('../../app').default
+      const Config = require('../../src/config').default
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -81,7 +82,7 @@ describe('Transactions API Integration', () => {
 
   it('Gets empty transactions history successfully', async () => {
 
-    database.getTransactionHistory.mockImplementation(async () => [])
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
     const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsResponse.status).toBe(HttpStatus.OK)
@@ -96,14 +97,14 @@ describe('Transactions API Integration', () => {
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
-    database.getTransactionHistory.mockImplementation(async () => [{
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
       fromAddress: rawTransactionParams.from,
       toAddress: rawTransactionParams.to,
       value: rawTransactionParams.transferAmount.toString(),
       contract: rawTransactionParams.contractAddress
     }])
 
-    database.addPendingTransaction.mockImplementation(async () => null)
+    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 

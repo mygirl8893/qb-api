@@ -13,7 +13,7 @@ const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
 
   /* eslint-disable-next-line global-require */
-  const Config = require('../src/config/config.js')
+  const Config = require('../src/config/config')
 
   Config.default.test = testConfiguration
 }
@@ -55,7 +55,7 @@ const waitForAppToBeReady = async (config) => {
 
   while (true) {
     /* eslint-disable-next-line no-await-in-loop */
-    if (config.default.getWeb3ConnectionsAreReady()) {
+    if (config.getWeb3ConnectionsAreReady()) {
       break
     }
 

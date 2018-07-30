@@ -1,6 +1,6 @@
-import HttpStatus from 'http-status-codes'
-import request from "supertest"
-import Web3 from 'web3'
+import * as HttpStatus from 'http-status-codes'
+import * as request from "supertest"
+const Web3 = require('web3')
 import APITesting from "./apiTesting"
 
 APITesting.setupTestConfiguration(APITesting.UNIT_TEST_CONFIGURATION)
@@ -11,7 +11,7 @@ const TEST_USER_TRANSACTION_COUNT = 99
 const publicWeb3Rpc = APITesting.getBaseWeb3Mock(1234)
 const privateWeb3Rpc = APITesting.getBaseWeb3Mock(9876)
 
-privateWeb3Rpc.eth.getTransactionCount = jest.fn()
+;(privateWeb3Rpc.eth as any).getTransactionCount = jest.fn()
 
 Web3.mockImplementation((url) => {
 
@@ -34,8 +34,8 @@ jest.mock('../src/database', () => ({
 /* using require for the app in order to allow the mocks to take effect
    before the module is actually loaded
  */
-const app = require('../app')
-const Config = require('../src/config')
+const app = require('../app').default
+const Config = require('../src/config').default
 
 describe('Users API', () => {
 
@@ -44,20 +44,20 @@ describe('Users API', () => {
   })
 
   it('returns user info successfully', async () => {
-    privateWeb3Rpc.eth.getTransactionCount.mockImplementation(async () => TEST_USER_TRANSACTION_COUNT)
+    ;(privateWeb3Rpc.eth as any).getTransactionCount.mockImplementation(async () => TEST_USER_TRANSACTION_COUNT)
 
     const r = await request(app).get(`/users/${TEST_USER_ADDRESS}`)
 
     expect(r.status).toBe(HttpStatus.OK)
 
-    expect(privateWeb3Rpc.eth.getTransactionCount).toHaveBeenCalled()
+    expect((privateWeb3Rpc.eth as any).getTransactionCount).toHaveBeenCalled()
 
     expect(r.body.address).toBe(TEST_USER_ADDRESS)
     expect(r.body.transactionCount).toBe(TEST_USER_TRANSACTION_COUNT)
   })
 
   it('fails to return user info when web3.eth.getTransactionCount fails', async () => {
-    privateWeb3Rpc.eth.getTransactionCount.mockImplementation(async () => {
+    ;(privateWeb3Rpc.eth as any).getTransactionCount.mockImplementation(async () => {
       throw new Error("Failed to get transaction count")
     })
 
@@ -65,6 +65,6 @@ describe('Users API', () => {
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
-    expect(privateWeb3Rpc.eth.getTransactionCount).toHaveBeenCalled()
+    expect((privateWeb3Rpc.eth as any).getTransactionCount).toHaveBeenCalled()
   })
 })

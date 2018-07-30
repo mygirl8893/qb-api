@@ -60,4 +60,4 @@ router.get('/:contract', LibAPI.wrap(Controller.getToken))
  */
 router.get('/', LibAPI.wrap(Controller.getTokens))
 
-module.exports = router
+export default router

@@ -80,7 +80,7 @@ const getInfo = async function (req, res) {
     res.json(info)
   } catch (e) {
     if (e.message.includes(`Provided address "${address.toLowerCase()}" is invalid`)) {
-      e.status = HttpStatus.BAD_REQUEST
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
     }
     throw e
   }

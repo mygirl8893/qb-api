@@ -140,14 +140,11 @@ describe('Network, Users and Tokens API', () => {
     expect(token.totalSupply).toBe(`${privateChain.initialLoyaltyTokenAmount}`)
   })
 
-  // it('Fails to get token for bad contract address', async () => {
-  //
-  //   const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
-  //   const r = await request(app).get(`/tokens/${badAddress}`)
-  //
-  //   expect(r.status).toBe(HttpStatus.BAD_REQUEST)
-  //   const token = r.body.private
-  //
-  //   expect(token.contractAddress.toLowerCase()).toBe(privateChain.loyaltyTokenContractAddress.toLowerCase())
-  // })
+  it('Fails to get token for bad contract address', async () => {
+
+    const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
+    const r = await request(app).get(`/tokens/${badAddress}`)
+
+    expect(r.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 })

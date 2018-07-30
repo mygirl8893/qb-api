@@ -1,5 +1,6 @@
 import User from '../users/controller'
 import Config from '../config'
+import * as HttpStatus from "http-status-codes";
 
 const web3 = Config.getPrivateWeb3()
 
@@ -39,15 +40,22 @@ const getTokens = async (req, res) => {
 const getToken = async (req, res) => {
   const publicBalance = 0
 
-  const privateBalance = await User.getBalanceOnContract(
-    req.query.from,
-    req.params.contract
-  )
+  const contractAddress = req.params.contract
+  try {
+    const privateBalance = await User.getBalanceOnContract(
+      req.query.from,
+      contractAddress
+    )
 
-  return res.json({
-    private: privateBalance,
-    public: publicBalance
-  })
+    return res.json({
+      private: privateBalance,
+      public: publicBalance
+    })
+  } catch (e) {
+    if (e.message.includes(`Provided address "${contractAddress.toLowerCase()}" is invalid`)) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    }
+  }
 }
 
 export default {

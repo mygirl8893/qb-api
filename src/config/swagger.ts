@@ -35,11 +35,11 @@ const SwaggerConfig = {
     produces: ['application/json']
   },
   apis: [
-    './src/network/router.js',
-    './src/tokens/router.js',
-    './src/transactions/router.js',
-    './src/users/router.js',
-    './src/prices/router.js'
+    './src/network/router.ts',
+    './src/tokens/router.ts',
+    './src/transactions/router.ts',
+    './src/users/router.ts',
+    './src/prices/router.ts'
   ]
 }
 

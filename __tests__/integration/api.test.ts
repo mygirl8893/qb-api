@@ -146,5 +146,7 @@ describe('Network, Users and Tokens API', () => {
     const r = await request(app).get(`/tokens/${badAddress}`)
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
+
+    expect(r.body.message.includes(`Provided address "${badAddress.toLowerCase()}" is invalid`)).toBeTruthy()
   })
 })

@@ -183,7 +183,6 @@ const transfer = async (req, res) => {
   return res.json(result)
 }
 
-// TODO: should be POST maybe
 const buildRawTransaction = async (req, res) => {
   const { from, to, contractAddress, transferAmount } = req.query
   const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {

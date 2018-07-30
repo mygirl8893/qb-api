@@ -1,6 +1,9 @@
 import { BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
+import * as HttpStatus from 'http-status-codes'
+
+import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
@@ -66,17 +69,21 @@ const getPublicBalance = async (from = null) => {
 
 const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
-  // TODO: validate input. If from is false should throw an error.
-  const address = req.params.from,
-    transactionCount =
-      address === null
-        ? 0
-        : await web3.eth.getTransactionCount(address.toLowerCase())
-  const info = {
-    address,
-    transactionCount: await transactionCount
+
+  const address = req.params.from
+  try {
+    const transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
+    const info = {
+      address,
+      transactionCount: transactionCount
+    }
+    res.json(info)
+  } catch (e) {
+    if (e.message.includes(`Provided address "${address.toLowerCase()}" is invalid`)) {
+      e.status = HttpStatus.BAD_REQUEST
+    }
+    throw e
   }
-  res.json(info)
 }
 
 export default {

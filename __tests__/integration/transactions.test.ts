@@ -104,7 +104,17 @@ describe('Transactions API Integration', () => {
       contract: rawTransactionParams.contractAddress
     }])
 
-    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
+
+    /*
+    {
+      "hash": "0x5d183a31b5c1439c81acb7cdb6b33dbb938682f9269676933fbd1c24d31bb456",
+      "fromAddress": "0x87265a62c60247f862b9149423061b36b460f4bb",
+      "toAddress": "0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf",
+      "contractAddress": "0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b",
+      "state": "pending"
+    }
+    */
+    ;(database.addPendingTransaction as any).mockImplementation(async () => {})
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
@@ -132,12 +142,70 @@ describe('Transactions API Integration', () => {
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
     const transactions = transactionsAfterResponse.body
 
+    expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
+      fromAddress: rawTransactionParams.from.toLowerCase(),
+      toAddress: rawTransactionParams.to.toLowerCase(),
+      contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
+      state: 'pending'
+    }))
+
     expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
     expect(singleTransaction.contract).toBe(privateChain.loyaltyTokenContractAddress)
     expect(singleTransaction.value).toBe(rawTransactionParams.transferAmount.toString())
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
+  })
+
+  it('Executes 5 transactions successfully with incrementing nonce', async () => {
+    const rawTransactionParams = {
+        from: ACCOUNTS[1].address,
+        to: ACCOUNTS[0].address,
+        transferAmount: 1,
+        contractAddress: privateChain.loyaltyTokenContractAddress
+      }
+
+    const transactionCount = 5
+
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
+      fromAddress: rawTransactionParams.from,
+      toAddress: rawTransactionParams.to,
+      value: rawTransactionParams.transferAmount.toString(),
+      contract: rawTransactionParams.contractAddress
+    }])
+
+    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
+
+    for (let i = 0; i < transactionCount; i++) {
+      const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+      expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+      const rawTransaction = rawTransactionResponse.body
+
+      expect(rawTransaction.from).toBe(ACCOUNTS[1].address)
+      expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+      expect(rawTransaction.nonce).toBe(`0x${i}`)
+
+      const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
+      const transaction = new Tx(rawTransaction)
+      transaction.sign(privateKey)
+      const serializedTx = transaction.serialize().toString('hex')
+
+      const postTransferParams = {
+        data: serializedTx
+      }
+
+      const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+      expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+
+      expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
+        fromAddress: rawTransactionParams.from.toLowerCase(),
+        toAddress: rawTransactionParams.to.toLowerCase(),
+        contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
+        state: 'pending'
+      }))
+    }
   })
 
   it('Rejects 1 raw transaction request with bad contract address', async () => {

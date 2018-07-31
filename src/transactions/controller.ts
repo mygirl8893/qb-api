@@ -8,6 +8,8 @@ import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
+import * as HttpStatus from "http-status-codes";
+import utils from "../lib/utils";
 
 const web3 = Config.getPrivateWeb3()
 
@@ -185,22 +187,34 @@ const transfer = async (req, res) => {
 
 const buildRawTransaction = async (req, res) => {
   const { from, to, contractAddress, transferAmount } = req.query
-  const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
-    from
-  }).methods,
-    txCount = (await web3.eth.getTransactionCount(from)).toString(16)
 
-  // TODO: return a real unsigned transaction and not just a JSON file.
-  return res.json({
-    from,
-    nonce: `0x${txCount}`,
-    gasPrice: web3.utils.toHex(0),
-    gasLimit: web3.utils.toHex(1000000),
-    to: contractAddress,
-    value: '0x0',
-    data: Token.transfer(to, transferAmount).encodeABI(),
-    chainId: Config.getChainID()
-  })
+  try {
+    const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
+      from
+    }).methods
+
+    const txCount = (await web3.eth.getTransactionCount(from)).toString(16)
+
+    // TODO: return a real unsigned transaction and not just a JSON file.
+    return res.json({
+      from,
+      nonce: `0x${txCount}`,
+      gasPrice: web3.utils.toHex(0),
+      gasLimit: web3.utils.toHex(1000000),
+      to: contractAddress,
+      value: '0x0',
+      data: Token.transfer(to, transferAmount).encodeABI(),
+      chainId: Config.getChainID()
+    })
+
+  } catch (e) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress) ||
+      utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    } else {
+      throw e
+    }
+  }
 }
 
 export default {

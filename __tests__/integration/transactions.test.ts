@@ -139,5 +139,38 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
   })
+
+  it('Rejects 1 raw transaction request with bad contract address', async () => {
+
+    const badContractAddress = privateChain.loyaltyTokenContractAddress
+      .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: badContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message.includes(`Provided address "${badContractAddress}" is invalid`)).toBeTruthy()
+  })
+
+  it('Rejects 1 raw transaction request with bad from address', async () => {
+
+    const badFromAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + 'xx'
+    const rawTransactionParams = {
+      from: badFromAddress,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+  })
 })
 

@@ -1,6 +1,7 @@
 import User from '../users/controller'
 import Config from '../config'
 import * as HttpStatus from "http-status-codes";
+import utils from "../lib/utils";
 
 const web3 = Config.getPrivateWeb3()
 
@@ -52,8 +53,10 @@ const getToken = async (req, res) => {
       public: publicBalance
     })
   } catch (e) {
-    if (e.message.includes(`Provided address "${contractAddress.toLowerCase()}" is invalid`)) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    } else {
+      throw e
     }
   }
 }

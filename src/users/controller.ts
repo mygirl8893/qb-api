@@ -4,6 +4,7 @@ import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
 
 import log from '../logging'
+import utils from "../lib/utils";
 
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
@@ -79,10 +80,11 @@ const getInfo = async function (req, res) {
     }
     res.json(info)
   } catch (e) {
-    if (e.message.includes(`Provided address "${address.toLowerCase()}" is invalid`)) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, address)) {
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
+    } else {
+      throw e
     }
-    throw e
   }
 }
 

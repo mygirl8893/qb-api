@@ -104,16 +104,6 @@ describe('Transactions API Integration', () => {
       contract: rawTransactionParams.contractAddress
     }])
 
-
-    /*
-    {
-      "hash": "0x5d183a31b5c1439c81acb7cdb6b33dbb938682f9269676933fbd1c24d31bb456",
-      "fromAddress": "0x87265a62c60247f862b9149423061b36b460f4bb",
-      "toAddress": "0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf",
-      "contractAddress": "0x988f24d8356bf7e3d4645ba34068a5723bf3ec6b",
-      "state": "pending"
-    }
-    */
     ;(database.addPendingTransaction as any).mockImplementation(async () => {})
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
@@ -269,6 +259,34 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Rejects 1 transfer signed with the wrong key', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
   })
 })
 

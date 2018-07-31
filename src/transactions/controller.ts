@@ -66,57 +66,6 @@ const getTransaction = async (req, res) => {
   return res.json(tx) // TODO: improve response
 }
 
-/*
- * DISCLAIMER: this method is inefficient as it has to go through
- * all the blocks and get the transactions. We will implement an
- * off-chain solution with a database to improve its performance.
- * We also have to take into considerations transactions happening
- * on the public chain.
- */
-const getHistoryFromPrivateChain = async (req, res) => {
-  const defaultBlocks = 200, // TODO: make it a constant
-    address = req.params.address.toLowerCase(),
-    latestBlock = await web3.eth.getBlock('latest'),
-    startBlock = req.query.startBlock >= 0 ? req.query.startBlock : 0,
-    endBlock = req.query.endBlock > 0 ? req.query.endBlock : 0,
-    historyArray = []
-  let endBlockNumber = endBlock || latestBlock.number,
-    startBlockNumber = startBlock || endBlockNumber - defaultBlocks
-
-  abiDecoder.addABI(Config.getTokenABI())
-
-  if (endBlockNumber > latestBlock.number) {
-    endBlockNumber = latestBlock.number
-  }
-
-  if (startBlockNumber > latestBlock.number) {
-    startBlockNumber = latestBlock.number
-  }
-
-  if (startBlockNumber < 0) {
-    startBlockNumber = 0
-  }
-
-  for (
-    let blockNumber = startBlockNumber;
-    blockNumber <= endBlockNumber;
-    blockNumber += 1
-  ) {
-    const block = await web3.eth.getBlock(blockNumber, true)
-    if (block !== null && block.transactions !== null) {
-      for (const tx of block.transactions) {
-        const decodedTx = abiDecoder.decodeMethod(tx.input)
-        if (typeof decodedTx !== 'undefined') {
-          if (txBelongsTo(address, tx, decodedTx)) {
-            historyArray.push(await getTx(tx.hash)) // TODO: Promise.all()? NO, We want to keep the exact order...
-          }
-        }
-      }
-    }
-  }
-  return res.json(historyArray)
-}
-
 const getHistory = async (req, res) => {
   const address = req.params.address.toLowerCase()
   log.info(`Fetching transaction history for address ${address}`)

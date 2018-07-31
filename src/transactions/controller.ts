@@ -121,10 +121,21 @@ const transfer = async (req, res) => {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Loyalty Token not found' }) // TODO: use Error object
     }
 
-    const receipt = await web3.eth.sendSignedTransaction(req.body.data)
+    const sendSignedTransactionPromise = web3.eth.sendSignedTransaction(req.body.data)
+
+    const transactionHash = await new Promise((resolve, reject) => {
+      sendSignedTransactionPromise.once('transactionHash', txHash => {
+        resolve(txHash)
+      })
+      sendSignedTransactionPromise.on('error', error => {
+        reject(error)
+      })
+    })
+
+    log.info(`Successfully sent transaction  with hash ${transactionHash}`)
 
     const storeableTransaction = {
-      hash: receipt.transactionHash,
+      hash: transactionHash as string,
       fromAddress: sender,
       toAddress: toAddress,
       contractAddress: txData.to,
@@ -133,7 +144,7 @@ const transfer = async (req, res) => {
 
     await database.addPendingTransaction(storeableTransaction)
 
-    const result = { hash: receipt.transactionHash, status: 'pending', tx: receipt }
+    const result = { hash: transactionHash, status: 'pending'}
 
     return res.json(result)
 
@@ -157,12 +168,12 @@ const buildRawTransaction = async (req, res) => {
       from
     }).methods
 
-    const txCount = (await web3.eth.getTransactionCount(from)).toString(16)
+    const txCount = await web3.eth.getTransactionCount(from, 'pending')
 
     // TODO: return a real unsigned transaction and not just a JSON file.
     return res.json({
       from,
-      nonce: `0x${txCount}`,
+      nonce: `0x${txCount.toString(16)}`,
       gasPrice: web3.utils.toHex(0),
       gasLimit: web3.utils.toHex(1000000),
       to: contractAddress,

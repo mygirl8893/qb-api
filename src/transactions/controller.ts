@@ -208,9 +208,14 @@ const buildRawTransaction = async (req, res) => {
     })
 
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress) ||
-      utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
-      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
+      const errorMessage = `Contract address invalid: ${e.message}`
+      log.error(errorMessage)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
+    } else if (utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
+      const errorMessage = `Transaction From address invalid: ${e.message}`
+      log.error(errorMessage)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
     } else {
       throw e
     }

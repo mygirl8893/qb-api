@@ -80,7 +80,8 @@ const getInfo = async function (req, res) {
     }
     res.json(info)
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, address)) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
+      log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
     } else {
       throw e

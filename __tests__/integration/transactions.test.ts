@@ -290,7 +290,7 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
   })
 
-  it('Rejects 1 transfer with the wrong "to" wrong address', async () => {
+  it('Rejects 1 transfer with the wrong "to" address', async () => {
 
     const rawTransactionParams = {
       from: ACCOUNTS[0].address,

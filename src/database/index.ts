@@ -24,7 +24,15 @@ const getTransactionHistory = async (address) => {
   }
 }
 
-const addPendingTransaction = async (transaction) => {
+interface PendingTransaction {
+  hash: string
+  fromAddress: string
+  toAddress: string
+  contractAddress: string
+  state: string
+}
+
+const addPendingTransaction = async (transaction: PendingTransaction) => {
 
   const conn = await pool.getConnection()
   try {

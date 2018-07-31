@@ -154,35 +154,46 @@ const getHistory = async (req, res) => {
 const transfer = async (req, res) => {
   abiDecoder.addABI(Config.getTokenABI())
 
-  const signedTransaction = new EthereumTx(req.body.data)
-  const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
+  try {
+    const signedTransaction = new EthereumTx(req.body.data)
+    const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
-  const { txData } = unsign(req.body.data),
-    decodedTx = abiDecoder.decodeMethod(txData.data),
-    Token = TokenController.tokenDB(),
-    loyaltyToken = await Token.getToken(txData.to).call()
+    const { txData } = unsign(req.body.data),
+      decodedTx = abiDecoder.decodeMethod(txData.data),
+      Token = TokenController.tokenDB(),
+      loyaltyToken = await Token.getToken(txData.to).call()
 
-  if (
-    typeof loyaltyToken[0] === 'undefined' ||
-    (decodedTx && decodedTx.name !== 'transfer')
-  ) {
-    return res.json({ error: 'Loyalty Token not found' }) // TODO: use Error object
+    if (
+      typeof loyaltyToken[0] === 'undefined' ||
+      (decodedTx && decodedTx.name !== 'transfer')
+    ) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Loyalty Token not found' }) // TODO: use Error object
+    }
+
+    const receipt = await web3.eth.sendSignedTransaction(req.body.data)
+
+    const storeableTransaction = {
+      hash: receipt.transactionHash,
+      fromAddress: sender,
+      toAddress: decodedTx.params[0].value,
+      contractAddress: txData.to,
+      state: 'pending'
+    }
+    await database.addPendingTransaction(storeableTransaction)
+
+    const result = { hash: receipt.transactionHash, status: 'pending', tx: receipt }
+
+    return res.json(result)
+
+  } catch (e) {
+    if (e.message.includes(`the tx doesn't have the correct nonce.`)) {
+      log.error(e)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
+    } else {
+      throw e
+    }
   }
 
-  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
-
-  const storeableTransaction = {
-    hash: receipt.transactionHash,
-    fromAddress: sender,
-    toAddress: decodedTx.params[0].value,
-    contractAddress: txData.to,
-    state: 'pending'
-  }
-  await database.addPendingTransaction(storeableTransaction)
-
-  const result = { hash: receipt.transactionHash, status: 'pending', tx: receipt }
-
-  return res.json(result)
 }
 
 const buildRawTransaction = async (req, res) => {

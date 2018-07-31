@@ -100,12 +100,22 @@ describe('Network, Users and Tokens API', () => {
 
   it('Fails to get user info for a bad address', async () => {
 
-    const badAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + 'xy'
+    const badAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + 'xx'
     const r = await request(app).get(`/users/${badAddress}`)
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
     expect(r.body.message.includes(`Provided address "${badAddress}" is invalid`)).toBeTruthy()
+  })
+
+  it('Fails to get user info for an address with 0 transactions', async () => {
+
+    const badAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + '11'
+    const r = await request(app).get(`/users/${badAddress}`)
+
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.transactionCount).toBe(0)
   })
 
   it('Gets tokens successfully', async () => {
@@ -140,13 +150,24 @@ describe('Network, Users and Tokens API', () => {
     expect(token.totalSupply).toBe(`${privateChain.initialLoyaltyTokenAmount}`)
   })
 
-  it('Fails to get token for bad contract address', async () => {
+  it('Fails to get token for invalid contract address', async () => {
 
     const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
     const r = await request(app).get(`/tokens/${badAddress}`)
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
+    // is not a contract address
     expect(r.body.message.includes(`Provided address "${badAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+  })
+
+  it('Fails to get token for non-existent contract address', async () => {
+
+    const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + '11'
+    const r = await request(app).get(`/tokens/${badAddress}`)
+
+    expect(r.status).toBe(HttpStatus.BAD_REQUEST)
+
+    expect(r.body.message.includes(`is not a contract address`)).toBeTruthy()
   })
 })

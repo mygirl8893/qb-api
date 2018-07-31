@@ -54,7 +54,8 @@ const getToken = async (req, res) => {
       public: publicBalance
     })
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase())) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
+        e.message.includes('is not a contract address')) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
     } else {

@@ -201,7 +201,7 @@ describe('Transactions API Integration', () => {
   it('Rejects 1 raw transaction request with bad contract address', async () => {
 
     const badContractAddress = privateChain.loyaltyTokenContractAddress
-      .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
+      .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + '11'
     const rawTransactionParams = {
       from: ACCOUNTS[0].address,
       to: ACCOUNTS[1].address,
@@ -217,6 +217,7 @@ describe('Transactions API Integration', () => {
 
   it('Rejects 1 raw transaction request with bad from address', async () => {
 
+    // add illegal characters 'xx' at the end
     const badFromAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + 'xx'
     const rawTransactionParams = {
       from: badFromAddress,
@@ -287,6 +288,36 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+  })
+
+  it('Rejects 1 transfer with the wrong "to" wrong address', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    rawTransaction.to = rawTransaction.to.substring(0, rawTransaction.to.length - 2) + '11'
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 })
 

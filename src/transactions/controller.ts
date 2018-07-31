@@ -107,10 +107,12 @@ const transfer = async (req, res) => {
     const signedTransaction = new EthereumTx(req.body.data)
     const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
-    const { txData } = unsign(req.body.data),
-      decodedTx = abiDecoder.decodeMethod(txData.data),
-      Token = TokenController.tokenDB(),
-      loyaltyToken = await Token.getToken(txData.to).call()
+    const { txData } = unsign(req.body.data)
+    const decodedTx = abiDecoder.decodeMethod(txData.data)
+    const toAddress = decodedTx.params[0].value
+    const Token = TokenController.tokenDB()
+
+    const loyaltyToken = await Token.getToken(txData.to).call()
 
     if (
       typeof loyaltyToken[0] === 'undefined' ||
@@ -124,10 +126,11 @@ const transfer = async (req, res) => {
     const storeableTransaction = {
       hash: receipt.transactionHash,
       fromAddress: sender,
-      toAddress: decodedTx.params[0].value,
+      toAddress: toAddress,
       contractAddress: txData.to,
       state: 'pending'
     }
+
     await database.addPendingTransaction(storeableTransaction)
 
     const result = { hash: receipt.transactionHash, status: 'pending', tx: receipt }
@@ -135,7 +138,8 @@ const transfer = async (req, res) => {
     return res.json(result)
 
   } catch (e) {
-    if (e.message.includes(`the tx doesn't have the correct nonce.`)) {
+    if (e.message.includes(`the tx doesn't have the correct nonce.`) ||
+      e.message.includes(`is not a contract address`)) {
       log.error(e)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
     } else {

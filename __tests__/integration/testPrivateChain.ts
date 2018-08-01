@@ -20,13 +20,26 @@ function getContract(web3, sourceFile, contractName) {
   return contract
 }
 
+interface TestAccount {
+  address: string
+  secretKey: string
+  balance: number
+}
+
+interface TestToken {
+  name: string
+  symbol: string
+  decimals: number
+  rate: number
+}
+
 class TestPrivateChain {
   public setupBlockCount: number
   public initialLoyaltyTokenAmount: number
   public loyaltyTokenContractAddress: string = null
   public tokenDBContractAddress: string = null
-  private accounts: any
-  private token: any
+  private accounts: [TestAccount]
+  private token: TestToken
   private port: number
   private ganacheChildProcess: ChildProcess
   constructor(accounts, token, port) {

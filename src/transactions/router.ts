@@ -71,7 +71,7 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *   get:
  *     tags:
  *       - Transactions
- *     description: Get transaction history for the given address with transactions sorted by block number in descending order. supports pagination with limit/offset parameters.
+ *     description: Get transaction history for the given address with transactions sorted by block number in descending order. Supports pagination with limit/offset parameters.
  *     produces:
  *       - application/json
  *     parameters:
@@ -81,7 +81,7 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *         required: true
  *         type: string
  *       - name: limit
- *         description: Define what is the maximum number of transactions the response can contain (Default and up to: 100).
+ *         description: Define what is the maximum number of transactions the response can contain (Default and up to 100).
  *         in: query
  *         required: false
  *         type: integer

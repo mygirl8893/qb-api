@@ -23,7 +23,9 @@ const router = express.Router()
  *       200:
  *          description: Returns information about the user on the qiibee chain
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/:from', LibAPI.wrap(Controller.getInfo))
 

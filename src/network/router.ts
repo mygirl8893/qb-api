@@ -18,7 +18,9 @@ const router = express.Router()
  *       200:
  *          description: Returns the network information
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/', LibAPI.wrap(Controller.getInfo))
 

@@ -20,12 +20,27 @@ function getContract(web3, sourceFile, contractName) {
   return contract
 }
 
+interface TestAccount {
+  address: string
+  secretKey: string
+  balance: number
+}
+
+interface TestToken {
+  name: string
+  symbol: string
+  decimals: number
+  rate: number
+}
+
 class TestPrivateChain {
-  public accounts: any
-  public token: any
-  public port: number
+  public setupBlockCount: number
+  public initialLoyaltyTokenAmount: number
   public loyaltyTokenContractAddress: string = null
   public tokenDBContractAddress: string = null
+  private accounts: [TestAccount]
+  private token: TestToken
+  private port: number
   private ganacheChildProcess: ChildProcess
   constructor(accounts, token, port) {
     this.accounts = accounts
@@ -131,9 +146,10 @@ class TestPrivateChain {
 
     log.info(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
 
-    const initialLoyaltyTokenAmount = 1000000
+    this.initialLoyaltyTokenAmount = 1000000
 
-    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address, initialLoyaltyTokenAmount).send({
+    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address,
+      this.initialLoyaltyTokenAmount).send({
       from: this.accounts[0].address,
       gas: 1500000,
       gasPrice: '30'
@@ -141,6 +157,8 @@ class TestPrivateChain {
 
     log.info(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
 
+    const latestBlock = await privateWeb3.eth.getBlock('latest')
+    this.setupBlockCount = latestBlock.number
   }
 
   async tearDown() {
@@ -158,7 +176,7 @@ class TestPrivateChain {
 
     // force kill test network on Travis cause ganacheChildProcess PID != pgrep -f ganache-cli
     const pidProcess = childProcess.spawn(`pgrep -f ganache-cli`, [], {shell: true})
-    let PID;
+    let PID
     await new Promise((resolve) => {
       pidProcess.stdout.on('data', async (data) => {
         PID = data.toString()

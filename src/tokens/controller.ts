@@ -1,5 +1,8 @@
 import User from '../users/controller'
 import Config from '../config'
+import * as HttpStatus from "http-status-codes"
+import utils from "../lib/utils"
+import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -39,15 +42,26 @@ const getTokens = async (req, res) => {
 const getToken = async (req, res) => {
   const publicBalance = 0
 
-  const privateBalance = await User.getBalanceOnContract(
-    req.query.from,
-    req.params.contract
-  )
+  const contractAddress = req.params.contract
+  try {
+    const privateBalance = await User.getBalanceOnContract(
+      req.query.from,
+      contractAddress
+    )
 
-  return res.json({
-    private: privateBalance,
-    public: publicBalance
-  })
+    return res.json({
+      private: privateBalance,
+      public: publicBalance
+    })
+  } catch (e) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
+        e.message.includes('is not a contract address')) {
+      log.error(e.message)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    } else {
+      throw e
+    }
+  }
 }
 
 export default {

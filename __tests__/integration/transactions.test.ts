@@ -104,7 +104,7 @@ describe('Transactions API Integration', () => {
       contract: rawTransactionParams.contractAddress
     }])
 
-    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
+    ;(database.addPendingTransaction as any).mockImplementation(async () => {})
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
@@ -132,12 +132,192 @@ describe('Transactions API Integration', () => {
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
     const transactions = transactionsAfterResponse.body
 
+    expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
+      fromAddress: rawTransactionParams.from.toLowerCase(),
+      toAddress: rawTransactionParams.to.toLowerCase(),
+      contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
+      state: 'pending'
+    }))
+
     expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
     expect(singleTransaction.contract).toBe(privateChain.loyaltyTokenContractAddress)
     expect(singleTransaction.value).toBe(rawTransactionParams.transferAmount.toString())
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
+  })
+
+  it('Executes 5 transactions successfully with incrementing nonce', async () => {
+    const rawTransactionParams = {
+        from: ACCOUNTS[1].address,
+        to: ACCOUNTS[0].address,
+        transferAmount: 1,
+        contractAddress: privateChain.loyaltyTokenContractAddress
+      }
+
+    const transactionCount = 5
+
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
+      fromAddress: rawTransactionParams.from,
+      toAddress: rawTransactionParams.to,
+      value: rawTransactionParams.transferAmount.toString(),
+      contract: rawTransactionParams.contractAddress
+    }])
+
+    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
+
+    for (let i = 0; i < transactionCount; i++) {
+      const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+      expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+      const rawTransaction = rawTransactionResponse.body
+
+      expect(rawTransaction.from).toBe(ACCOUNTS[1].address)
+      expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+      expect(rawTransaction.nonce).toBe(`0x${i}`)
+
+      const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
+      const transaction = new Tx(rawTransaction)
+      transaction.sign(privateKey)
+      const serializedTx = transaction.serialize().toString('hex')
+
+      const postTransferParams = {
+        data: serializedTx
+      }
+
+      const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+      expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+
+      expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
+        fromAddress: rawTransactionParams.from.toLowerCase(),
+        toAddress: rawTransactionParams.to.toLowerCase(),
+        contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
+        state: 'pending'
+      }))
+    }
+  })
+
+  it('Rejects 1 raw transaction request with bad contract address', async () => {
+
+    const badContractAddress = privateChain.loyaltyTokenContractAddress
+      .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + '11'
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: badContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message.includes(`Provided address "${badContractAddress}" is invalid`)).toBeTruthy()
+  })
+
+  it('Rejects 1 raw transaction request with bad from address', async () => {
+
+    // add illegal characters 'xx' at the end
+    const badFromAddress = ACCOUNTS[0].address.substring(0, ACCOUNTS[0].address.length - 2) + 'xx'
+    const rawTransactionParams = {
+      from: badFromAddress,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+  })
+
+  it('Rejects 1 transfer with the wrong nonce', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    rawTransaction.nonce = rawTransaction.nonce - 1
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Rejects 1 transfer signed with the wrong key', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+  })
+
+  it('Rejects 1 transfer with the wrong "to" address', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    rawTransaction.to = rawTransaction.to.substring(0, rawTransaction.to.length - 2) + '11'
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 })
 

@@ -8,6 +8,8 @@ import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
+import * as HttpStatus from "http-status-codes";
+import utils from "../lib/utils";
 
 const web3 = Config.getPrivateWeb3()
 
@@ -64,57 +66,6 @@ const getTransaction = async (req, res) => {
   return res.json(tx) // TODO: improve response
 }
 
-/*
- * DISCLAIMER: this method is inefficient as it has to go through
- * all the blocks and get the transactions. We will implement an
- * off-chain solution with a database to improve its performance.
- * We also have to take into considerations transactions happening
- * on the public chain.
- */
-const getHistoryFromPrivateChain = async (req, res) => {
-  const defaultBlocks = 200, // TODO: make it a constant
-    address = req.params.address.toLowerCase(),
-    latestBlock = await web3.eth.getBlock('latest'),
-    startBlock = req.query.startBlock >= 0 ? req.query.startBlock : 0,
-    endBlock = req.query.endBlock > 0 ? req.query.endBlock : 0,
-    historyArray = []
-  let endBlockNumber = endBlock || latestBlock.number,
-    startBlockNumber = startBlock || endBlockNumber - defaultBlocks
-
-  abiDecoder.addABI(Config.getTokenABI())
-
-  if (endBlockNumber > latestBlock.number) {
-    endBlockNumber = latestBlock.number
-  }
-
-  if (startBlockNumber > latestBlock.number) {
-    startBlockNumber = latestBlock.number
-  }
-
-  if (startBlockNumber < 0) {
-    startBlockNumber = 0
-  }
-
-  for (
-    let blockNumber = startBlockNumber;
-    blockNumber <= endBlockNumber;
-    blockNumber += 1
-  ) {
-    const block = await web3.eth.getBlock(blockNumber, true)
-    if (block !== null && block.transactions !== null) {
-      for (const tx of block.transactions) {
-        const decodedTx = abiDecoder.decodeMethod(tx.input)
-        if (typeof decodedTx !== 'undefined') {
-          if (txBelongsTo(address, tx, decodedTx)) {
-            historyArray.push(await getTx(tx.hash)) // TODO: Promise.all()? NO, We want to keep the exact order...
-          }
-        }
-      }
-    }
-  }
-  return res.json(historyArray)
-}
-
 const getHistory = async (req, res) => {
   const address = req.params.address.toLowerCase()
   log.info(`Fetching transaction history for address ${address}`)
@@ -152,56 +103,98 @@ const getHistory = async (req, res) => {
 const transfer = async (req, res) => {
   abiDecoder.addABI(Config.getTokenABI())
 
-  const signedTransaction = new EthereumTx(req.body.data)
-  const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
+  try {
+    const signedTransaction = new EthereumTx(req.body.data)
+    const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
-  const { txData } = unsign(req.body.data),
-    decodedTx = abiDecoder.decodeMethod(txData.data),
-    Token = TokenController.tokenDB(),
-    loyaltyToken = await Token.getToken(txData.to).call()
+    const { txData } = unsign(req.body.data)
+    const decodedTx = abiDecoder.decodeMethod(txData.data)
+    const toAddress = decodedTx.params[0].value
+    const Token = TokenController.tokenDB()
 
-  if (
-    typeof loyaltyToken[0] === 'undefined' ||
-    (decodedTx && decodedTx.name !== 'transfer')
-  ) {
-    return res.json({ error: 'Loyalty Token not found' }) // TODO: use Error object
+    const loyaltyToken = await Token.getToken(txData.to).call()
+
+    if (
+      typeof loyaltyToken[0] === 'undefined' ||
+      (decodedTx && decodedTx.name !== 'transfer')
+    ) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Loyalty Token not found' }) // TODO: use Error object
+    }
+
+    const sendSignedTransactionPromise = web3.eth.sendSignedTransaction(req.body.data)
+
+    const transactionHash = await new Promise((resolve, reject) => {
+      sendSignedTransactionPromise.once('transactionHash', txHash => {
+        resolve(txHash)
+      })
+      sendSignedTransactionPromise.on('error', error => {
+        reject(error)
+      })
+    })
+
+    log.info(`Successfully sent transaction  with hash ${transactionHash}`)
+
+    const storeableTransaction = {
+      hash: transactionHash as string,
+      fromAddress: sender,
+      toAddress: toAddress,
+      contractAddress: txData.to,
+      state: 'pending'
+    }
+
+    await database.addPendingTransaction(storeableTransaction)
+
+    const result = { hash: transactionHash, status: 'pending'}
+
+    return res.json(result)
+
+  } catch (e) {
+    if (e.message.includes(`the tx doesn't have the correct nonce.`) ||
+      e.message.includes(`is not a contract address`)) {
+      log.error(e)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
+    } else {
+      throw e
+    }
   }
 
-  const receipt = await web3.eth.sendSignedTransaction(req.body.data)
-
-  const storeableTransaction = {
-    hash: receipt.transactionHash,
-    fromAddress: sender,
-    toAddress: decodedTx.params[0].value,
-    contractAddress: txData.to,
-    state: 'pending'
-  }
-  await database.addPendingTransaction(storeableTransaction)
-
-  const result = { hash: receipt.transactionHash, status: 'pending', tx: receipt }
-
-  return res.json(result)
 }
 
-// TODO: should be POST maybe
 const buildRawTransaction = async (req, res) => {
   const { from, to, contractAddress, transferAmount } = req.query
-  const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
-    from
-  }).methods,
-    txCount = (await web3.eth.getTransactionCount(from)).toString(16)
 
-  // TODO: return a real unsigned transaction and not just a JSON file.
-  return res.json({
-    from,
-    nonce: `0x${txCount}`,
-    gasPrice: web3.utils.toHex(0),
-    gasLimit: web3.utils.toHex(1000000),
-    to: contractAddress,
-    value: '0x0',
-    data: Token.transfer(to, transferAmount).encodeABI(),
-    chainId: Config.getChainID()
-  })
+  try {
+    const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
+      from
+    }).methods
+
+    const txCount = await web3.eth.getTransactionCount(from, 'pending')
+
+    // TODO: return a real unsigned transaction and not just a JSON file.
+    return res.json({
+      from,
+      nonce: `0x${txCount.toString(16)}`,
+      gasPrice: web3.utils.toHex(0),
+      gasLimit: web3.utils.toHex(1000000),
+      to: contractAddress,
+      value: '0x0',
+      data: Token.transfer(to, transferAmount).encodeABI(),
+      chainId: Config.getChainID()
+    })
+
+  } catch (e) {
+    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
+      const errorMessage = `Contract address invalid: ${e.message}`
+      log.error(errorMessage)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
+    } else if (utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
+      const errorMessage = `Transaction From address invalid: ${e.message}`
+      log.error(errorMessage)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
+    } else {
+      throw e
+    }
+  }
 }
 
 export default {

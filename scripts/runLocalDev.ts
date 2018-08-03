@@ -1,7 +1,7 @@
-import mysql from 'promise-mysql'
+import * as mysql from 'promise-mysql'
 import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import apiTesting from '../__tests__/apiTesting'
-import Tx from 'ethereumjs-tx'
+import * as Tx from 'ethereumjs-tx'
 import axios from 'axios/index'
 import log from '../src/logging'
 
@@ -97,17 +97,17 @@ async function launch() {
 
   log.info('Local test chain is setup and running.')
 
-  const configValues = require('../src/config/config.js')
+  const configValues = require('../src/config/config')
 
   configValues.default.development.tokenDB = testPrivateChain.tokenDBContractAddress
 
   const app = require('../app')
-  const Config = require('../src/config')
+  const Config = require('../src/config').default
 
-  const port = process.env.PORT || Config.default.getPort()
-  app.listen(port)
+  const port = process.env.PORT || Config.getPort()
+  app.default.listen(port)
 
-  log.info(`Running API in ${Config.default.getEnv()} mode. Listening on port: ${port}`)
+  log.info(`Running API in ${Config.getEnv()} mode. Listening on port: ${port}`)
 
   await apiTesting.waitForAppToBeReady(Config)
 
@@ -120,7 +120,7 @@ async function seed() {
 
   log.info("Get raw transaction.")
 
-  let request = {
+  const rawTransactionRequest = {
     params: {
       from: ACCOUNTS[0].address,
       to: ACCOUNTS[1].address,
@@ -131,7 +131,7 @@ async function seed() {
 
   const baseUrl = `http://localhost:${API_PORT}`
 
-  const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, request)
+  const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
 
   log.info(rawTransactionResponse.data)
 
@@ -140,13 +140,13 @@ async function seed() {
   transaction.sign(privateKey)
   const serializedTx = transaction.serialize().toString('hex')
 
-  request = {
+  const transferRequest = {
     data: serializedTx
   }
 
   log.info('POST signed transaction..')
 
-  const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, request)
+  const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, transferRequest)
 
   log.info(sendTransactionResponse)
 

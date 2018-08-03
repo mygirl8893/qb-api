@@ -11,7 +11,6 @@ const SwaggerConfig = {
         email: 'tech@qiibee.com'
       }
     },
-    host: 'api.qiibee.com',
     basePath: '/',
     tags: [
       {
@@ -25,6 +24,9 @@ const SwaggerConfig = {
       },
       {
         name: 'Network'
+      },
+      {
+        name: 'Prices'
       }
     ],
     schemes: ['https'],
@@ -32,10 +34,11 @@ const SwaggerConfig = {
     produces: ['application/json']
   },
   apis: [
-    './src/network/router.js',
-    './src/tokens/router.js',
-    './src/transactions/router.js',
-    './src/users/router.js'
+    './src/network/router.ts',
+    './src/tokens/router.ts',
+    './src/transactions/router.ts',
+    './src/users/router.ts',
+    './src/prices/router.ts'
   ]
 }
 

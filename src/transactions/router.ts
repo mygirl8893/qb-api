@@ -38,7 +38,9 @@ const router = express.Router()
  *       200:
  *          description: Returns a transaction-like JSON array ready to be used for creating a transaction
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
 
@@ -61,7 +63,9 @@ router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
  *       200:
  *          description: Returns a JSON file containing the information relative to the transaction {hash}
  *       400:
- *          description: Request failed, see error message.
+ *          description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
 
@@ -71,7 +75,7 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *   get:
  *     tags:
  *       - Transactions
- *     description: Get transaction history for the given address
+ *     description: Get transaction history for the given address with transactions sorted by block number in descending order. Supports pagination with limit/offset parameters.
  *     produces:
  *       - application/json
  *     parameters:
@@ -80,13 +84,13 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *         in: path
  *         required: true
  *         type: string
- *       - name: startBlock
- *         description: Define from which bblock on it should check for transactions.
+ *       - name: limit
+ *         description: Define what is the maximum number of transactions the response can contain (Default is 100, maximum is 100).
  *         in: query
  *         required: false
  *         type: integer
- *       - name: endBlock
- *         description: Define to which block on it should check for transactions.
+ *       - name: offset
+ *         description: define the offset (how many transactions to be skipped) for the query.
  *         in: query
  *         required: false
  *         type: integer
@@ -94,7 +98,9 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *       200:
  *          description: Returns the history of transactions for the given address
  *       400:
- *          description: Request failed, see error message.
+ *          description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/:address/history', LibAPI.wrap(Controller.getHistory))
 
@@ -116,7 +122,11 @@ router.get('/:address/history', LibAPI.wrap(Controller.getHistory))
  *     responses:
  *       200:
  *          description: desc
+ *       400:
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.post('/', LibAPI.wrap(Controller.transfer))
 
-module.exports = router
+export default router

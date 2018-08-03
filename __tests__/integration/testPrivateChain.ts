@@ -1,10 +1,11 @@
-import Web3 from 'web3'
-import ChildProcess from 'child_process'
-import solc from 'solc'
-import fs from 'fs'
-import path from 'path'
+const Web3 = require('web3')
+import * as childProcess from 'child_process'
+import * as solc from 'solc'
+import * as fs from 'fs'
+import * as path from 'path'
 import log from '../../src/logging'
 import utils from '../../src/lib/utils'
+import { ChildProcess } from "child_process";
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -19,13 +20,32 @@ function getContract(web3, sourceFile, contractName) {
   return contract
 }
 
+interface TestAccount {
+  address: string
+  secretKey: string
+  balance: number
+}
+
+interface TestToken {
+  name: string
+  symbol: string
+  decimals: number
+  rate: number
+}
+
 class TestPrivateChain {
+  public setupBlockCount: number
+  public initialLoyaltyTokenAmount: number
+  public loyaltyTokenContractAddress: string = null
+  public tokenDBContractAddress: string = null
+  private accounts: [TestAccount]
+  private token: TestToken
+  private port: number
+  private ganacheChildProcess: ChildProcess
   constructor(accounts, token, port) {
     this.accounts = accounts
     this.token = token
     this.port = port
-    this.loyaltyTokenContractAddress = null
-    this.tokenDBContractAddress = null
   }
 
   async setup() {
@@ -44,18 +64,25 @@ class TestPrivateChain {
 
     log.info(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 
-    this.ganacheChildProcess = ChildProcess.spawn(launchGanacheCmd, [], {shell: true})
+    this.ganacheChildProcess = childProcess.spawn(launchGanacheCmd, [], {shell: true})
 
     // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
-    await new Promise((resolve) => {
+    let error = ""
+    const result = await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
-        const dataString = data.toString('utf8')
+        const dataString = data.toString()
         if (dataString.indexOf('Listening on') > -1) {
-          resolve(data)
+          resolve(true)
+        }
+        if (dataString.indexOf('Error: listen EADDRINUSE') > -1) {
+          error = dataString
+          resolve(false)
         }
       })
     })
+
+    if (!result) throw `Failed setting up the test context: ${error}`
 
     log.info('Test network launched. Connecting to it with Web3..')
 
@@ -119,9 +146,10 @@ class TestPrivateChain {
 
     log.info(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
 
-    const initialLoyaltyTokenAmount = 1000000
+    this.initialLoyaltyTokenAmount = 1000000
 
-    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address, initialLoyaltyTokenAmount).send({
+    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address,
+      this.initialLoyaltyTokenAmount).send({
       from: this.accounts[0].address,
       gas: 1500000,
       gasPrice: '30'
@@ -129,14 +157,48 @@ class TestPrivateChain {
 
     log.info(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
 
+    const latestBlock = await privateWeb3.eth.getBlock('latest')
+    this.setupBlockCount = latestBlock.number
   }
 
   async tearDown() {
-
     log.info('Killing the test chain..')
-    // kill test network
-    this.ganacheChildProcess.kill('SIGINT')
-    await utils.sleep(3000)
+    log.info(`Killing ganacheChildProcess with PID ${this.ganacheChildProcess.pid}...`)
+    this.ganacheChildProcess.kill()
+
+    await new Promise((resolve) => {
+      this.ganacheChildProcess.on('exit', (err, signal) => {
+        log.info(`ganacheChildProcess killed? ${this.ganacheChildProcess.killed}`)
+        log.info(`ganacheChildProcess exited with code ${signal}`);
+        resolve(signal)
+      })
+    })
+
+    // force kill test network on Travis cause ganacheChildProcess PID != pgrep -f ganache-cli
+    const pidProcess = childProcess.spawn(`pgrep -f ganache-cli`, [], {shell: true})
+    let PID
+    await new Promise((resolve) => {
+      pidProcess.stdout.on('data', async (data) => {
+        PID = data.toString()
+        log.info(`ganache-cli PID is ${PID}`)
+        resolve(true)
+      })
+      pidProcess.stdout.on('close', async () => {
+        resolve(true)
+      })
+    })
+
+    if (PID) {
+      const killProcess = childProcess.spawn(`kill -9 ${PID}`, [], { shell: true })
+      log.info(`Killing ganache-cli with PID ${PID}...`)
+      await new Promise((resolve) => {
+        killProcess.stdout.on('close', (data) => {
+          log.info(`ganache-cli killed`)
+          resolve(true)
+        })
+      })
+    }
+
     log.info('Done with sending a kill signal.')
   }
 }

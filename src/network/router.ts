@@ -17,9 +17,9 @@ const router = express.Router()
  *     responses:
  *       200:
  *          description: Returns the network information
- *       400:
- *          description: Request failed, see error message.
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/', LibAPI.wrap(Controller.getInfo))
 
-module.exports = router
+export default router

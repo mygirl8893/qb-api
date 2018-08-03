@@ -1,5 +1,4 @@
-/* eslint-disable no-console */
-import Web3 from 'web3'
+const Web3 = require('web3')
 import Config from './config'
 import SwaggerConfig from './swagger'
 import log from '../logging'

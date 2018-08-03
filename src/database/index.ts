@@ -1,30 +1,42 @@
-import mysql from 'promise-mysql'
+import * as mysql from 'promise-mysql'
 import Config from './config'
+import { add } from "winston";
 
 const env = process.env.NODE_ENV || 'development',
   dbConfig = Config[env]
 
 const pool = mysql.createPool(dbConfig)
 
-const getTransactionHistory = async (address) => {
+/*
+  Security NOTE: node-mysql escapes the inputs if the '?' placeholder is used
+  as documented here https://github.com/mysqljs/mysql#escaping-query-values
+ */
+
+const getTransactionHistory = async (address: string, limit: number, offset: number) => {
 
   const conn = await pool.getConnection()
 
   try {
-    // prevent SQL injections
-    const escapedAddress = conn.escape(address)
 
     const transactions = await conn.query(`SELECT * from transactions
     JOIN tokens ON transactions.contractAddress = tokens.contractAddress
-    WHERE toAddress=${escapedAddress} OR fromAddress=${escapedAddress}
-    ORDER BY blockNumber DESC`)
+    WHERE toAddress=? OR fromAddress=?
+    ORDER BY blockNumber DESC LIMIT ? OFFSET ?`, [address, address, limit, offset])
     return transactions
   } finally {
     conn.release()
   }
 }
 
-const addPendingTransaction = async (transaction) => {
+interface PendingTransaction {
+  hash: string
+  fromAddress: string
+  toAddress: string
+  contractAddress: string
+  state: string
+}
+
+const addPendingTransaction = async (transaction: PendingTransaction) => {
 
   const conn = await pool.getConnection()
   try {

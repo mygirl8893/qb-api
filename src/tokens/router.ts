@@ -28,7 +28,9 @@ const router = express.Router()
  *       200:
  *          description: Returns successfully a specific Loyalty Token in the qiibee chain
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/:contract', LibAPI.wrap(Controller.getToken))
 
@@ -56,8 +58,10 @@ router.get('/:contract', LibAPI.wrap(Controller.getToken))
  *       200:
  *          description: Returns successfully a List of all Loyalty Tokens in the qiibee chain
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/', LibAPI.wrap(Controller.getTokens))
 
-module.exports = router
+export default router

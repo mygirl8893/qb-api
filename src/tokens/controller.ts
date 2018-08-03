@@ -58,6 +58,10 @@ const getToken = async (req, res) => {
         e.message.includes('is not a contract address')) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})
+    } else if (e.message.includes('Couldn\'t decode')) {
+      const errorMessage = `Contract address ${contractAddress} is incorrect. error: ${e.message}`
+      log.error(errorMessage)
+      res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
     } else {
       throw e
     }

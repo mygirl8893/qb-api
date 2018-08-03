@@ -254,7 +254,7 @@ describe('Transactions API Integration', () => {
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
 
-    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 200, 0)
+    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 100, 0)
   })
 
   it('Fails to return transaction history when offset is negative', async () => {

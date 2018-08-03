@@ -67,7 +67,7 @@ const getTransaction = async (req, res) => {
 }
 
 const DEFAULT_HISTORY_LIMIT = 100
-const MAX_HISTORY_LIMIT = 200
+const MAX_HISTORY_LIMIT = 100
 
 function isPositiveNumber(value) {
   return !isNaN(value) && value >= 0

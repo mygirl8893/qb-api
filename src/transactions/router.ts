@@ -81,7 +81,7 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *         required: true
  *         type: string
  *       - name: limit
- *         description: Define what is the maximum number of transactions the response can contain (Default and up to 100).
+ *         description: Define what is the maximum number of transactions the response can contain (Default is 100, maximum is 100).
  *         in: query
  *         required: false
  *         type: integer

@@ -66,11 +66,31 @@ const getTransaction = async (req, res) => {
   return res.json(tx) // TODO: improve response
 }
 
-const getHistory = async (req, res) => {
-  const address = req.params.address.toLowerCase()
-  log.info(`Fetching transaction history for address ${address}`)
+const DEFAULT_HISTORY_LIMIT = 100
+const MAX_HISTORY_LIMIT = 100
 
-  const history = await database.getTransactionHistory(address)
+function isPositiveNumber(value) {
+  return !isNaN(value) && value >= 0
+}
+
+const getHistory = async (req, res) => {
+  let {limit = DEFAULT_HISTORY_LIMIT, offset = 0} = req.query
+
+  limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
+
+  limit = parseInt(limit)
+  offset = parseInt(offset)
+  if (!isPositiveNumber(limit)) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'limit parameter is not a positive number.'})
+  }
+  if (!isPositiveNumber(offset)) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'offset parameter is not a positive number.'})
+  }
+
+  const address = req.params.address.toLowerCase()
+  log.info(`Fetching transaction history for address ${address} with limit ${limit} and offset ${offset}`)
+
+  const history = await database.getTransactionHistory(address, limit, offset)
 
   history.forEach((t) => {
     t.to = t.toAddress

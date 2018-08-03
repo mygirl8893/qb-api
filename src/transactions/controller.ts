@@ -66,14 +66,15 @@ const getTransaction = async (req, res) => {
   return res.json(tx) // TODO: improve response
 }
 
-const MAX_HISTORY_LIMIT = 100
+const DEFAULT_HISTORY_LIMIT = 100
+const MAX_HISTORY_LIMIT = 200
 
 function isPositiveNumber(value) {
   return !isNaN(value) && value >= 0
 }
 
 const getHistory = async (req, res) => {
-  let {limit = MAX_HISTORY_LIMIT, offset = 0} = req.query
+  let {limit = DEFAULT_HISTORY_LIMIT, offset = 0} = req.query
 
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
 

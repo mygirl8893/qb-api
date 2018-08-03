@@ -221,14 +221,14 @@ describe('Transactions API Integration', () => {
 
     const limitOffsetParams = {
       limit: "waza",
-      offset: -1
+      offset: 0
     }
 
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
-  it('Returns transaction history using limit and offset', async () => {
+  it('Returns transaction history using default limit and offset', async () => {
 
     // return value irrelevant for this test
     ;(database.getTransactionHistory as any).mockImplementation(async () => [])
@@ -238,6 +238,37 @@ describe('Transactions API Integration', () => {
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
 
     expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 100, 0)
+  })
+
+  it('Returns transaction history using max value for limit when exceeded', async () => {
+
+    // return value irrelevant for this test
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
+
+    const limitOffsetParams = {
+      limit: 210,
+      offset: 0
+    }
+
+    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+
+    expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
+
+    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 200, 0)
+  })
+
+  it('Fails to return transaction history when offset is negative', async () => {
+
+    // return value irrelevant for this test
+    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
+
+    const limitOffsetParams = {
+      limit: 50,
+      offset: -1
+    }
+
+    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
   it('Rejects 1 raw transaction request with bad contract address', async () => {

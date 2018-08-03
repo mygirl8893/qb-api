@@ -38,7 +38,9 @@ const router = express.Router()
  *       200:
  *          description: Returns a transaction-like JSON array ready to be used for creating a transaction
  *       400:
- *          description: Request failed, see error message.
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
 
@@ -61,7 +63,9 @@ router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
  *       200:
  *          description: Returns a JSON file containing the information relative to the transaction {hash}
  *       400:
- *          description: Request failed, see error message.
+ *          description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
 
@@ -116,6 +120,10 @@ router.get('/:address/history', LibAPI.wrap(Controller.getHistory))
  *     responses:
  *       200:
  *          description: desc
+ *       400:
+ *         description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
  */
 router.post('/', LibAPI.wrap(Controller.transfer))
 

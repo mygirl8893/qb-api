@@ -42,6 +42,37 @@ const getPrice = async (req, res) => {
   return res.status(statusCode).json(results)
 }
 
+/**
+ * Returns the historical price values of a specific Loyalty Token on in the private ecosystem
+ * in the desired currency
+ * NOTE: this endpoint will be modified after the QBX is tradable on exchanges
+ * @param {object} req - request object.
+ * @param {object} res - respond object.
+ * @return {json} The result.
+ */
+const getHistory = async (req, res) => {
+  const { from, to = 'USD', limit = 30, aggregate = 3, frequency = 'day' } = req.query //TODO: default values could be improve
+  const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
+  const { status, data } = await axios.get(api)
+  const rate = await tokenRate(from)
+
+  let statusCode = 200
+  if (status !== 200 || data.Response === 'Error') {
+    statusCode = data.Response ? 400 : status
+    let results = {message: data.Message}
+    return res.status(statusCode).json(results)
+  } else {
+    let results = []
+    for (let entry of data.Data) {
+      const qbxFiat = QBX_ETH * entry.close
+      const fiat = qbxFiat / rate
+      results.push({time: entry.time, price: fiat.toFixed(10)})
+    }
+    return res.status(statusCode).json(results)
+  }
+}
+
 export default {
   getPrice,
+  getHistory,
 }

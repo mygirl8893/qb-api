@@ -178,5 +178,124 @@ describe('Prices API Integration', () => {
     expect(response.body.message).toEqual(`There is no data for any of the toSymbols ${CURR} .`)
   })
 
+  it('Get historical values of LoyaltyToken MCW. Should default to USD if no currency is passed', async () => {
+    ;(axios.get as any).mockImplementation(async () => ({
+      status: HttpStatus.OK,
+      data: {
+        Response: "Success",
+        Type: 100,
+        Aggregated: false,
+        Data: [
+          {
+            time: 1533582600,
+            close: 177.24,
+            high: 177.24,
+            low: 177.21,
+            open: 177.21,
+            volumefrom: 0.08624,
+            volumeto: 15.29
+          },
+          {
+            time: 1533582660,
+            close: 177.11,
+            high: 177.24,
+            low: 177.11,
+            open: 177.24,
+            volumefrom: 2.92,
+            volumeto: 1424.17
+          },
+        ]
+      }
+    }))
+
+    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&limit=30&aggregate=1&frequency=minute`
+    const response = await request(app)
+      .get(`/prices/history`)
+      .query(pricesParams)
+    expect(response.status).toBe(HttpStatus.OK)
+    expect(response.body).toEqual([{"price": "0.0017724000", "time": 1533582600}, {"price": "0.0017711000", "time": 1533582660}])
+  })
+
+  it('Get historical values of LoyaltyToken MCW should not fail if from is empty', async () => {
+    const CURR = 'USD'
+    ;(axios.get as any).mockImplementation(async () => ({
+      status: HttpStatus.BAD_REQUEST,
+      data: {
+        "Response": "Error",
+        "Message": "fsym param is empty or null.",
+        "Type": 1,
+        "Aggregated": false,
+        "Data": []
+      }
+    }))
+
+    const pricesParams = `to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const response = await request(app)
+      .get(`/prices/history`)
+      .query(pricesParams)
+    expect(response.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(response.body.message).toEqual('fsym param is empty or null.')
+  })
+
+  it('Get historical values of LoyaltyToken MCW should not fail if multiple currencies are passed', async () => {
+    const CURR = 'USD,CHF'
+    ;(axios.get as any).mockImplementation(async () => ({
+      status: HttpStatus.OK,
+      data: {
+        "Response": "Error",
+        "Message": "There is no data for the toSymbol USD,CHF .",
+        "Type": 1,
+        "Aggregated": false,
+        "Data": []
+      }
+    }))
+
+    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const response = await request(app)
+      .get(`/prices/history`)
+      .query(pricesParams)
+    expect(response.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(response.body.message).toEqual('There is no data for the toSymbol USD,CHF .')
+  })
+
+  it('Get historical values of LoyaltyToken MCW in USD with limit 30, aggregate 1 and frequency in minutes', async () => {
+    const CURR = 'USD,CHF'
+    ;(axios.get as any).mockImplementation(async () => ({
+      status: HttpStatus.OK,
+      data: {
+        Response: "Success",
+        Type: 100,
+        Aggregated: false,
+        Data: [
+          {
+            time: 1533582600,
+            close: 177.24,
+            high: 177.24,
+            low: 177.21,
+            open: 177.21,
+            volumefrom: 0.08624,
+            volumeto: 15.29
+          },
+          {
+            time: 1533582660,
+            close: 177.11,
+            high: 177.24,
+            low: 177.11,
+            open: 177.24,
+            volumefrom: 2.92,
+            volumeto: 1424.17
+          },
+        ]
+      }
+    }))
+
+    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const response = await request(app)
+      .get(`/prices/history`)
+      .query(pricesParams)
+    expect(response.status).toBe(HttpStatus.OK)
+    expect(response.body).toEqual([{"price": "0.0017724000", "time": 1533582600}, {"price": "0.0017711000", "time": 1533582660}])
+  })
+
 })
 

@@ -234,7 +234,7 @@ describe('Prices API Integration', () => {
       .get(`/prices/history`)
       .query(pricesParams)
     expect(response.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(response.body.message).toEqual('fsym param is empty or null.')
+    expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
   })
 
   it('Get historical values of invalid LoyaltyToken', async () => {

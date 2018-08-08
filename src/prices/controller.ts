@@ -24,7 +24,6 @@ const getPrice = async (req, res) => {
   const { from, to = 'USD' } = req.query
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
-  console.log('DATAA', data)
   const rate = await tokenRate(from)
 
   let statusCode = HttpStatus.OK

@@ -237,6 +237,18 @@ describe('Prices API Integration', () => {
     expect(response.body.message).toEqual('fsym param is empty or null.')
   })
 
+  it('Get historical values of invalid LoyaltyToken', async () => {
+    const CURR = 'USD'
+    const INVALID_TOKEN_ADDRESS = '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6c'
+
+    const pricesParams = `from=${INVALID_TOKEN_ADDRESS}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const response = await request(app)
+      .get(`/prices/history`)
+      .query(pricesParams)
+    expect(response.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
+  })
+
   it('Get historical values of LoyaltyToken MCW should not fail if multiple currencies are passed', async () => {
     const CURR = 'USD,CHF'
     ;(axios.get as any).mockImplementation(async () => ({

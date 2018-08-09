@@ -9,7 +9,7 @@ const tokenRate = async (tokenAddress) => {
   const TokenDB = TokenController.tokenDB()
   const token = await TokenDB.getToken(tokenAddress).call()
   const tokenRate = Number(token['2'])
-  return tokenRate
+  return tokenRate !== 0 ? tokenRate : undefined
 }
 
 /**
@@ -55,12 +55,12 @@ const getHistory = async (req, res) => {
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK
 
-  if (rate !== 0) {
+  if (rate) {
     const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
     const { status, data } = await axios.get(api)
 
     if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
-      statusCode = data.Response ? 400 : status
+      statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
       let results = {message: data.Message}
       return res.status(statusCode).json(results)
     } else {

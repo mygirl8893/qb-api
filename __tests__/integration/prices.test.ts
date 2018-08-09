@@ -88,7 +88,7 @@ describe('Prices API Integration', () => {
   })
 
   it('Gets price of LoyaltyToken MCW in USD successfully', async () => {
-
+    const CURR = 'USD'
     ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.OK,
         data: {
@@ -97,7 +97,10 @@ describe('Prices API Integration', () => {
       })
     )
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=USD`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      to: CURR,
+    }
     const response = await request(app)
       .get(`/prices`)
       .query(pricesParams)
@@ -109,7 +112,7 @@ describe('Prices API Integration', () => {
   })
 
   it('Gets price of LoyaltyToken MCW in multiple currencies successfully', async () => {
-
+    const CURR = 'USD,CHF,EUR'
     ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.OK,
         data: {
@@ -120,7 +123,10 @@ describe('Prices API Integration', () => {
       })
     )
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=USD,CHF,EUR`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      to: CURR,
+    }
     const response = await request(app)
       .get(`/prices`)
       .query(pricesParams)
@@ -133,7 +139,7 @@ describe('Prices API Integration', () => {
     })
   })
 
-  it('Gets price of LoyaltyToken MCW should not fail if no currency is given', async () => {
+  it('Gets price of LoyaltyToken MCW should fail if no currency is given', async () => {
 
     ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.OK,
@@ -143,7 +149,7 @@ describe('Prices API Integration', () => {
       })
     )
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}`
+    const pricesParams = { from: privateChain.loyaltyTokenContractAddress }
     const response = await request(app)
       .get(`/prices`)
       .query(pricesParams)
@@ -154,7 +160,7 @@ describe('Prices API Integration', () => {
     })
   })
 
-  it('Gets price of LoyaltyToken MCW should not fail if currency unknown', async () => {
+  it('Gets price of LoyaltyToken MCW should fail if currency unknown', async () => {
     const CURR = 'AAA'
     ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.BAD_REQUEST,
@@ -170,7 +176,10 @@ describe('Prices API Integration', () => {
       })
     )
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=${CURR}`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      to: CURR,
+    }
     const response = await request(app)
       .get(`/prices`)
       .query(pricesParams)
@@ -208,7 +217,12 @@ describe('Prices API Integration', () => {
       }
     }))
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&limit=30&aggregate=1&frequency=minute`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      limit:30,
+      aggregate:1,
+      frequency: 'minute'
+    }
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
@@ -216,7 +230,7 @@ describe('Prices API Integration', () => {
     expect(response.body).toEqual([{"price": "0.0017724000", "time": 1533582600}, {"price": "0.0017711000", "time": 1533582660}])
   })
 
-  it('Get historical values of LoyaltyToken MCW should not fail if from is empty', async () => {
+  it('Get historical values of LoyaltyToken MCW should fail if from is empty', async () => {
     const CURR = 'USD'
     ;(axios.get as any).mockImplementation(async () => ({
       status: HttpStatus.BAD_REQUEST,
@@ -229,7 +243,12 @@ describe('Prices API Integration', () => {
       }
     }))
 
-    const pricesParams = `to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const pricesParams = {
+      to: CURR,
+      limit:30,
+      aggregate:1,
+      frequency: 'minute'
+    }
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
@@ -241,7 +260,13 @@ describe('Prices API Integration', () => {
     const CURR = 'USD'
     const INVALID_TOKEN_ADDRESS = '0x988f24d8356bf7e3d4645ba34068a5723bf3ec6c'
 
-    const pricesParams = `from=${INVALID_TOKEN_ADDRESS}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const pricesParams = {
+      from: INVALID_TOKEN_ADDRESS,
+      to: CURR,
+      limit:30,
+      aggregate:1,
+      frequency: 'minute'
+    }
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
@@ -249,7 +274,7 @@ describe('Prices API Integration', () => {
     expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
   })
 
-  it('Get historical values of LoyaltyToken MCW should not fail if multiple currencies are passed', async () => {
+  it('Get historical values of LoyaltyToken MCW should fail if multiple currencies are passed', async () => {
     const CURR = 'USD,CHF'
     ;(axios.get as any).mockImplementation(async () => ({
       status: HttpStatus.OK,
@@ -262,7 +287,13 @@ describe('Prices API Integration', () => {
       }
     }))
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      to: CURR,
+      limit:30,
+      aggregate:1,
+      frequency: 'minute'
+    }
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
@@ -301,7 +332,13 @@ describe('Prices API Integration', () => {
       }
     }))
 
-    const pricesParams = `from=${privateChain.loyaltyTokenContractAddress}&to=${CURR}&limit=30&aggregate=1&frequency=minute`
+    const pricesParams = {
+      from: privateChain.loyaltyTokenContractAddress,
+      to: CURR,
+      limit:30,
+      aggregate:1,
+      frequency: 'minute'
+    }
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)

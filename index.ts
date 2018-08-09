@@ -8,12 +8,12 @@ const loyaltyTokenABI = config.tokenABI
 const { tokenDBABI } = config
 
 const loyaltyTokenCode = fs.readFileSync(
-  path.resolve(__dirname, '../contracts/loyaltyToken.sol'),
+  path.resolve(__dirname, 'src/contracts/loyaltyToken.sol'),
   'utf-8'
 )
 
 const tokenDBCode = fs.readFileSync(
-  path.resolve(__dirname, '../contracts/tokenDB.sol'),
+  path.resolve(__dirname, 'src/contracts/tokenDB.sol'),
   'utf-8'
 )
 

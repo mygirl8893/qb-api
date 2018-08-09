@@ -51,7 +51,7 @@ const getPrice = async (req, res) => {
  * @return {json} The result.
  */
 const getHistory = async (req, res) => {
-  const { from, to = 'USD', limit = 30, aggregate = 3, frequency = 'day' } = req.query //TODO: default values could be improve
+  const { from, to = 'USD', limit = 30, aggregate = 1, frequency = 'day' } = req.query //TODO: default values could be improve
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK
 

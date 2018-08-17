@@ -45,7 +45,7 @@ const masterAccount = {
   const tokenDBContractInstance = await tokenDBContract.deploy().send({
     from: masterAccount.address,
     gas: 1500000,
-    gasPrice: '30'
+    gasPrice: '0'
   })
 
   const tokenDBContractAddress = tokenDBContractInstance.options.address

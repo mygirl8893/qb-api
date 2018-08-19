@@ -42,7 +42,7 @@ cd qb-api
 ```console
 npm install
 # start dependencies locally and an instance of qb-api
-npm run localdev launch
+npm run localenv launch
 ```
 
 Go to [localhost:3000](http://localhost:3000)
@@ -50,7 +50,7 @@ Go to [localhost:3000](http://localhost:3000)
 To run a transaction and fetch the history do:
 
 ```console
-npm localdev seed
+npm localenv seed
 ```
 
 ## License

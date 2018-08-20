@@ -124,6 +124,10 @@ const transfer = async (req, res) => {
   abiDecoder.addABI(Config.getTokenABI())
 
   try {
+
+    if (!req.body.data) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing data field.' })
+    }
     const signedTransaction = new EthereumTx(req.body.data)
     const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
@@ -182,6 +186,10 @@ const transfer = async (req, res) => {
 
 const buildRawTransaction = async (req, res) => {
   const { from, to, contractAddress, transferAmount } = req.query
+
+  if (!from || !to || !contractAddress || !transferAmount) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing one or more query params.' })
+  }
 
   try {
     const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {

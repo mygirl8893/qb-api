@@ -58,13 +58,6 @@ const getPublicBalance = async (from = null) => {
       totalSupply,
       decimals: parseInt(await QiibeeToken.decimals().call(), 10)
     }
-    // {
-    //   contractAddress: 'Ethereum',
-    //   symbol: 'ETH',
-    //   name: 'ETH',
-    //   balance: BigNumber(ethBalance).toString(10),
-    //   decimals: 18
-    // }
   ]
 }
 

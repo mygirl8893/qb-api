@@ -58,13 +58,6 @@ const getPublicBalance = async (from = null) => {
       totalSupply,
       decimals: parseInt(await QiibeeToken.decimals().call(), 10)
     }
-    // {
-    //   contractAddress: 'Ethereum',
-    //   symbol: 'ETH',
-    //   name: 'ETH',
-    //   balance: BigNumber(ethBalance).toString(10),
-    //   decimals: 18
-    // }
   ]
 }
 
@@ -72,6 +65,10 @@ const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
 
   const address = req.params.from
+
+  if (!address) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.' })
+  }
   try {
     const transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const info = {

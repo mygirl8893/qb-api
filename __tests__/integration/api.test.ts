@@ -1,12 +1,9 @@
 import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
-import Tx = require('ethereumjs-tx')
-
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
 import log from '../../src/logging'
-
+import DBConfig from '../../src/database/config'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -40,26 +37,28 @@ const TOKEN = {
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
-jest.mock('../../src/database', () => ({
-  default: {
-    getTransactionHistory: jest.fn(),
-    addPendingTransaction: jest.fn()
-  }
-}))
-
 jest.setTimeout(180000)
 
 describe('Network, Users and Tokens API', () => {
   let app = null
   let privateChain = null
+  let dbConn = null
 
   beforeAll(async () => {
 
     try {
+
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
+
+      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
+      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
+      // reuse the development config
+      DBConfig['test'] = DBConfig.development
+      dbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default
@@ -74,6 +73,7 @@ describe('Network, Users and Tokens API', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await dbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

@@ -1,11 +1,15 @@
+import Web3Connection from 'web3'
+const Web3 = require('web3')
 import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
 import Tx = require('ethereumjs-tx')
+import Sequelize from 'sequelize'
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
 import log from '../../src/logging'
+import DBConfig from '../../src/database/config'
+import * as qbDB from 'qb-db-migrations'
 
 
 const PRIVATE_WEB3_PORT = 8545
@@ -34,32 +38,47 @@ const INTEGRATION_TEST_CONFIGURATION = {
 const TOKEN = {
   name: "MagicCarpetsWorld",
   symbol: "MCW",
-  decimals: 10,
+  decimals: 18,
   rate: 100
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
-
-jest.mock('../../src/database', () => ({
-    default: {
-      getTransactionHistory: jest.fn(),
-      addPendingTransaction: jest.fn()
-    }
-  }))
 
 jest.setTimeout(180000)
 
 describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
+  let dbConn = null
+  let Transaction = null
+  let web3Conn: Web3Connection = null
+
+  /* this mimics the actions of a listener process which updates  */
+  async function markTransactionAsMined(txHash) {
+    const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
+    await Transaction.update({blockNumber: txReceipt.blockNumber, state: 'processed'}, {where: { hash: txHash } })
+    log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
+  }
 
   beforeAll(async () => {
-
     try {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
+
+      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
+      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
+      // reuse the development config
+      DBConfig['test'] = DBConfig.development
+      dbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
+
+      Transaction = qbDB.transaction(dbConn, Sequelize.DataTypes)
+
+      web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
+      await web3Conn.eth.net.isListening()
+      log.info('Web3 connection established.')
 
       app = require('../../app').default
       const Config = require('../../src/config').default
@@ -74,6 +93,7 @@ describe('Transactions API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await dbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e
@@ -81,8 +101,6 @@ describe('Transactions API Integration', () => {
   })
 
   it('Gets empty transactions history successfully', async () => {
-
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
     const transactionsResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsResponse.status).toBe(HttpStatus.OK)
@@ -96,15 +114,6 @@ describe('Transactions API Integration', () => {
       transferAmount: 10,
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
-
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
-      fromAddress: rawTransactionParams.from,
-      toAddress: rawTransactionParams.to,
-      value: rawTransactionParams.transferAmount.toString(),
-      contract: rawTransactionParams.contractAddress
-    }])
-
-    ;(database.addPendingTransaction as any).mockImplementation(async () => {})
 
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
@@ -127,24 +136,24 @@ describe('Transactions API Integration', () => {
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
     const transactions = transactionsAfterResponse.body
 
-    expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
-      fromAddress: rawTransactionParams.from.toLowerCase(),
-      toAddress: rawTransactionParams.to.toLowerCase(),
-      contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
-      state: 'pending'
-    }))
-
     expect(transactions).toHaveLength(1)
     const singleTransaction = transactions[0]
-    expect(singleTransaction.contract).toBe(privateChain.loyaltyTokenContractAddress)
-    expect(singleTransaction.value).toBe(rawTransactionParams.transferAmount.toString())
+    expect(singleTransaction.token.contractAddress).toBe(privateChain.loyaltyTokenContractAddress)
+    expect(singleTransaction.token.name).toBe(TOKEN.name)
+    expect(singleTransaction.token.symbol).toBe(TOKEN.symbol)
+    expect(singleTransaction.token.decimals).toBe(TOKEN.decimals)
+    expect(singleTransaction.token.totalSupply).toBe(TOKEN['totalSupply'])
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
+    expect(singleTransaction.state).toBe('processed')
+    expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
   })
 
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
@@ -156,15 +165,6 @@ describe('Transactions API Integration', () => {
       }
 
     const transactionCount = 5
-
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [{
-      fromAddress: rawTransactionParams.from,
-      toAddress: rawTransactionParams.to,
-      value: rawTransactionParams.transferAmount.toString(),
-      contract: rawTransactionParams.contractAddress
-    }])
-
-    ;(database.addPendingTransaction as any).mockImplementation(async () => null)
 
     for (let i = 0; i < transactionCount; i++) {
       const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
@@ -189,35 +189,45 @@ describe('Transactions API Integration', () => {
       const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
       expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
-      expect(database.addPendingTransaction).toBeCalledWith(expect.objectContaining({
-        fromAddress: rawTransactionParams.from.toLowerCase(),
-        toAddress: rawTransactionParams.to.toLowerCase(),
-        contractAddress: rawTransactionParams.contractAddress.toLowerCase(),
-        state: 'pending'
-      }))
+      await markTransactionAsMined(sendTransactionResponse.body.hash)
+    }
+
+    const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    const historicalTransactions = transactionsHistory.body
+    expect(historicalTransactions).toHaveLength(transactionCount + 1)
+
+    let previousBlockNumber = (await web3Conn.eth.getBlock('latest')).number
+
+    for (let i = 0; i < transactionCount; i++) {
+      const tx = historicalTransactions[i]
+      expect(tx.token.contractAddress).toBe(privateChain.loyaltyTokenContractAddress)
+      expect(tx.token.name).toBe(TOKEN.name)
+      expect(tx.token.symbol).toBe(TOKEN.symbol)
+      expect(tx.token.decimals).toBe(TOKEN.decimals)
+      expect(tx.token.totalSupply).toBe(TOKEN['totalSupply'])
+      expect(tx.from.toLowerCase()).toBe(ACCOUNTS[1].address)
+      expect(tx.to.toLowerCase()).toBe(ACCOUNTS[0].address)
+      expect(tx.state).toBe('processed')
+
+      // check that the transactions are ordered DESC by blockNumber
+      expect(tx.blockNumber).toBeLessThanOrEqual(previousBlockNumber)
+      previousBlockNumber = tx.blockNumber
     }
   })
 
   it('Returns transaction history using defined limit and offset', async () => {
 
-    // return value irrelevant for this test
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
-
     const limitOffsetParams = {
-      limit: 5,
-      offset: 3
+      limit: 3,
+      offset: 1
     }
 
-    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
-    expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
-
-    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, limitOffsetParams.limit, limitOffsetParams.offset)
+    const transactionHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    const historicalTransactions = transactionHistory.body
+    expect(historicalTransactions).toHaveLength(limitOffsetParams.limit)
   })
 
   it('Fails to return transaction history using invalid limit and offset', async () => {
-
-    // return value irrelevant for this test
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
 
     const limitOffsetParams = {
       limit: "waza",
@@ -229,22 +239,12 @@ describe('Transactions API Integration', () => {
   })
 
   it('Returns transaction history using default limit and offset', async () => {
-
-    // return value irrelevant for this test
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
-
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
-
-    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 100, 0)
   })
 
   it('Returns transaction history using max value for limit when exceeded', async () => {
-
-    // return value irrelevant for this test
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
-
     const limitOffsetParams = {
       limit: 210,
       offset: 0
@@ -253,14 +253,9 @@ describe('Transactions API Integration', () => {
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
-
-    expect(database.getTransactionHistory).toBeCalledWith(ACCOUNTS[0].address, 100, 0)
   })
 
   it('Fails to return transaction history when offset is negative', async () => {
-
-    // return value irrelevant for this test
-    ;(database.getTransactionHistory as any).mockImplementation(async () => [])
 
     const limitOffsetParams = {
       limit: 50,

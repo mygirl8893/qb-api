@@ -42,8 +42,8 @@ jest.setTimeout(180000)
 describe('Network, Users and Tokens API', () => {
   let app = null
   let privateChain = null
-  let dbConn = null
-
+  let testDbConn = null
+  let apiDbConn = null
   beforeAll(async () => {
 
     try {
@@ -58,10 +58,12 @@ describe('Network, Users and Tokens API', () => {
 
       // reuse the development config
       DBConfig['test'] = DBConfig.development
-      dbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
+      testDbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default
+
+      apiDbConn = require('../../src/database').default
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -73,6 +75,8 @@ describe('Network, Users and Tokens API', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await testDbConn.end()
+      await apiDbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

@@ -47,13 +47,14 @@ jest.setTimeout(180000)
 describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
-  let dbConn = null
+  let testDbConn = null
   let web3Conn: Web3Connection = null
+  let apiDBConn = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    const r = await dbConn.query(`UPDATE transactions SET blockNumber = ${txReceipt.blockNumber}, state = 'processed' WHERE hash = '${txHash}'`)
+    const r = await testDbConn.query(`UPDATE transactions SET blockNumber = ${txReceipt.blockNumber}, state = 'processed' WHERE hash = '${txHash}'`)
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
   }
 
@@ -69,14 +70,17 @@ describe('Transactions API Integration', () => {
 
       // reuse the development config
       DBConfig['test'] = DBConfig.development
-      dbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
+      testDbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()
       log.info('Web3 connection established.')
 
+
       app = require('../../app').default
       const Config = require('../../src/config').default
+
+      apiDBConn = require('../../src/database').default
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -88,6 +92,8 @@ describe('Transactions API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await testDbConn.end()
+      await apiDBConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

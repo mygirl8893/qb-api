@@ -50,7 +50,12 @@ const addPendingTransaction = async (transaction: PendingTransaction) => {
   }
 }
 
+async function close() {
+  await pool.end()
+}
+
 export default {
   getTransactionHistory,
-  addPendingTransaction
+  addPendingTransaction,
+  close
 }

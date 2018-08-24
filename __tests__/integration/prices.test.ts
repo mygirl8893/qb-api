@@ -52,7 +52,7 @@ jest.setTimeout(180000)
 describe('Prices API Integration', () => {
   let app = null
   let privateChain = null
-
+  let apiDbConn = null
   beforeAll(async () => {
 
     try {
@@ -70,6 +70,8 @@ describe('Prices API Integration', () => {
       app = require('../../app').default
       const Config = require('../../src/config').default
 
+      apiDbConn = require('../../src/database').default
+
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
       log.error(`Failed setting up the test context ${e}`)
@@ -80,6 +82,7 @@ describe('Prices API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await apiDbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

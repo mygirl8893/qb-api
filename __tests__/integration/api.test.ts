@@ -73,7 +73,6 @@ describe('Network, Users and Tokens API', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
-      await dbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

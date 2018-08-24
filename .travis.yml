@@ -19,8 +19,6 @@ before_install:
 - sudo mysql_upgrade
 - sudo service mysql restart
 - mysql -e 'CREATE DATABASE IF NOT EXISTS qiibee;'
-services:
-- mysql
 script:
 - npm test
 - npm run build

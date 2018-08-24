@@ -1,6 +1,5 @@
 import utils from '../src/lib/utils'
 import Sequelize from 'sequelize'
-import * as qbDB from 'qb-db-migrations'
 import log from '../src/logging'
 import * as mysql from "promise-mysql";
 

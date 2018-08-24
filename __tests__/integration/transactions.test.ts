@@ -3,13 +3,11 @@ const Web3 = require('web3')
 import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
 import Tx = require('ethereumjs-tx')
-import Sequelize from 'sequelize'
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import log from '../../src/logging'
 import DBConfig from '../../src/database/config'
-import * as qbDB from 'qb-db-migrations'
 
 
 const PRIVATE_WEB3_PORT = 8545
@@ -50,13 +48,12 @@ describe('Transactions API Integration', () => {
   let app = null
   let privateChain = null
   let dbConn = null
-  let Transaction = null
   let web3Conn: Web3Connection = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    await Transaction.update({blockNumber: txReceipt.blockNumber, state: 'processed'}, {where: { hash: txHash } })
+    const r = await dbConn.query(`UPDATE transactions SET blockNumber = ${txReceipt.blockNumber}, state = 'processed' WHERE hash = '${txHash}'`)
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
   }
 
@@ -73,8 +70,6 @@ describe('Transactions API Integration', () => {
       // reuse the development config
       DBConfig['test'] = DBConfig.development
       dbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
-
-      Transaction = qbDB.transaction(dbConn, Sequelize.DataTypes)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()
@@ -93,7 +88,6 @@ describe('Transactions API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
-      await dbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e}`)
       throw e

@@ -43,6 +43,10 @@ const getToken = async (req, res) => {
   const publicBalance = 0
 
   const contractAddress = req.params.contract
+
+  if (!contractAddress) {
+    res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
+  }
   try {
     const privateBalance = await User.getBalanceOnContract(
       req.query.from,

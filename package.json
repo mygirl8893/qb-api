@@ -1,6 +1,6 @@
 {
-  "name": "qb-api",
-  "version": "0.0.7",
+  "name": "@qiibee/qb-api",
+  "version": "0.0.8",
   "description": "qiibee API",
   "author": "qiibee Foundation",
   "license": "ISC",
@@ -8,11 +8,11 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "node_modules/jest/bin/jest.js __tests__/integration/*.test.ts --runInBand",
-    "start": "./node_modules/.bin/ts-node server.ts",
+    "start": "ts-node server.ts",
     "build": "rm -rf dist && ./node_modules/.bin/tsc -p ./tsconfig.json && mkdir -p ./dist/src/contracts && cp ./src/contracts/* ./dist/src/contracts/",
     "serve": "node dist/server.js",
     "startmon": "nodemon server.js",
-    "localenv": "./node_modules/.bin/ts-node scripts/runLocalDev.ts",
+    "localenv": "ts-node scripts/runLocalDev.ts",
     "prepublish": "npm run build"
   },
   "engines": {
@@ -60,5 +60,17 @@
     "web3": "^1.0.0-beta.29",
     "web3-eth-personal": "^1.0.0-beta.30",
     "winston": "^3.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qiibee/qb-api.git"
+  },
+  "keywords": [
+    "qiibee",
+    "API"
+  ],
+  "bugs": {
+    "url": "https://github.com/qiibee/qb-api/issues"
+  },
+  "homepage": "https://github.com/qiibee/qb-api#readme"
 }

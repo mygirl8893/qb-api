@@ -9,7 +9,6 @@ import TestPrivateChain from './testPrivateChain'
 import log from '../../src/logging'
 import DBConfig from '../../src/database/config'
 
-
 const PRIVATE_WEB3_PORT = 8545
 
 const START_BALANCE = 10 ** 20

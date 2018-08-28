@@ -67,7 +67,7 @@ describe('Network, Users and Tokens API', () => {
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
-      log.error(`Failed setting up the test context ${e}`)
+      log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
   })
@@ -78,7 +78,7 @@ describe('Network, Users and Tokens API', () => {
       await testDbConn.end()
       await apiDbConn.close()
     } catch (e) {
-      log.error(`Failed to tear down the test context ${e}`)
+      log.error(`Failed to tear down the test context ${e.stack}`)
       throw e
     }
   })

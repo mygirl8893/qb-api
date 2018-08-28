@@ -74,7 +74,7 @@ describe('Prices API Integration', () => {
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
-      log.error(`Failed setting up the test context ${e}`)
+      log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
   })
@@ -84,7 +84,7 @@ describe('Prices API Integration', () => {
       await privateChain.tearDown()
       await apiDbConn.close()
     } catch (e) {
-      log.error(`Failed to tear down the test context ${e}`)
+      log.error(`Failed to tear down the test context ${e.stack}`)
       throw e
     }
   })

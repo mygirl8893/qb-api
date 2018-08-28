@@ -141,5 +141,5 @@ async function seed() {
   }
 
 })().catch(e => {
-  log.error(`${e}`)
+  log.error(`${e.stack}`)
 })

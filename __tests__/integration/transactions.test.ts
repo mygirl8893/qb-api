@@ -53,7 +53,7 @@ describe('Transactions API Integration', () => {
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    const r = await testDbConn.query(`UPDATE transactions SET blockNumber = ${txReceipt.blockNumber}, state = 'processed' WHERE hash = '${txHash}'`)
+    const r = await testDbConn.updateMinedStatus(txHash, txReceipt.blockNumber)
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
   }
 
@@ -69,7 +69,9 @@ describe('Transactions API Integration', () => {
 
       // reuse the development config
       DBConfig['test'] = DBConfig.development
-      testDbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
+      testDbConn = new APITesting.TestDatabaseConn()
+
+      await testDbConn.setup(DBConfig['test'], TOKEN)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()
@@ -91,7 +93,7 @@ describe('Transactions API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
-      await testDbConn.end()
+      await testDbConn.close()
       await apiDBConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e.stack}`)

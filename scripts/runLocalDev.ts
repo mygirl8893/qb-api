@@ -33,19 +33,6 @@ const TOKEN = {
     rate: 100
   }
 
-async function getMysqlConnection(config) {
-  const mysqlConn = await mysql.createConnection({
-    host     : config.host,
-    user     : config.user,
-    password : config.password,
-    database : config.database
-  })
-
-  log.info('Successfully connected to mysql.')
-
-  return mysqlConn
-}
-
 async function launch() {
 
   const testPrivateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
@@ -63,7 +50,8 @@ async function launch() {
     decimals: TOKEN.decimals,
   }
 
-  await apiTesting.setupDatabase(DBConfig.development, token)
+  const testDbConn = new apiTesting.TestDatabaseConn()
+  await testDbConn.setup(DBConfig.development, token)
 
   const configValues = require('../src/config/config')
 
@@ -84,8 +72,6 @@ async function launch() {
 }
 
 async function seed() {
-  const mysqlConn = await getMysqlConnection(DBConfig.development)
-
   log.info("Get raw transaction.")
 
   const rawTransactionRequest = {

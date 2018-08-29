@@ -58,7 +58,8 @@ describe('Network, Users and Tokens API', () => {
 
       // reuse the development config
       DBConfig['test'] = DBConfig.development
-      testDbConn = await APITesting.setupDatabase(DBConfig['test'], TOKEN)
+      testDbConn = new APITesting.TestDatabaseConn()
+      await testDbConn.setup(DBConfig['test'], TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default
@@ -75,7 +76,7 @@ describe('Network, Users and Tokens API', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
-      await testDbConn.end()
+      await testDbConn.close()
       await apiDbConn.close()
     } catch (e) {
       log.error(`Failed to tear down the test context ${e.stack}`)

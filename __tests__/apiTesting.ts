@@ -1,7 +1,8 @@
 import utils from '../src/lib/utils'
 import Sequelize from 'sequelize'
 import log from '../src/logging'
-import * as mysql from "promise-mysql";
+import * as mysql from 'promise-mysql'
+import * as qbDB from 'qb-db-migrations'
 
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
@@ -59,27 +60,61 @@ async function setupDatabaseTables(mysqlConn) {
   );`)
 }
 
-async function setupDatabase(dbConfig, existingToken) {
-  const mysqlConn = await mysql.createConnection({
-    host     : dbConfig.host,
-    user     : dbConfig.user,
-    password : dbConfig.password,
-    database : dbConfig.database
-  })
+class TestDatabaseConn {
+  Token = null
+  Transaction = null
+  sequelize = null
+  constructor() {
+  }
 
-  log.info('Successfully connected to mysql.')
+  async setup(dbConfig, existingToken): Promise<void> {
+    const sequelize = new Sequelize(
+      dbConfig.database,
+      dbConfig.user,
+      dbConfig.password, {
+        host: dbConfig.host,
+        dialect: 'mysql',
+        operatorsAliases: false,
 
-  await setupDatabaseTables(mysqlConn)
+        pool: {
+          max: 5,
+          min: 0,
+          acquire: 30000,
+          idle: 10000
+        }
+      })
+    await sequelize.authenticate()
 
-  log.info(`Adding test token ${existingToken.symbol}.`)
+    log.info('Authenticated with the database. synching the model and deleting previously existing data.')
 
-  await mysqlConn.query(`INSERT INTO tokens SET ?`, existingToken)
+    this.Token = qbDB.token(sequelize, Sequelize.DataTypes)
+    await this.Token.sync({force: true})
+    await this.Token.destroy({ where: {} })
 
-  return mysqlConn
+    this.Transaction = qbDB.transaction(sequelize, Sequelize.DataTypes)
+    await this.Transaction.sync({force: true})
+    await this.Transaction.destroy({ where: {} })
+
+    log.info(`Adding test token ${existingToken.symbol}.`)
+    await this.Token.create(existingToken)
+
+    log.info('Successfully setup database.')
+
+    this.sequelize = sequelize
+  }
+
+  async updateMinedStatus(txHash, blockNumber) {
+    const r = await this.Transaction.update({ blockNumber: blockNumber, state: 'processed'}, { where: { hash: txHash }})
+    return r
+  }
+
+  async close() {
+    await this.sequelize.close()
+  }
 }
 
 export default {
   setupTestConfiguration,
   waitForAppToBeReady,
-  setupDatabase
+  TestDatabaseConn
 }

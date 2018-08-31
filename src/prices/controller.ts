@@ -22,6 +22,10 @@ const tokenRate = async (tokenAddress) => {
  */
 const getPrice = async (req, res) => {
   const { from, to = 'USD' } = req.query
+  if (!from) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
+  }
+
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
   const rate = await tokenRate(from)
@@ -52,6 +56,10 @@ const getPrice = async (req, res) => {
  */
 const getHistory = async (req, res) => {
   const { from, to = 'USD', limit = 30, aggregate = 1, frequency = 'day' } = req.query //TODO: default values could be improve
+  if (!from) {
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
+  }
+
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK
 

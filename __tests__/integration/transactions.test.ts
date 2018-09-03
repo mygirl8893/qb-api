@@ -216,6 +216,19 @@ describe('Transactions API Integration', () => {
     }
   })
 
+  it('Returns individual transaction by hash', async () =>{
+    const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    const historicalTransactions = transactionsHistory.body
+    const someTransaction = historicalTransactions[0]
+
+    const txDataResponse = await request(app).get(`/transactions/${someTransaction.hash}`)
+    const singleTx = txDataResponse.body
+
+    expect(singleTx.hash).toBe(someTransaction.hash)
+    expect(singleTx.from.toLowerCase()).toBe(someTransaction.from)
+    expect(singleTx.to.toLowerCase()).toBe(someTransaction.to)
+  })
+
   it('Returns transaction history using defined limit and offset', async () => {
 
     const limitOffsetParams = {

@@ -26,33 +26,73 @@ const masterAccount = {
 
   const host = process.argv[2]
   const port = process.argv[3]
+  const contractType = process.argv[4]
+  const ownerAddress = "0xd49a1fefbb414012347df4814f2cf76e48bc53e9"
+  const password = ""
 
   const chainUrl = `http://${host}:${port}`
-
-  log.info(`Deploying token db contract to ${chainUrl}. Connecting with web3..`)
-
   const privateWeb3 = new Web3(chainUrl)
   await privateWeb3.eth.net.isListening()
+  log.info(`Connected to chain at ${chainUrl}`)
 
-  log.info("Compiling token DB contract..")
+  //await privateWeb3.personal.unlockAccount(ownerAddress, password, 100000)
 
-  const tokenDBContract = getContract(privateWeb3,
-    path.resolve(__dirname, '../src/contracts/tokenDB.sol'),
-    ':TokenDB')
+  if (contractType === 'tokendb') {
 
-  log.info('Deploying the token DB contract..')
+    log.info(`Deploying token db contract to ${chainUrl}. Connecting with web3..`)
 
-  const tokenDBContractInstance = await tokenDBContract.deploy().send({
-    from: masterAccount.address,
-    gas: 1500000,
-    gasPrice: '0'
-  })
+    log.info("Compiling token DB contract..")
 
-  const tokenDBContractAddress = tokenDBContractInstance.options.address
-  tokenDBContract.options.address = tokenDBContractAddress
-  this.tokenDBContractAddress = tokenDBContractAddress
+    const tokenDBContract = getContract(privateWeb3,
+      path.resolve(__dirname, '../src/contracts/tokenDB.sol'),
+      ':TokenDB')
 
-  log.info(`Token DB contract deployed successfully. The address is ${this.tokenDBContractAddress}`)
+    log.info('Deploying the token DB contract..')
+
+    const tokenDBContractInstance = await tokenDBContract.deploy().send({
+      from: masterAccount.address,
+      gas: 1500000,
+      gasPrice: '0'
+    })
+
+    const tokenDBContractAddress = tokenDBContractInstance.options.address
+    tokenDBContract.options.address = tokenDBContractAddress
+    this.tokenDBContractAddress = tokenDBContractAddress
+
+    log.info(`Token DB contract deployed successfully. The address is ${this.tokenDBContractAddress}`)
+  } else if (contractType === 'loyalty') {
+
+    const name = 'Sausalito coin' // process.argv[5]
+    const symbol = 'SPX' //process.argv[6]
+    const decimals = 18
+    log.info(`Deploying loyalty contract to ${chainUrl} wit name ${name} and symbol ${symbol}. Connecting with web3..`)
+    log.info('Compiling loyalty token contract..')
+
+    const loyaltyTokenContract = getContract(privateWeb3,
+      path.resolve(__dirname, '../src/contracts/loyaltyToken.sol'),
+      ':SmartToken')
+
+    loyaltyTokenContract.options.from = ownerAddress
+    loyaltyTokenContract.options.gas = 1500000
+
+    log.info('Deploying the loyalty token contract..')
+
+    const loyaltyTokenContractInstance = await loyaltyTokenContract.deploy({
+      arguments: [name, symbol, decimals]
+    }).send({
+      from: ownerAddress,
+      gas: 1500000,
+      gasPrice: '0'
+    })
+
+    const loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
+    log.info(`Loyalty Token contract deployed successfully. The address is ${loyaltyTokenContractAddress}`)
+
+  } else {
+    throw new Error(`Unknown contract type ${contractType}`)
+  }
+
+
 
 })().catch(e => {
   log.error(`${e}`)

@@ -32,6 +32,8 @@ class TestDatabaseConn {
   async setup(dbConfig, existingToken): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
+    await setupDatabaseTables()
+
     const firstBrand = {
       legalName: 'MagicWorld'
     }

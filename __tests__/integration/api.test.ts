@@ -29,10 +29,12 @@ const INTEGRATION_TEST_CONFIGURATION = {
 }
 
 const TOKEN = {
-  name: "MagicCarpetsWorld",
-  symbol: "MCW",
-  decimals: 10,
-  rate: 100
+  name: 'MagicCarpetsWorld',
+  symbol: 'MCW',
+  decimals: 18,
+  rate: 100,
+  description: 'Magic is in the air.',
+  website: 'otherworldlymagicalcarpets.com'
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)

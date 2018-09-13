@@ -17,8 +17,8 @@ before_install:
 - echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa_travis_ci\n" >> ~/.ssh/config
 - touch ~/.ssh/id_rsa_travis_ci.pub
 - touch ~/.ssh/id_rsa_travis_ci
-- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.pub.enc -out $HOME\/.ssh/id_rsa_travis_ci.pub -d
-- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.enc -out $HOME\/.ssh/id_rsa_travis_ci -d
+- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.pub.enc -out ./id_rsa_travis_ci.pub -d
+- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.enc -out ./id_rsa_travis_ci -d
 - sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('') where
   User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
 - sudo mysql_upgrade

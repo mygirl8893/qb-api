@@ -6,6 +6,24 @@ node_js:
 cache:
   directories:
   - node_modules
+addons:
+  apt:
+    sources:
+    - mysql-5.7-trusty
+    packages:
+    - mysql-server
+    - mysql-client
+before_install:
+- echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa_travis_ci\n" >> ~/.ssh/config
+- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.enc -out ./id_rsa_travis_ci -d
+- mv ./id_rsa_travis_ci ~/.ssh/
+- chmod 600 ~/.ssh/id_rsa_travis_ci
+- ls -a ~/.ssh
+- sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('') where
+  User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+- sudo mysql_upgrade
+- sudo service mysql restart
+- mysql -e 'CREATE DATABASE IF NOT EXISTS qiibee;'
 script:
 - npm test
 - npm run build

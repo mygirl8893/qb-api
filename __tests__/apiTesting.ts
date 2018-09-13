@@ -1,9 +1,10 @@
 import utils from '../src/lib/utils'
+import Sequelize from 'sequelize'
+import log from '../src/logging'
+import * as qbDB from 'qb-db-migrations'
 
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
-
-  /* eslint-disable-next-line global-require */
   const Config = require('../src/config/config')
 
   Config.default.test = testConfiguration
@@ -20,7 +21,43 @@ const waitForAppToBeReady = async (config) => {
   }
 }
 
+async function setupDatabaseTables() {
+  await qbDB.runMigrations(qbDB.models.sequelize, true)
+}
+
+class TestDatabaseConn {
+  constructor() {
+  }
+
+  async setup(dbConfig, existingToken): Promise<void> {
+    log.info(`Adding test token ${existingToken.symbol}.`)
+
+    await setupDatabaseTables()
+
+    const firstBrand = {
+      legalName: 'MagicWorld'
+    }
+    await qbDB.models.brand.create(firstBrand)
+    const newBrand = await qbDB.models.brand.find({where: {legalName: firstBrand.legalName}})
+
+    existingToken.brandId = newBrand.id
+    await qbDB.models.token.create(existingToken)
+
+    log.info('Successfully setup database.')
+  }
+
+  async updateMinedStatus(txHash, blockNumber) {
+    const r = await qbDB.models.transaction.update({ blockNumber: blockNumber, state: 'processed'}, { where: { hash: txHash }})
+    return r
+  }
+
+  async close() {
+    await qbDB.models.sequelize.close()
+  }
+}
+
 export default {
   setupTestConfiguration,
-  waitForAppToBeReady
+  waitForAppToBeReady,
+  TestDatabaseConn
 }

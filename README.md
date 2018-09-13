@@ -34,8 +34,7 @@ cd qb-api
  - for OSX you can do `brew install mysql`
  - 	access mysql using the `mysql` program from the terminal
  -  inside the `mysql` console type `CREATE DATABASE qiibee`
- -  next type `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'a12345678$X'`
- -  further on you'll be accessing the mysql console using the command `mysql -u root --password` and type in the above password
+ -  further on you'll be accessing the mysql console using the command `mysql -u root --password` and leave a blank password
 
 * Start
 

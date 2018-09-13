@@ -39,7 +39,7 @@ const TOKEN = {
   name: 'MagicCarpetsWorld',
   symbol: 'MCW',
   decimals: 18,
-  rate: 100,
+  rate: 10,
   description: 'Magic is in the air.',
   website: 'otherworldlymagicalcarpets.com'
 }

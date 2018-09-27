@@ -26,6 +26,7 @@ async function setupDatabaseTables() {
 }
 
 class TestDatabaseConn {
+  testToken
   constructor() {
   }
 
@@ -41,13 +42,17 @@ class TestDatabaseConn {
     const newBrand = await qbDB.models.brand.find({where: {legalName: firstBrand.legalName}})
 
     existingToken.brandId = newBrand.id
-    await qbDB.models.token.create(existingToken)
+    this.testToken = await qbDB.models.token.create(existingToken)
 
     log.info('Successfully setup database.')
   }
 
   async updateMinedStatus(txHash, blockNumber) {
-    const r = await qbDB.models.transaction.update({ blockNumber: blockNumber, state: 'processed'}, { where: { hash: txHash }})
+    const r = await qbDB.models.transaction.update({
+      blockNumber: blockNumber,
+      state: 'processed',
+      tokenId: this.testToken.id
+    }, { where: { hash: txHash }})
     return r
   }
 

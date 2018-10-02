@@ -29,7 +29,7 @@ const Config = {
     database: 'qiibee',
     host: 'localhost',
     connectionLimit: 3,
-    debug: true
+    debug: false
   }
 }
 

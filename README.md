@@ -52,7 +52,7 @@ To run a transaction and fetch the history do:
 npm localenv seed
 ```
 
-## License
+## License 
 
 qiibee API is open source and distributed under the Apache License v2.0
 

@@ -14,8 +14,10 @@ addons:
     - mysql-server
     - mysql-client
 before_install:
-- echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa_travis_ci\n" >> ~/.ssh/config
-- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv -in id_rsa_travis_ci.enc -out ./id_rsa_travis_ci -d
+- echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa_travis_ci\n"
+  >> ~/.ssh/config
+- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv
+  -in id_rsa_travis_ci.enc -out ./id_rsa_travis_ci -d
 - mv ./id_rsa_travis_ci ~/.ssh/
 - chmod 600 ~/.ssh/id_rsa_travis_ci
 - ls -a ~/.ssh
@@ -34,7 +36,7 @@ deploy:
     skip_cleanup: true
     access_key_id: AKIAIE4NIBVBAKOTWSQQ
     secret_access_key:
-      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+      secure: sFvyYkm/kW1ZYOtD/wlQWvRp+ArfFPtLWCswDK1CYXx0hE62L2L7ZTA5+G4ie6flIzfYYqjiCCexqhFP+fqeersLAgp8CzfQAbEIaGq1GWS2QPJANLEZqTW9UcS58/z41GXcm/OB+UgH+kB5Dcz0VMI5d/+tdn7Wndw9/SRPyhlZP50Ukf3zmuzGpgkVrzlGSqUfWbuF/gJk1ycLZuQwjXwnA6Kum+kneCm/QtzC74rnmgjP205loxJ34flBxZJT1wH8gmqcq+URdu8zVZ/eC9Bq94//qzxvwk8Szt814h9FiFUwsa0G2upZpUQpGWElda0EhNxjCyGxh+ImPz1ABhfm8FzNWLclYr3RQbzOnAaFTlPV2LyStiM4BIAvVmdowe0lngtRJgksctJ+IELq8v/6b4H+S70Xxo1jQMohj09sbWK/Xs2ejenBrdESAoEgl4l9KGisdD2a8ZrPxNXwHbtHiuGmuFfWOS9jboRcJIB10TAQ/XyM35jIjnGteH4hgprXR4dqEolxktcg9oIu+OBFX5AdsYdHtpfh7G9m2OZ9TD4jk3wwfbRvhLmLRM/yZHxjh4pVP2O5VaCIgdbYo7euhIp5R68YiX9kQsICKD0ZtYN6Ij5zAZE17F3zEpsLRr3H0LFS6XePUz9kf+bUJCf4AgSQ57DPar61Ng8cNqo=
     region: eu-central-1
     app: qbAPI
     env: qb-api-testing
@@ -46,7 +48,7 @@ deploy:
     skip_cleanup: true
     access_key_id: AKIAIE4NIBVBAKOTWSQQ
     secret_access_key:
-      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+      secure: sFvyYkm/kW1ZYOtD/wlQWvRp+ArfFPtLWCswDK1CYXx0hE62L2L7ZTA5+G4ie6flIzfYYqjiCCexqhFP+fqeersLAgp8CzfQAbEIaGq1GWS2QPJANLEZqTW9UcS58/z41GXcm/OB+UgH+kB5Dcz0VMI5d/+tdn7Wndw9/SRPyhlZP50Ukf3zmuzGpgkVrzlGSqUfWbuF/gJk1ycLZuQwjXwnA6Kum+kneCm/QtzC74rnmgjP205loxJ34flBxZJT1wH8gmqcq+URdu8zVZ/eC9Bq94//qzxvwk8Szt814h9FiFUwsa0G2upZpUQpGWElda0EhNxjCyGxh+ImPz1ABhfm8FzNWLclYr3RQbzOnAaFTlPV2LyStiM4BIAvVmdowe0lngtRJgksctJ+IELq8v/6b4H+S70Xxo1jQMohj09sbWK/Xs2ejenBrdESAoEgl4l9KGisdD2a8ZrPxNXwHbtHiuGmuFfWOS9jboRcJIB10TAQ/XyM35jIjnGteH4hgprXR4dqEolxktcg9oIu+OBFX5AdsYdHtpfh7G9m2OZ9TD4jk3wwfbRvhLmLRM/yZHxjh4pVP2O5VaCIgdbYo7euhIp5R68YiX9kQsICKD0ZtYN6Ij5zAZE17F3zEpsLRr3H0LFS6XePUz9kf+bUJCf4AgSQ57DPar61Ng8cNqo=
     region: eu-central-1
     app: qbAPI
     env: qb-api-production

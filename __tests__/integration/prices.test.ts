@@ -4,8 +4,8 @@ const axios = require('axios/index')
 
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
 import log from '../../src/logging'
+import DBConfig from '../../src/database/config'
 
 const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
@@ -36,20 +36,15 @@ const INTEGRATION_TEST_CONFIGURATION = {
 }
 
 const TOKEN = {
-  name: "MagicCarpetsWorld",
-  symbol: "MCW",
+  name: 'MagicCarpetsWorld',
+  symbol: 'MCW',
   decimals: 18,
-  rate: 10
+  rate: 10,
+  description: 'Magic is in the air.',
+  website: 'otherworldlymagicalcarpets.com'
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
-
-jest.mock('../../src/database', () => ({
-    default: {
-      getTransactionHistory: jest.fn(),
-      addPendingTransaction: jest.fn(),
-    }
-  }))
 
 jest.genMockFromModule('axios')
 jest.mock('axios')
@@ -59,7 +54,7 @@ jest.setTimeout(180000)
 describe('Prices API Integration', () => {
   let app = null
   let privateChain = null
-
+  let apiDbConn = null
   beforeAll(async () => {
 
     try {
@@ -68,12 +63,20 @@ describe('Prices API Integration', () => {
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
+      // reuse the development config
+      DBConfig['test'] = DBConfig.development
+
+      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
+      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
       app = require('../../app').default
       const Config = require('../../src/config').default
 
+      apiDbConn = require('../../src/database').default
+
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
-      log.error(`Failed setting up the test context ${e}`)
+      log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
   })
@@ -81,8 +84,9 @@ describe('Prices API Integration', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await apiDbConn.close()
     } catch (e) {
-      log.error(`Failed to tear down the test context ${e}`)
+      log.error(`Failed to tear down the test context ${e.stack}`)
       throw e
     }
   })
@@ -253,7 +257,7 @@ describe('Prices API Integration', () => {
       .get(`/prices/history`)
       .query(pricesParams)
     expect(response.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
+    expect(response.body.message).toEqual('Missing "from" parameter.')
   })
 
   it('Get historical values of invalid LoyaltyToken', async () => {

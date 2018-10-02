@@ -34,15 +34,14 @@ cd qb-api
  - for OSX you can do `brew install mysql`
  - 	access mysql using the `mysql` program from the terminal
  -  inside the `mysql` console type `CREATE DATABASE qiibee`
- -  next type `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'a12345678$X'`
- -  further on you'll be accessing the mysql console using the command `mysql -u root --password` and type in the above password
+ -  further on you'll be accessing the mysql console using the command `mysql -u root --password` and leave a blank password
 
 * Start
 
 ```console
 npm install
 # start dependencies locally and an instance of qb-api
-npm run localdev launch
+npm run localenv launch
 ```
 
 Go to [localhost:3000](http://localhost:3000)
@@ -50,7 +49,7 @@ Go to [localhost:3000](http://localhost:3000)
 To run a transaction and fetch the history do:
 
 ```console
-npm localdev seed
+npm localenv seed
 ```
 
 ## License

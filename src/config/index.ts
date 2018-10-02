@@ -27,7 +27,7 @@ let web3ConnectionsAreReady = false
     envtConfig.chainID = chainID
     web3ConnectionsAreReady = true
 })().catch((e) => {
-  log.error(`${e}`)
+  log.error(`${e.stack}`)
   process.exit(1)
 })
 

@@ -4,6 +4,7 @@ import apiTesting from '../__tests__/apiTesting'
 import * as Tx from 'ethereumjs-tx'
 import axios from 'axios/index'
 import log from '../src/logging'
+import DBConfig from '../src/database/config'
 
 /*
  *  This script creates a local dev environment to experiment with the API
@@ -32,70 +33,25 @@ const TOKEN = {
     rate: 100
   }
 
-async function getMysqlConnection() {
-  const mysqlConn = await mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : 'a12345678$X',
-    database : 'qiibee'
-  })
-
-  log.info('Successfully connected to mysql.')
-
-  return mysqlConn
-}
-
 async function launch() {
-  const mysqlConn = await getMysqlConnection()
-
-  log.info('Clear out existing tables, and set up new tables..')
-
-  await mysqlConn.query('DROP TABLE IF EXISTS tokens')
-  await mysqlConn.query(`
-  CREATE TABLE tokens
-    (
-      contractAddress CHAR(42) PRIMARY KEY,
-      symbol VARCHAR(64),
-      name VARCHAR(256),
-      rate BIGINT UNSIGNED,
-      totalSupply DECIMAL(36,0),
-      decimals INT UNSIGNED
-    );`)
-
-  await mysqlConn.query('DROP TABLE IF EXISTS transactions')
-  await mysqlConn.query(`
-  CREATE TABLE transactions
-  (
-    hash  CHAR(66) PRIMARY KEY,
-    nonce BIGINT UNSIGNED,
-    blockHash VARCHAR(66),
-    blockNumber BIGINT UNSIGNED,
-    transactionIndex BIGINT UNSIGNED,
-    fromAddress CHAR(42),
-    toAddress CHAR(42),
-    value DECIMAL(36,0),
-    input TEXT,
-    status VARCHAR(3),
-    timestamp BIGINT UNSIGNED,
-    confirms BIGINT UNSIGNED,
-    contractAddress CHAR(42),
-    state VARCHAR(50)
-  );`)
 
   const testPrivateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
   await testPrivateChain.setup()
 
-  await mysqlConn.query(`INSERT INTO tokens SET ?`, {
+  log.info('Local test chain is setup and running.')
+
+  const token = {
     contractAddress: testPrivateChain.loyaltyTokenContractAddress,
     symbol: TOKEN.symbol,
     name: TOKEN.name,
     rate: TOKEN.rate,
     totalSupply: 10 ** 27, // this is innacurate pick a valid value from the actual chain
     decimals: TOKEN.decimals,
-  })
+  }
 
-  log.info('Local test chain is setup and running.')
+  const testDbConn = new apiTesting.TestDatabaseConn()
+  await testDbConn.setup(DBConfig.development, token)
 
   const configValues = require('../src/config/config')
 
@@ -116,8 +72,6 @@ async function launch() {
 }
 
 async function seed() {
-  const mysqlConn = await getMysqlConnection()
-
   log.info("Get raw transaction.")
 
   const rawTransactionRequest = {
@@ -173,5 +127,5 @@ async function seed() {
   }
 
 })().catch(e => {
-  log.error(`${e}`)
+  log.error(`${e.stack}`)
 })

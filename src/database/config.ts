@@ -25,11 +25,11 @@ const Config = {
   },
   development: {
     user: 'root',
-    password: 'a12345678$X',
+    password: '',
     database: 'qiibee',
     host: 'localhost',
     connectionLimit: 3,
-    debug: true
+    debug: false
   }
 }
 

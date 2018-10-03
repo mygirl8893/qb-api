@@ -6,6 +6,26 @@ node_js:
 cache:
   directories:
   - node_modules
+addons:
+  apt:
+    sources:
+    - mysql-5.7-trusty
+    packages:
+    - mysql-server
+    - mysql-client
+before_install:
+- echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_rsa_travis_ci\n"
+  >> ~/.ssh/config
+- openssl aes-256-cbc -K $encrypted_5fa70d14a19f_key -iv $encrypted_5fa70d14a19f_iv
+  -in id_rsa_travis_ci.enc -out ./id_rsa_travis_ci -d
+- mv ./id_rsa_travis_ci ~/.ssh/
+- chmod 600 ~/.ssh/id_rsa_travis_ci
+- ls -a ~/.ssh
+- sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('') where
+  User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+- sudo mysql_upgrade
+- sudo service mysql restart
+- mysql -e 'CREATE DATABASE IF NOT EXISTS qiibee;'
 script:
 - npm test
 - npm run build
@@ -16,7 +36,7 @@ deploy:
     skip_cleanup: true
     access_key_id: AKIAIE4NIBVBAKOTWSQQ
     secret_access_key:
-      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+      secure: H0OKmegYqCtphBFAHLpCMXQUkJG64inGQoHZFkbMANZ4l3OGeH/D42dgB/n+RvhJ5uFFzMq7vaj4GoSGsWQE3NzNTCW9qxcugW2ZNj7uAwxVMfdJu6h0mTJ8xGjfO4IG1bgSpMEB3K5BcLQ0DNJXRfHs3B1+1pKzv2DLF6ZvQBSwIDauCiCYO79ErTlzbQfv0WdrKC9diqpy/X8uRJo9oWWwcrh3qnUVXUP5jB6rp1PFsU2qNQV2Lxx39oN0sm3aFSuE9E5DM60JBO8Fzfj8DpFKBassLzlFR71qs/Tbpvq8kvrnX/m/oFT46NrcCwmOK4EjG5Rt5nfM3ypzpGHC0yXNTvLxuOad29koMPMXATi3jDrbHjdaRhg7XcRpJWyggklEjXB9Ijh6w6Uud0oLkM5PEjNNlb95ncQN9uxNdBU9GFY4n8ZginAsR3sxZURDkJCxU0Sf2an2VltnEhvp4JZ5+ggeD55Z10/W0ROOC0quIFWIpZ+qMI7Bl5yzVpBC287o8Oh5+NRSwXcL1WbWPkfArsDKbd4v8MX+2NjfwnnejH/q8nKVmCslkwQxYpMk2pYEX52njWyn/sX/njwhzqfbW3fS4+2eP9V4uok2bmWg3dwhlYTLOjO+22VLm9VgsomoINSsm0xA5dMGIPm4t8ufCPngPCXKP+tanDh1FME=
     region: eu-central-1
     app: qbAPI
     env: qb-api-testing
@@ -28,7 +48,7 @@ deploy:
     skip_cleanup: true
     access_key_id: AKIAIE4NIBVBAKOTWSQQ
     secret_access_key:
-      secure: qNEnB249H6WXZGPlbnXJn4lTacXstoJsJ3Uk5YOvbpP5czXRyFwM4OoTgvA2aNG0ZJFGnH2wxprHWmYYMIkUgG0XwbDf/lkikrCUXzt7GojXrLvUJT+opfi6JVbfd0TTTZYVpEoqSZ9Q7UQS/xi+CuBb9b0C9jvt/2KxriRpo5h+wtBGOJ2hrFFnIRAYofcMhX0vvX/Mt2WFgqRvrs8V5V8uzhO3y0OHiQLlQW2HWDkTNNKp+P0LXwJQsQsGG0GfQBuzMQlfCCv4izkwiNGlyPFpTX1zdjS8oKAi/5r1oZZvG3e2KbwPsm/7s1ro5r5nj0dxIgxa35dlDXsyIzHAPSMbKd828TsMnXdkKmAHb5YNioa33Bi+MppipVRE+XsjNVaq+DOS3Usip+sKRDlenvqsGP1s13tJm5AEL3oQ9e9xiV3g2g7UcOsTi2yVnC0vNkTyN3d6wc8bX4/iv/gIS4EOeN83a2esrSCjxHTUNVQNjgx9yL9O4wvt/Hv/5n+ntfrF1O94fq8nXUPg8q3Z5VN+1q4V9CkES79HLJx2QbqdjKBZCORzysEOlekgBEnG72EciKeKx+I1DEHVQmhcGcmvGeu9va9TVmbtBRwdNIBotHrmDnHOGXdwFQeqEpB1eKecGUmLyt7b5gbsBueLYcku4fDHGoPTm4pOwuZxX24=
+      secure: H0OKmegYqCtphBFAHLpCMXQUkJG64inGQoHZFkbMANZ4l3OGeH/D42dgB/n+RvhJ5uFFzMq7vaj4GoSGsWQE3NzNTCW9qxcugW2ZNj7uAwxVMfdJu6h0mTJ8xGjfO4IG1bgSpMEB3K5BcLQ0DNJXRfHs3B1+1pKzv2DLF6ZvQBSwIDauCiCYO79ErTlzbQfv0WdrKC9diqpy/X8uRJo9oWWwcrh3qnUVXUP5jB6rp1PFsU2qNQV2Lxx39oN0sm3aFSuE9E5DM60JBO8Fzfj8DpFKBassLzlFR71qs/Tbpvq8kvrnX/m/oFT46NrcCwmOK4EjG5Rt5nfM3ypzpGHC0yXNTvLxuOad29koMPMXATi3jDrbHjdaRhg7XcRpJWyggklEjXB9Ijh6w6Uud0oLkM5PEjNNlb95ncQN9uxNdBU9GFY4n8ZginAsR3sxZURDkJCxU0Sf2an2VltnEhvp4JZ5+ggeD55Z10/W0ROOC0quIFWIpZ+qMI7Bl5yzVpBC287o8Oh5+NRSwXcL1WbWPkfArsDKbd4v8MX+2NjfwnnejH/q8nKVmCslkwQxYpMk2pYEX52njWyn/sX/njwhzqfbW3fS4+2eP9V4uok2bmWg3dwhlYTLOjO+22VLm9VgsomoINSsm0xA5dMGIPm4t8ufCPngPCXKP+tanDh1FME=
     region: eu-central-1
     app: qbAPI
     env: qb-api-production
@@ -36,6 +56,18 @@ deploy:
     on:
       repo: qiibee/qb-api
       branch: production
+  - provider: elasticbeanstalk
+    skip_cleanup: true
+    access_key_id: AKIAIE4NIBVBAKOTWSQQ
+    secret_access_key:
+      secure: H0OKmegYqCtphBFAHLpCMXQUkJG64inGQoHZFkbMANZ4l3OGeH/D42dgB/n+RvhJ5uFFzMq7vaj4GoSGsWQE3NzNTCW9qxcugW2ZNj7uAwxVMfdJu6h0mTJ8xGjfO4IG1bgSpMEB3K5BcLQ0DNJXRfHs3B1+1pKzv2DLF6ZvQBSwIDauCiCYO79ErTlzbQfv0WdrKC9diqpy/X8uRJo9oWWwcrh3qnUVXUP5jB6rp1PFsU2qNQV2Lxx39oN0sm3aFSuE9E5DM60JBO8Fzfj8DpFKBassLzlFR71qs/Tbpvq8kvrnX/m/oFT46NrcCwmOK4EjG5Rt5nfM3ypzpGHC0yXNTvLxuOad29koMPMXATi3jDrbHjdaRhg7XcRpJWyggklEjXB9Ijh6w6Uud0oLkM5PEjNNlb95ncQN9uxNdBU9GFY4n8ZginAsR3sxZURDkJCxU0Sf2an2VltnEhvp4JZ5+ggeD55Z10/W0ROOC0quIFWIpZ+qMI7Bl5yzVpBC287o8Oh5+NRSwXcL1WbWPkfArsDKbd4v8MX+2NjfwnnejH/q8nKVmCslkwQxYpMk2pYEX52njWyn/sX/njwhzqfbW3fS4+2eP9V4uok2bmWg3dwhlYTLOjO+22VLm9VgsomoINSsm0xA5dMGIPm4t8ufCPngPCXKP+tanDh1FME=
+    region: eu-central-1
+    app: qbAPI
+    env: qb-api-beta
+    bucket_name: elasticbeanstalk-eu-central-1-233816796838
+    on:
+      repo: qiibee/qb-api
+      branch: beta
 notifications:
   slack:
     secure: ZzpOM0BQ2nwrisHjaoELCtcykyc8tMG9qVVQq8SJjoCHlDN9HwTMZZ+VQfAAUr9k5hbxFEir8p+r47a6kyAGA3XJ9KxORUI65TP71IETVlIS+Ud5nZZmte7aGFOi4WRTSbuLzG5hYY+HGiDFZHMybf2ocrQlidqtgw8OB01cLM9e1GkQtg/DL5RNpyzPVzfB2KC6XnZ0B1Pa2uQzxsC+KRFzLXRVN9jqFQewIrtCMtYm7qMy4+pRhNTXHrE6OWj0GKrBrsGj3WizUqTABo2UwF9ovf8yZldifqlZLHfT6anyrK0tMGE+FuMJ2gMN92JsSZt7CHW7Q/cyVEVdib/X0GhpductZmayTEuHnI9UoA162kY4sS5VXELUHUX7netctGeTsHEQrGnRg6Zvx23nkOcisVlenfIAr88suYMkzYQ2FxJD+iW441Wn8k7xx8r3v0wj5pGe/HD3cWtCA9MJsP5M6ctuGXXVQ2PN3H9J33bodqsSfKPjb8OYPUDVQUG4J5HSioopIGh9i3736v3+OMRId7lr778B9WbR1dYXAzbKoeW/thtDcfierMsYQm8kXe22LIHZR1cC3D26lmxtXOYFCemYjDHYV3+H5qebwsANJQF3P+oz/SZSBjHs7RyxYUvf6Qk682cBOoqlc7OZuu23YXhymhXwlyXd4+lXyTo=

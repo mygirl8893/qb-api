@@ -1,12 +1,9 @@
 import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
-import Tx = require('ethereumjs-tx')
-
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
 import log from '../../src/logging'
-
+import DBConfig from '../../src/database/config'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -32,41 +29,48 @@ const INTEGRATION_TEST_CONFIGURATION = {
 }
 
 const TOKEN = {
-  name: "MagicCarpetsWorld",
-  symbol: "MCW",
-  decimals: 10,
-  rate: 100
+  name: 'MagicCarpetsWorld',
+  symbol: 'MCW',
+  decimals: 18,
+  rate: 100,
+  description: 'Magic is in the air.',
+  website: 'otherworldlymagicalcarpets.com'
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
-
-jest.mock('../../src/database', () => ({
-  default: {
-    getTransactionHistory: jest.fn(),
-    addPendingTransaction: jest.fn()
-  }
-}))
 
 jest.setTimeout(180000)
 
 describe('Network, Users and Tokens API', () => {
   let app = null
   let privateChain = null
-
+  let testDbConn = null
+  let apiDbConn = null
   beforeAll(async () => {
 
     try {
+
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
+      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
+      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
+      // reuse the development config
+      DBConfig['test'] = DBConfig.development
+      testDbConn = new APITesting.TestDatabaseConn()
+      await testDbConn.setup(DBConfig['test'], TOKEN)
+
       app = require('../../app').default
       const Config = require('../../src/config').default
 
+      apiDbConn = require('../../src/database').default
+
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
-      log.error(`Failed setting up the test context ${e}`)
+      log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
   })
@@ -74,8 +78,10 @@ describe('Network, Users and Tokens API', () => {
   afterAll(async () => {
     try {
       await privateChain.tearDown()
+      await testDbConn.close()
+      await apiDbConn.close()
     } catch (e) {
-      log.error(`Failed to tear down the test context ${e}`)
+      log.error(`Failed to tear down the test context ${e.stack}`)
       throw e
     }
   })

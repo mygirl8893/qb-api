@@ -62,7 +62,7 @@
     "web3": "^1.0.0-beta.29",
     "web3-eth-personal": "^1.0.0-beta.30",
     "winston": "^3.0.0",
-    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v0.0.1"
+    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v0.1.3"
   },
   "repository": {
     "type": "git",

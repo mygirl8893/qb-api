@@ -92,30 +92,6 @@ const getHistory = async (req, res) => {
 
   const history = await database.getTransactionHistory(address, limit, offset)
 
-  history.forEach((t) => {
-    t.to = t.toAddress
-    delete t.toAddress
-
-    t.from = t.fromAddress
-    delete t.fromAddress
-
-    t.token = {
-      contractAddress: t.contractAddress,
-      name: t.name,
-      rate: t.rate,
-      symbol: t.symbol,
-      totalSupply: t.totalSupply,
-      decimals: t.decimals
-    }
-
-    delete t.contractAddress
-    delete t.name
-    delete t.rate
-    delete t.symbol
-    delete t.totalSupply
-    delete t.decimals
-    delete t.confirms
-  })
 
   return res.json(history)
 }

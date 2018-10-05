@@ -1,31 +1,38 @@
 import * as mysql from 'promise-mysql'
 import Config from './config'
-import { add } from "winston";
-
-const env = process.env.NODE_ENV || 'development',
-  dbConfig = Config[env]
-
-const pool = mysql.createPool(dbConfig)
-
-/*
-  Security NOTE: node-mysql escapes the inputs if the '?' placeholder is used
-  as documented here https://github.com/mysqljs/mysql#escaping-query-values
- */
+import * as qbDB from 'qb-db-migrations'
 
 const getTransactionHistory = async (address: string, limit: number, offset: number) => {
+  const transactions = await qbDB.models.transaction.findAll({
+    where: {
+      $or: {
+        toAddress: { $eq: address},
+        fromAddress: { $eq: address},
+      }
+    },
+    order: [ ['blockNumber', 'DESC'] ],
+    limit: limit,
+    offset: offset,
+    include: [qbDB.models.token]
+  })
 
-  const conn = await pool.getConnection()
+  transactions.forEach((t) => {
+    t.dataValues.to = t.toAddress
+    delete t.dataValues.toAddress
 
-  try {
+    t.dataValues.from = t.fromAddress
+    delete t.dataValues.fromAddress
 
-    const transactions = await conn.query(`SELECT * from transactions
-    LEFT JOIN tokens ON transactions.tokenId = tokens.id
-    WHERE toAddress=? OR fromAddress=?
-    ORDER BY blockNumber DESC LIMIT ? OFFSET ?`, [address, address, limit, offset])
-    return transactions
-  } finally {
-    conn.release()
-  }
+    if (t.token) {
+      t.token.totalSupply = parseInt(t.token.totalSupply)
+      delete t.token.dataValues.id
+      delete t.token.dataValues.brandId
+    }
+
+    delete t.dataValues.confirms
+  })
+
+  return transactions
 }
 
 interface PendingTransaction {
@@ -36,22 +43,27 @@ interface PendingTransaction {
   state: string
 }
 
-const addPendingTransaction = async (transaction: PendingTransaction) => {
+/*
+  Security NOTE: sequelize escapes the inputs if the '?' placeholder is used
+ */
 
-  const conn = await pool.getConnection()
-  try {
-    /* insert if the primary key (transaction hash) is not present; do nothing otherwise.
-       if it's already there it means it was already synched to the database.
-     */
-    const r = await conn.query(`INSERT IGNORE INTO transactions SET ?`, transaction)
-    return r
-  } finally {
-    conn.release()
-  }
+const addPendingTransaction = async (transaction: PendingTransaction) => {
+  const keys = Object.keys(transaction)
+
+  /* insert if the primary key (transaction hash) is not present; do nothing otherwise.
+     if it's already there it means it was already synched to the database.
+   */
+  const r = await qbDB.models.sequelize.query(`INSERT IGNORE INTO transactions
+    (${keys.join(',')})
+    VALUES (${Array(keys.length).fill('?').join(',')})`, {
+    replacements: keys.map(k => transaction[k]),
+    type: qbDB.models.sequelize.QueryTypes.INSERT
+  })
+  return r
 }
 
 async function close() {
-  await pool.end()
+  await qbDB.models.sequelize.close()
 }
 
 export default {

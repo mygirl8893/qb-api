@@ -1,4 +1,3 @@
-import * as mysql from 'promise-mysql'
 import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import apiTesting from '../__tests__/apiTesting'
 import * as Tx from 'ethereumjs-tx'

@@ -1,5 +1,3 @@
-import * as mysql from 'promise-mysql'
-import Config from './config'
 import * as qbDB from 'qb-db-migrations'
 
 const getTransactionHistory = async (address: string, limit: number, offset: number) => {

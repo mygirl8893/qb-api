@@ -3,7 +3,6 @@ import apiTesting from '../__tests__/apiTesting'
 import * as Tx from 'ethereumjs-tx'
 import axios from 'axios/index'
 import log from '../src/logging'
-import DBConfig from '../src/database/config'
 
 /*
  *  This script creates a local dev environment to experiment with the API
@@ -50,7 +49,7 @@ async function launch() {
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()
-  await testDbConn.setup(DBConfig.development, token)
+  await testDbConn.setup(token)
 
   const configValues = require('../src/config/config')
 

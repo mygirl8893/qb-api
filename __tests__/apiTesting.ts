@@ -30,7 +30,7 @@ class TestDatabaseConn {
   constructor() {
   }
 
-  async setup(dbConfig, existingToken): Promise<void> {
+  async setup(existingToken): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()

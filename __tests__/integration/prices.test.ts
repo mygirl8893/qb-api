@@ -5,7 +5,6 @@ const axios = require('axios/index')
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import log from '../../src/logging'
-import DBConfig from '../../src/database/config'
 
 const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
@@ -62,9 +61,6 @@ describe('Prices API Integration', () => {
 
       await privateChain.setup()
       INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
-
-      // reuse the development config
-      DBConfig['test'] = DBConfig.development
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress

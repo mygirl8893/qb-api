@@ -3,7 +3,6 @@ import * as HttpStatus from 'http-status-codes'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import log from '../../src/logging'
-import DBConfig from '../../src/database/config'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -58,10 +57,8 @@ describe('Network, Users and Tokens API', () => {
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
 
-      // reuse the development config
-      DBConfig['test'] = DBConfig.development
       testDbConn = new APITesting.TestDatabaseConn()
-      await testDbConn.setup(DBConfig['test'], TOKEN)
+      await testDbConn.setup(TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default

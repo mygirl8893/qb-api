@@ -3,6 +3,7 @@ import Config from '../config'
 import * as HttpStatus from "http-status-codes"
 import utils from "../lib/utils"
 import log from '../logging'
+import * as Joi from 'joi'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -33,6 +34,11 @@ const getTokens = async (req, res) => {
   })
 }
 
+const getTokenSchema = Joi.object().keys({
+  contract: Joi.string().alphanum().required(),
+  from: Joi.string().alphanum()
+})
+
 /**
  * Returns a specific Loyalty Token in the private ecosystem
  * @param {object} req - request object.
@@ -42,9 +48,9 @@ const getTokens = async (req, res) => {
 const getToken = async (req, res) => {
   const publicBalance = 0
 
+  const {error, value} = Joi.validate({...req.params, ...req.query}, getTokenSchema)
   const contractAddress = req.params.contract
-
-  if (!contractAddress) {
+  if (error) {
     res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
   }
   try {

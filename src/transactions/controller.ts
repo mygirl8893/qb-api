@@ -45,13 +45,13 @@ const getTx = async (txHash) => {
   delete transaction.r
   delete transaction.s
 
-  const toBalance = await User.getBalanceOnContract(
+  const token = await User.getTokenByContract(
     transaction.to,
     transaction.contract
   )
-  delete toBalance.balance
+  delete token.balance
 
-  transaction.token = toBalance || null
+  transaction.token = token || null
   return transaction
 }
 

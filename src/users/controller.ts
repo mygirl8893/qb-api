@@ -2,14 +2,16 @@ import { BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
+import * as qbDB from 'qb-db-migrations'
 
+const Token = qbDB.models.token
 import log from '../logging'
 import utils from "../lib/utils";
 
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
 
-const getBalanceOnContract = async (from = null, contractAddress) => {
+const getTokenByContract = async (from = null, contractAddress) => {
   const Token = TokenController.loyaltyToken(contractAddress.toLowerCase())
   const totalSupply = new BigNumber(await Token.totalSupply().call()).toString(10)
   let balance = '0'
@@ -23,23 +25,27 @@ const getBalanceOnContract = async (from = null, contractAddress) => {
     contractAddress: contractAddress.toLowerCase(),
     symbol: await Token.symbol().call(),
     name: await Token.name().call(),
+    rate: '',
     balance,
     totalSupply,
-    decimals: parseInt(await Token.decimals().call(), 10)
+    decimals: parseInt(await Token.decimals().call(), 10),
+    description: '',
+    website: '',
+    logoUrl: ''
   }
 }
 
-const getBalances = async from => {
+const getTokensFromBlockchain = async from => {
   const TokenDB = TokenController.tokenDB(),
     tokens = await TokenDB.getTokens().call()
-  const balances = []
+  const list = []
   for (const token of tokens) {
-    balances.push(await getBalanceOnContract(from, token))
+    list.push(await getTokenByContract(from, token))
   }
-  return balances
+  return list
 }
 
-const getPublicBalance = async (from = null) => {
+const getPublicTokens = async (from = null) => {
   const QiibeeToken = new web3Pub.eth.Contract(Config.getTokenABI(), Config.getQBXAddress(), {}).methods
   const totalSupply = await QiibeeToken.totalSupply().call()
   let balance = 0
@@ -87,8 +93,8 @@ const getInfo = async function (req, res) {
 }
 
 export default {
-  getBalanceOnContract,
-  getBalances,
-  getPublicBalance,
+  getTokenByContract,
+  getTokensFromBlockchain,
+  getPublicTokens,
   getInfo
 }

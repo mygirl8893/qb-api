@@ -1,9 +1,11 @@
 import User from '../users/controller'
 import Config from '../config'
 import * as HttpStatus from "http-status-codes"
+import * as qbDB from 'qb-db-migrations'
 import utils from "../lib/utils"
 import log from '../logging'
 
+const Token = qbDB.models.token
 const web3 = Config.getPrivateWeb3()
 
 const tokenDB = () => new web3.eth.Contract(
@@ -18,18 +20,37 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   {}
 ).methods
 
-const getTokens = async (req, res) => {
-  let publicBalance = undefined
+const getTokensFromDB = async (tokens) => {
+  let dbTokens = await Token.findAll({ raw: true })
+  return dbTokens
+}
 
-  const privateBalance = await User.getBalances(req.query.from)
+const getTokenFromDB = async (contractAddress) => {
+  return await Token.find({ where: { contractAddress }, raw: true })
+}
+
+const getTokens = async (req, res) => {
+  let publicTokens= undefined
+  const privateTokens = await User.getTokensFromBlockchain(req.query.from)
+  const dbTokens = await getTokensFromDB(privateTokens)
+  for (const token of privateTokens) {
+    let tdb = dbTokens.find((t) =>
+      t.contractAddress.toLowerCase() == token.contractAddress.toLowerCase())
+    if (tdb) {
+      token.rate = tdb.rate
+      token.description = tdb.description
+      token.website = tdb.website
+      token.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+    }
+  }
 
   if (req.query.public) {
-    publicBalance = await User.getPublicBalance(req.query.from)
+    publicTokens = await User.getPublicTokens(req.query.from)
   }
 
   return res.json({
-    private: privateBalance,
-    public: publicBalance
+    private: privateTokens,
+    public: publicTokens
   })
 }
 
@@ -48,13 +69,20 @@ const getToken = async (req, res) => {
     res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
   }
   try {
-    const privateBalance = await User.getBalanceOnContract(
+    const privateToken = await User.getTokenByContract(
       req.query.from,
       contractAddress
     )
+    const token = await getTokenFromDB(contractAddress)
+    if (token) {
+      privateToken.rate = token.rate
+      privateToken.description = token.description
+      privateToken.website = token.website
+      privateToken.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+    }
 
     return res.json({
-      private: privateBalance,
+      private: privateToken,
       public: publicBalance
     })
   } catch (e) {

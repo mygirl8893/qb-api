@@ -51,7 +51,7 @@ const getToken = async (req, res) => {
   const {error, value} = Joi.validate({...req.params, ...req.query}, getTokenSchema)
   const contractAddress = req.params.contract
   if (error) {
-    res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error })
   }
   try {
     const privateBalance = await User.getBalanceOnContract(

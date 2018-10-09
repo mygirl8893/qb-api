@@ -1,6 +1,7 @@
 import axios from "axios/index"
 import * as HttpStatus from 'http-status-codes'
 import TokenController from '../tokens/controller'
+import * as Joi from 'joi'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
@@ -45,6 +46,12 @@ const getPrice = async (req, res) => {
   }
   return res.status(statusCode).json(results)
 }
+
+const getHistorySchema = Joi.object().keys({
+  from: Joi.string().alphanum().required(),
+  to: Joi.string().alphanum(),
+  limit: Joi.number.integer()
+})
 
 /**
  * Returns the historical price values of a specific Loyalty Token on in the private ecosystem

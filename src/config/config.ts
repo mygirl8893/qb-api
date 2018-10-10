@@ -19,7 +19,7 @@ const Config = {
     },
     tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
     port: process.env.PORT,
-    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/testing'
+    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/staging'
   },
   testing: {
     rpc: {
@@ -36,7 +36,7 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     port: 3000,
-    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/testing'
+    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/development'
   },
   qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

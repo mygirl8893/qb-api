@@ -2,6 +2,8 @@ import axios from "axios/index"
 import * as HttpStatus from 'http-status-codes'
 import TokenController from '../tokens/controller'
 import * as Joi from 'joi'
+import log from '../logging'
+import utils from "../lib/utils";
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
@@ -13,6 +15,12 @@ const tokenRate = async (tokenAddress) => {
   return tokenRate !== 0 ? tokenRate : undefined
 }
 
+const getPriceSchema = Joi.object().keys({
+  query: {
+    from: Joi.string().alphanum().required(),
+    to: Joi.string().default('USD')
+  }
+})
 /**
  * Returns the price of a specific Loyalty Token in the private ecosystem
  * in the desired currency
@@ -22,10 +30,8 @@ const tokenRate = async (tokenAddress) => {
  * @return {json} The result.
  */
 const getPrice = async (req, res) => {
-  const { from, to = 'USD' } = req.query
-  if (!from) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
-  }
+  utils.validateRequestInput(req, getPriceSchema)
+  const {from, to} = req.query
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
@@ -48,9 +54,13 @@ const getPrice = async (req, res) => {
 }
 
 const getHistorySchema = Joi.object().keys({
-  from: Joi.string().alphanum().required(),
-  to: Joi.string().alphanum(),
-  limit: Joi.number.integer()
+  query: {
+    from: Joi.string().alphanum().required(),
+    to: Joi.string().default('USD'),
+    limit: Joi.number().integer().default(30),
+    aggregate: Joi.number().integer().default(1),
+    frequency: Joi.string().valid('day', 'hour', 'minute').default('day')
+  }
 })
 
 /**
@@ -62,10 +72,8 @@ const getHistorySchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getHistory = async (req, res) => {
-  const { from, to = 'USD', limit = 30, aggregate = 1, frequency = 'day' } = req.query //TODO: default values could be improve
-  if (!from) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
-  }
+  utils.validateRequestInput(req, getHistorySchema)
+  const { from, to, limit, aggregate, frequency} = req.query
 
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK

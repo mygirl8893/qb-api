@@ -169,7 +169,7 @@ describe('Network, Users and Tokens API', () => {
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
     // is not a contract address
-    expect(r.body.message.includes(`Provided address "${badAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+    expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
   })
 
   it('Fails to get token for non-existent contract address', async () => {
@@ -179,6 +179,6 @@ describe('Network, Users and Tokens API', () => {
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
-    expect(r.body.message.includes(`is not a contract address`)).toBeTruthy()
+    expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
   })
 })

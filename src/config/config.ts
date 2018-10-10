@@ -12,14 +12,14 @@ const Config = {
     port: process.env.PORT,
     S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee'
   },
-  staging: {
+  beta: {
     rpc: {
       private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
     port: process.env.PORT,
-    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/staging'
+    S3Url: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/beta'
   },
   testing: {
     rpc: {

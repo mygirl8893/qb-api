@@ -22,7 +22,7 @@ function isInvalidWeb3AddressMessage(errorMessage: string, address: string): boo
   return errorMessage.includes(`Provided address "${address}" is invalid`)
 }
 
-function validateRequestInput(req: express.Request, schema) {
+function validateRequestInput(req: express.Request, schema): express.Request {
   const objectToValidate = {}
 
   if (Joi.reach(schema, 'params')) {

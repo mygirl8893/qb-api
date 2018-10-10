@@ -2,6 +2,7 @@ import { BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
 
 import log from '../logging'
 import utils from "../lib/utils";
@@ -61,14 +62,16 @@ const getPublicBalance = async (from = null) => {
   ]
 }
 
+const getInfoSchema = Joi.object().keys({
+  params: {
+    from: Joi.string().alphanum().required(),
+  }
+})
 const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
-
+  req = utils.validateRequestInput(req, getInfoSchema)
   const address = req.params.from
 
-  if (!address) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.' })
-  }
   try {
     const transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const info = {

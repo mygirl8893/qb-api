@@ -2,6 +2,7 @@ import User from '../users/controller'
 import Config from '../config'
 import * as HttpStatus from "http-status-codes"
 import utils from "../lib/utils"
+import database from "../database"
 import log from '../logging'
 
 const web3 = Config.getPrivateWeb3()
@@ -20,7 +21,7 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
 
 const getTokens = async (req, res) => {
   let publicTokens = undefined
-  const tokens = await utils.getTokens()
+  const tokens = await database.getTokens()
   for (const token of tokens) {
     let balance = await User.getBalance(req.query.from, token.contractAddress)
     delete token.id
@@ -56,7 +57,7 @@ const getToken = async (req, res) => {
   }
 
   try {
-    const token = await utils.getToken(contractAddress)
+    const token = await database.getToken(contractAddress)
     if (token) {
       const balance = await User.getBalance(req.query.from, contractAddress)
       delete token.id

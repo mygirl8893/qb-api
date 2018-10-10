@@ -44,7 +44,7 @@ const getTx = async (txHash) => {
   delete transaction.r
   delete transaction.s
 
-  const token = await utils.getToken(transaction.contract)
+  const token = await database.getToken(transaction.contract)
   delete token.balance
 
   transaction.token = token || null

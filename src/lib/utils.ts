@@ -24,12 +24,17 @@ function isInvalidWeb3AddressMessage(errorMessage: string, address: string): boo
 
 function validateRequestInput(req: express.Request, schema) {
   const objectToValidate = {}
-  if (Object.keys(req.params).length > 0) {
+
+  if (Joi.reach(schema, 'params')) {
     objectToValidate['params'] = req.params
   }
 
-  if (Object.keys(req.query).length > 0) {
+  if (Joi.reach(schema, 'query')) {
     objectToValidate['query'] = req.query
+  }
+
+  if (Joi.reach(schema, 'body')) {
+    objectToValidate['body'] = req.body
   }
 
   const {error, value} = Joi.validate(objectToValidate, schema)
@@ -39,7 +44,8 @@ function validateRequestInput(req: express.Request, schema) {
     throwableError['status'] = HttpStatus.BAD_REQUEST
     throw throwableError
   } else {
-    return value
+    const validatedRequest = {...req, ...value}
+    return validatedRequest
   }
 }
 

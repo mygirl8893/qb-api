@@ -35,8 +35,12 @@ const getTokens = async (req, res) => {
 }
 
 const getTokenSchema = Joi.object().keys({
-  contract: Joi.string().alphanum().required(),
-  from: Joi.string().alphanum()
+  params: Joi.object().keys({
+    contract: Joi.string().alphanum().required()
+  }),
+  query: Joi.object().keys({
+    from: Joi.string().alphanum()
+  })
 })
 
 /**
@@ -46,13 +50,10 @@ const getTokenSchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getToken = async (req, res) => {
-  const publicBalance = 0
+  req = utils.validateRequestInput(req, getTokenSchema)
 
-  const {error, value} = Joi.validate({...req.params, ...req.query}, getTokenSchema)
+  const publicBalance = 0
   const contractAddress = req.params.contract
-  if (error) {
-    res.status(HttpStatus.BAD_REQUEST).json({ message: error })
-  }
   try {
     const privateBalance = await User.getBalanceOnContract(
       req.query.from,

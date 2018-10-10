@@ -16,10 +16,10 @@ const tokenRate = async (tokenAddress) => {
 }
 
 const getPriceSchema = Joi.object().keys({
-  query: {
+  query: Joi.object().keys({
     from: Joi.string().alphanum().required(),
     to: Joi.string().default('USD')
-  }
+  })
 })
 /**
  * Returns the price of a specific Loyalty Token in the private ecosystem
@@ -30,7 +30,7 @@ const getPriceSchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getPrice = async (req, res) => {
-  utils.validateRequestInput(req, getPriceSchema)
+  req = utils.validateRequestInput(req, getPriceSchema)
   const {from, to} = req.query
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
@@ -54,13 +54,13 @@ const getPrice = async (req, res) => {
 }
 
 const getHistorySchema = Joi.object().keys({
-  query: {
+  query: Joi.object().keys({
     from: Joi.string().alphanum().required(),
     to: Joi.string().default('USD'),
     limit: Joi.number().integer().default(30),
     aggregate: Joi.number().integer().default(1),
     frequency: Joi.string().valid('day', 'hour', 'minute').default('day')
-  }
+  })
 })
 
 /**
@@ -72,7 +72,7 @@ const getHistorySchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getHistory = async (req, res) => {
-  utils.validateRequestInput(req, getHistorySchema)
+  req = utils.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
 
   const rate = await tokenRate(from)

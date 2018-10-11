@@ -34,7 +34,17 @@ function validateRequestInput(req: express.Request, schema): express.Request {
   }
 }
 
+function ethereumAddress()  {
+  return Joi.string().alphanum().length(42, 'utf8')
+}
+
+function ethereumHash()  {
+  return Joi.string().alphanum().length(66, 'utf8')
+}
+
 export default {
   validateRequestInput,
-  isInvalidWeb3AddressMessage
+  isInvalidWeb3AddressMessage,
+  ethereumAddress,
+  ethereumHash
 }

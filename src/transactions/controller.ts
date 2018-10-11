@@ -10,7 +10,6 @@ import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
-import utils from '../lib/utils'
 import validation from '../validation'
 
 
@@ -66,7 +65,7 @@ const txBelongsTo = (address, tx, decodedTx) => (
 
 const getTransactionSchema = Joi.object().keys({
   params: {
-    hash: Joi.string().alphanum().required(),
+    hash: validation.ethereumHash().required(),
   }
 })
 const getTransaction = async (req, res) => {
@@ -79,11 +78,11 @@ const DEFAULT_HISTORY_LIMIT = 100
 const MAX_HISTORY_LIMIT = 100
 const getHistorySchema = Joi.object().keys({
   query: Joi.object().keys({
-    limit: Joi.number().integer().min(0).default(DEFAULT_HISTORY_LIMIT),
+    limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
     offset: Joi.number().integer().min(0).default(0)
   }),
   params: Joi.object().keys({
-    address: Joi.string().alphanum().required()
+    address: validation.ethereumAddress().required()
   })
 })
 const getHistory = async (req, res) => {
@@ -169,10 +168,10 @@ const transfer = async (req, res) => {
 
 const buildRawTransactionSchema = Joi.object().keys({
   query: Joi.object().keys({
-    from: Joi.string().required(),
-    to: Joi.string().required(),
-    contractAddress:  Joi.string().required(),
-    transferAmount: Joi.number().integer().required()
+    from: validation.ethereumAddress().required(),
+    to: validation.ethereumAddress().required(),
+    contractAddress: validation.ethereumAddress().required(),
+    transferAmount: Joi.number().integer().greater(0).required()
   })
 })
 const buildRawTransaction = async (req, res) => {

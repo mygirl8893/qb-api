@@ -36,10 +36,10 @@ const getTokens = async (req, res) => {
 
 const getTokenSchema = Joi.object().keys({
   params: Joi.object().keys({
-    contract: Joi.string().alphanum().required()
+    contract: validation.ethereumAddress().required()
   }),
   query: Joi.object().keys({
-    from: Joi.string().alphanum()
+    from: validation.ethereumAddress().alphanum()
   })
 })
 

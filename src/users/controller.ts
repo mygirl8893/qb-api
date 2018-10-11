@@ -63,7 +63,7 @@ const getPublicBalance = async (from = null) => {
 
 const getInfoSchema = Joi.object().keys({
   params: {
-    from: Joi.string().alphanum().required(),
+    from: validation.ethereumAddress().required(),
   }
 })
 const getInfo = async function (req, res) {

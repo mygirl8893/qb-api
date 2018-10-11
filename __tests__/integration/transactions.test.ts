@@ -307,6 +307,23 @@ describe('Transactions API Integration', () => {
     expect(rawTransactionResponse.body.message).toContain('from')
   })
 
+  it('Rejects raw transaction request with extra unwanted fields', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress,
+      unwanted: `you don't want this`,
+      otherUnwanted: `you don't want this either`
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message).toContain('unwanted')
+    expect(rawTransactionResponse.body.message).toContain('otherUnwanted')
+  })
+
   it('Rejects 1 raw transaction request with bad contract address', async () => {
 
     const badContractAddress = privateChain.loyaltyTokenContractAddress

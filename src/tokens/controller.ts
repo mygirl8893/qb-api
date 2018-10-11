@@ -1,9 +1,9 @@
 import User from '../users/controller'
 import Config from '../config'
-import * as HttpStatus from "http-status-codes"
-import utils from "../lib/utils"
-import log from '../logging'
+import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
+import log from '../logging'
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -50,7 +50,7 @@ const getTokenSchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getToken = async (req, res) => {
-  req = utils.validateRequestInput(req, getTokenSchema)
+  req = validation.validateRequestInput(req, getTokenSchema)
 
   const publicBalance = 0
   const contractAddress = req.params.contract
@@ -65,7 +65,7 @@ const getToken = async (req, res) => {
       public: publicBalance
     })
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
+    if (validation.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
         e.message.includes('is not a contract address')) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})

@@ -2,15 +2,17 @@ import * as abiDecoder from 'abi-decoder'
 import unsign = require('@warren-bank/ethereumjs-tx-unsign')
 import EthereumTx = require('ethereumjs-tx')
 import  {BigNumber } from 'bignumber.js'
+import * as Joi from 'joi'
+import * as HttpStatus from 'http-status-codes'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
-import * as HttpStatus from 'http-status-codes'
 import utils from '../lib/utils'
-import * as Joi from 'joi'
+import validation from '../validation'
+
 
 const web3 = Config.getPrivateWeb3()
 
@@ -68,7 +70,7 @@ const getTransactionSchema = Joi.object().keys({
   }
 })
 const getTransaction = async (req, res) => {
-  req = utils.validateRequestInput(req, getTransactionSchema)
+  req = validation.validateRequestInput(req, getTransactionSchema)
   const tx = await getTx(req.params.hash)
   return res.json(tx) // TODO: improve response
 }
@@ -85,7 +87,7 @@ const getHistorySchema = Joi.object().keys({
   })
 })
 const getHistory = async (req, res) => {
-  req = utils.validateRequestInput(req, getHistorySchema)
+  req = validation.validateRequestInput(req, getHistorySchema)
   let {limit, offset} = req.query
 
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
@@ -104,7 +106,7 @@ const transferSchema = Joi.object().keys({
   })
 })
 const transfer = async (req, res) => {
-  req = utils.validateRequestInput(req, transferSchema)
+  req = validation.validateRequestInput(req, transferSchema)
 
   abiDecoder.addABI(Config.getTokenABI())
 
@@ -174,7 +176,7 @@ const buildRawTransactionSchema = Joi.object().keys({
   })
 })
 const buildRawTransaction = async (req, res) => {
-  req = utils.validateRequestInput(req, buildRawTransactionSchema)
+  req = validation.validateRequestInput(req, buildRawTransactionSchema)
   const { from, to, contractAddress, transferAmount } = req.query
 
   try {
@@ -197,11 +199,11 @@ const buildRawTransaction = async (req, res) => {
     })
 
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
+    if (validation.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
       const errorMessage = `Contract address invalid: ${e.message}`
       log.error(errorMessage)
       res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
-    } else if (utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
+    } else if (validation.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
       const errorMessage = `Transaction From address invalid: ${e.message}`
       log.error(errorMessage)
       res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})

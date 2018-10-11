@@ -3,7 +3,7 @@ import * as HttpStatus from 'http-status-codes'
 import TokenController from '../tokens/controller'
 import * as Joi from 'joi'
 import log from '../logging'
-import utils from "../lib/utils";
+import validation from '../validation'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
@@ -30,7 +30,7 @@ const getPriceSchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getPrice = async (req, res) => {
-  req = utils.validateRequestInput(req, getPriceSchema)
+  req = validation.validateRequestInput(req, getPriceSchema)
   const {from, to} = req.query
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
@@ -48,7 +48,7 @@ const getPrice = async (req, res) => {
       const qbxFiat = QBX_ETH * data[key]
       const fiat = qbxFiat / rate
       results[key] = fiat.toFixed(4)
-    }); 
+    })
   }
   return res.status(statusCode).json(results)
 }
@@ -72,7 +72,7 @@ const getHistorySchema = Joi.object().keys({
  * @return {json} The result.
  */
 const getHistory = async (req, res) => {
-  req = utils.validateRequestInput(req, getHistorySchema)
+  req = validation.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
 
   const rate = await tokenRate(from)
@@ -80,9 +80,11 @@ const getHistory = async (req, res) => {
 
   if (rate) {
     const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
+    log.info(`Querying cryptocompare: ${api}`)
     const { status, data } = await axios.get(api)
 
     if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
+      log.info(`Cryptocompare request failed: ${data.message}`)
       statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
       let results = {message: data.Message}
       return res.status(statusCode).json(results)

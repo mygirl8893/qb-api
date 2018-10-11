@@ -3,9 +3,8 @@ import Config from '../config'
 import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
-
 import log from '../logging'
-import utils from "../lib/utils";
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
@@ -69,7 +68,7 @@ const getInfoSchema = Joi.object().keys({
 })
 const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
-  req = utils.validateRequestInput(req, getInfoSchema)
+  req = validation.validateRequestInput(req, getInfoSchema)
   const address = req.params.from
 
   try {
@@ -80,7 +79,7 @@ const getInfo = async function (req, res) {
     }
     res.json(info)
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
+    if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
     } else {

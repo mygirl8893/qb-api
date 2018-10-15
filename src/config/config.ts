@@ -9,15 +9,17 @@ const Config = {
     },
     tokenDB: '0x7c21ac5994ea0c2dc965f6cd998f38a8a896de3c',
     chainID: 29746197,
-    port: process.env.PORT
+    port: process.env.PORT,
+    S3Url: 'http://tokens.qiibee.com'
   },
-  staging: {
+  beta: {
     rpc: {
       private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
-    port: process.env.PORT
+    port: process.env.PORT,
+    S3Url: 'http://tokensbeta.qiibee.com'
   },
   testing: {
     rpc: {
@@ -25,14 +27,16 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
-    port: process.env.PORT
+    port: process.env.PORT,
+    S3Url: 'http://tokenstesting.qiibee.com'
   },
   development: {
     rpc: {
       private: 'http://localhost:8545',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    port: 3000
+    port: 3000,
+    S3Url: 'http://tokensdevelopment.qiibee.com'
   },
   qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

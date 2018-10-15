@@ -5,7 +5,6 @@ import  {BigNumber } from 'bignumber.js'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
-import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
 import * as HttpStatus from "http-status-codes";
@@ -45,13 +44,10 @@ const getTx = async (txHash) => {
   delete transaction.r
   delete transaction.s
 
-  const toBalance = await User.getBalanceOnContract(
-    transaction.to,
-    transaction.contract
-  )
-  delete toBalance.balance
+  const token = await database.getToken(transaction.contract)
+  delete token.balance
 
-  transaction.token = toBalance || null
+  transaction.token = token || null
   return transaction
 }
 

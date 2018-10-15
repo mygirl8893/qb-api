@@ -47,4 +47,5 @@ export default {
   getStatusMessage: (code) => Config.statusMsgs[code],
   getSwaggerConfig: () => SwaggerConfig,
   getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
+  getS3Url: () => envtConfig.S3Url,
 }

@@ -7,7 +7,6 @@ import * as HttpStatus from 'http-status-codes'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
-import User from '../users/controller'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
@@ -47,13 +46,10 @@ const getTx = async (txHash) => {
   delete transaction.r
   delete transaction.s
 
-  const toBalance = await User.getBalanceOnContract(
-    transaction.to,
-    transaction.contract
-  )
-  delete toBalance.balance
+  const token = await database.getToken(transaction.contract)
+  delete token.balance
 
-  transaction.token = toBalance || null
+  transaction.token = token || null
   return transaction
 }
 

@@ -7,6 +7,8 @@ import * as swaggerUi from 'swagger-ui-express'
 import *  as swaggerJSDoc from 'swagger-jsdoc'
 import * as morgan from 'morgan'
 import * as HttpStatus from 'http-status-codes'
+import * as uuid from 'uuid'
+import * as httpContext from 'express-http-context'
 
 import Config from './src/config'
 
@@ -26,15 +28,19 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(pretty({ query: 'pretty' }))
 
+app.use(httpContext.middleware)
+// Run the context for each request. Assign a unique identifier to each request
+app.use(function(req, res, next) {
+  httpContext.set('reqId', uuid.v1())
+  next()
+})
 
 class WinstonStream {
   write(message: string) {
     log.info(message)
   }
 }
-
 const winstonStream = new WinstonStream()
-
 app.use(morgan("combined", { "stream": winstonStream }))
 
 app.use('/net', networkRouter)

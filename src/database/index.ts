@@ -1,6 +1,8 @@
+import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
 
 const Token = qbDB.models.token
+const Op = sequelize.Op;
 
 const getTransactionHistory = async (address: string, limit: number, offset: number) => {
   const transactions = await qbDB.models.transaction.findAll({
@@ -67,7 +69,12 @@ const getToken = async (contractAddress) => {
 }
 
 const getTokens = async () => {
-  return await Token.findAll({ raw: true })
+  return await Token.findAll({
+    where: {
+      contractAddress: { [Op.ne]: null }
+    },
+    raw: true }
+  )
 }
 
 async function close() {

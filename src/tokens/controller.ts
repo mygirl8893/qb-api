@@ -1,9 +1,10 @@
 import User from '../users/controller'
 import Config from '../config'
+import * as Joi from 'joi'
 import * as HttpStatus from "http-status-codes"
-import utils from "../lib/utils"
 import database from "../database"
 import log from '../logging'
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -40,6 +41,15 @@ const getTokens = async (req, res) => {
   })
 }
 
+const getTokenSchema = Joi.object().keys({
+  params: Joi.object().keys({
+    contract: validation.ethereumAddress().required()
+  }),
+  query: Joi.object().keys({
+    from: validation.ethereumAddress().alphanum()
+  })
+})
+
 /**
  * Returns a specific Loyalty Token in the private ecosystem
  * @param {object} req - request object.
@@ -47,6 +57,7 @@ const getTokens = async (req, res) => {
  * @return {json} The result.
  */
 const getToken = async (req, res) => {
+  req = validation.validateRequestInput(req, getTokenSchema)
   const contractAddress = req.params.contract
   if (!contractAddress)
     res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
@@ -69,7 +80,7 @@ const getToken = async (req, res) => {
       res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token has not been found'})
     }
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
+    if (validation.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
         e.message.includes('is not a contract address')) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})

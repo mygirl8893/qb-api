@@ -1,6 +1,9 @@
 import axios from "axios/index"
 import * as HttpStatus from 'http-status-codes'
 import TokenController from '../tokens/controller'
+import * as Joi from 'joi'
+import log from '../logging'
+import validation from '../validation'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
@@ -12,6 +15,12 @@ const tokenRate = async (tokenAddress) => {
   return tokenRate !== 0 ? tokenRate : undefined
 }
 
+const getPriceSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    from: Joi.string().alphanum().required(),
+    to: Joi.string().default('USD')
+  })
+})
 /**
  * Returns the price of a specific Loyalty Token in the private ecosystem
  * in the desired currency
@@ -21,10 +30,8 @@ const tokenRate = async (tokenAddress) => {
  * @return {json} The result.
  */
 const getPrice = async (req, res) => {
-  const { from, to = 'USD' } = req.query
-  if (!from) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
-  }
+  req = validation.validateRequestInput(req, getPriceSchema)
+  const {from, to} = req.query
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
@@ -41,10 +48,20 @@ const getPrice = async (req, res) => {
       const qbxFiat = QBX_ETH * data[key]
       const fiat = qbxFiat / rate
       results[key] = fiat.toFixed(4)
-    }); 
+    })
   }
   return res.status(statusCode).json(results)
 }
+
+const getHistorySchema = Joi.object().keys({
+  query: Joi.object().keys({
+    from: Joi.string().alphanum().required(),
+    to: Joi.string().default('USD'),
+    limit: Joi.number().integer().default(30),
+    aggregate: Joi.number().integer().default(1),
+    frequency: Joi.string().valid('day', 'hour', 'minute').default('day')
+  })
+})
 
 /**
  * Returns the historical price values of a specific Loyalty Token on in the private ecosystem
@@ -55,19 +72,19 @@ const getPrice = async (req, res) => {
  * @return {json} The result.
  */
 const getHistory = async (req, res) => {
-  const { from, to = 'USD', limit = 30, aggregate = 1, frequency = 'day' } = req.query //TODO: default values could be improve
-  if (!from) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.'})
-  }
+  req = validation.validateRequestInput(req, getHistorySchema)
+  const { from, to, limit, aggregate, frequency} = req.query
 
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK
 
   if (rate) {
     const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
+    log.info(`Querying cryptocompare: ${api}`)
     const { status, data } = await axios.get(api)
 
     if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
+      log.info(`Cryptocompare request failed: ${data.message}`)
       statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
       let results = {message: data.Message}
       return res.status(statusCode).json(results)

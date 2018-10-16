@@ -2,13 +2,15 @@ import * as abiDecoder from 'abi-decoder'
 import unsign = require('@warren-bank/ethereumjs-tx-unsign')
 import EthereumTx = require('ethereumjs-tx')
 import  {BigNumber } from 'bignumber.js'
+import * as Joi from 'joi'
+import * as HttpStatus from 'http-status-codes'
 
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import database from '../database'
 import log from '../logging'
-import * as HttpStatus from "http-status-codes";
-import utils from "../lib/utils";
+import validation from '../validation'
+
 
 const web3 = Config.getPrivateWeb3()
 
@@ -57,49 +59,53 @@ const txBelongsTo = (address, tx, decodedTx) => (
   decodedTx.params[0].value.toLowerCase() === address
 )
 
+const getTransactionSchema = Joi.object().keys({
+  params: {
+    hash: validation.ethereumHash().required(),
+  }
+})
 const getTransaction = async (req, res) => {
+  req = validation.validateRequestInput(req, getTransactionSchema)
   const tx = await getTx(req.params.hash)
   return res.json(tx) // TODO: improve response
 }
 
 const DEFAULT_HISTORY_LIMIT = 100
 const MAX_HISTORY_LIMIT = 100
-
-function isPositiveNumber(value) {
-  return !isNaN(value) && value >= 0
-}
-
+const getHistorySchema = Joi.object().keys({
+  query: Joi.object().keys({
+    limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
+    offset: Joi.number().integer().min(0).default(0)
+  }),
+  params: Joi.object().keys({
+    address: validation.ethereumAddress().required()
+  })
+})
 const getHistory = async (req, res) => {
-  let {limit = DEFAULT_HISTORY_LIMIT, offset = 0} = req.query
+  req = validation.validateRequestInput(req, getHistorySchema)
+  let {limit, offset} = req.query
 
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
-
-  limit = parseInt(limit)
-  offset = parseInt(offset)
-  if (!isPositiveNumber(limit)) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'limit parameter is not a positive number.'})
-  }
-  if (!isPositiveNumber(offset)) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'offset parameter is not a positive number.'})
-  }
 
   const address = req.params.address.toLowerCase()
   log.info(`Fetching transaction history for address ${address} with limit ${limit} and offset ${offset}`)
 
   const history = await database.getTransactionHistory(address, limit, offset)
 
-
   return res.json(history)
 }
 
+const transferSchema = Joi.object().keys({
+  body: Joi.object().keys({
+    data: Joi.string().required()
+  })
+})
 const transfer = async (req, res) => {
+  req = validation.validateRequestInput(req, transferSchema)
+
   abiDecoder.addABI(Config.getTokenABI())
 
   try {
-
-    if (!req.body.data) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing data field.' })
-    }
     const signedTransaction = new EthereumTx(req.body.data)
     const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
 
@@ -156,12 +162,17 @@ const transfer = async (req, res) => {
 
 }
 
+const buildRawTransactionSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    from: validation.ethereumAddress().required(),
+    to: validation.ethereumAddress().required(),
+    contractAddress: validation.ethereumAddress().required(),
+    transferAmount: Joi.number().integer().greater(0).required()
+  })
+})
 const buildRawTransaction = async (req, res) => {
+  req = validation.validateRequestInput(req, buildRawTransactionSchema)
   const { from, to, contractAddress, transferAmount } = req.query
-
-  if (!from || !to || !contractAddress || !transferAmount) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing one or more query params.' })
-  }
 
   try {
     const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
@@ -183,11 +194,11 @@ const buildRawTransaction = async (req, res) => {
     })
 
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
+    if (validation.isInvalidWeb3AddressMessage(e.message, contractAddress)) {
       const errorMessage = `Contract address invalid: ${e.message}`
       log.error(errorMessage)
       res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})
-    } else if (utils.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
+    } else if (validation.isInvalidWeb3AddressMessage(e.message, from.toLowerCase())) {
       const errorMessage = `Transaction From address invalid: ${e.message}`
       log.error(errorMessage)
       res.status(HttpStatus.BAD_REQUEST).json({ message: errorMessage})

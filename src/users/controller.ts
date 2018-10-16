@@ -2,8 +2,9 @@ import { BigNumber } from 'bignumber.js'
 import Config from '../config'
 import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
 import log from '../logging'
-import utils from "../lib/utils";
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
@@ -42,13 +43,16 @@ const getQBXToken = async (from = null) => {
     }
 }
 
+const getInfoSchema = Joi.object().keys({
+  params: {
+    from: validation.ethereumAddress().required(),
+  }
+})
 const getInfo = async function (req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
+  req = validation.validateRequestInput(req, getInfoSchema)
   const address = req.params.from
 
-  if (!address) {
-    return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing "from" parameter.' })
-  }
   try {
     const transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const info = {
@@ -57,7 +61,7 @@ const getInfo = async function (req, res) {
     }
     res.json(info)
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
+    if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message })
     } else {

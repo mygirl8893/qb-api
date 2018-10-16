@@ -75,7 +75,7 @@ app.use((err, req, res, next) => {
   }
 
   if (err) {
-    log.error(`Request failed with error ${err}`)
+    log.error(`Request failed with error ${err.stack}`)
     return res
       .status(err.status || HttpStatus.INTERNAL_SERVER_ERROR)
       .json({ message: err.message})

@@ -1,5 +1,4 @@
 import utils from '../src/lib/utils'
-import Sequelize from 'sequelize'
 import log from '../src/logging'
 import * as qbDB from 'qb-db-migrations'
 
@@ -43,6 +42,13 @@ class TestDatabaseConn {
 
     existingToken.brandId = newBrand.id
     this.testToken = await qbDB.models.token.create(existingToken)
+
+    // add non-deployed token
+    const nonDeployedToken = JSON.parse(JSON.stringify(existingToken))
+    delete nonDeployedToken.contractAddress
+    nonDeployedToken.symbol = 'SDS'
+    nonDeployedToken.name = 'Not deployed token'
+    await qbDB.models.token.create(nonDeployedToken)
 
     log.info('Successfully setup database.')
   }

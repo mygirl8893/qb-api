@@ -249,12 +249,14 @@ describe('Transactions API Integration', () => {
 
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(transactionsAfterResponse.body.message).toContain('limit')
   })
 
   it('Returns transaction history using default limit and offset', async () => {
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
+    expect(transactionsAfterResponse.body).toHaveLength(6)
   })
 
   it('Returns transaction history using max value for limit when exceeded', async () => {
@@ -277,6 +279,49 @@ describe('Transactions API Integration', () => {
 
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(transactionsAfterResponse.body.message).toContain('offset')
+  })
+
+  it('Rejects raw transaction request with missing contractAddress', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[1].address,
+      to: ACCOUNTS[0].address,
+      transferAmount: 1
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message).toContain('contractAddress')
+  })
+
+  it('Rejects raw transaction request with missing to and from fields', async () => {
+    const rawTransactionParams = {
+      transferAmount: 1,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message).toContain('from')
+  })
+
+  it('Rejects raw transaction request with extra unwanted fields', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress,
+      unwanted: `you don't want this`,
+      otherUnwanted: `you don't want this either`
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+    expect(rawTransactionResponse.body.message).toContain('unwanted')
+    expect(rawTransactionResponse.body.message).toContain('otherUnwanted')
   })
 
   it('Rejects 1 raw transaction request with bad contract address', async () => {

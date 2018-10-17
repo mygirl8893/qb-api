@@ -13,12 +13,7 @@ function sleep(ms: number) {
   })
 }
 
-function isInvalidWeb3AddressMessage(errorMessage: string, address: string): boolean {
-  return errorMessage.includes(`Provided address "${address}" is invalid`)
-}
-
 export default {
   wrap,
-  sleep,
-  isInvalidWeb3AddressMessage
+  sleep
 }

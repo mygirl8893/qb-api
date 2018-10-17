@@ -1,4 +1,8 @@
+import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
+
+const Token = qbDB.models.token
+const Op = sequelize.Op;
 
 const getTransactionHistory = async (address: string, limit: number, offset: number) => {
   const transactions = await qbDB.models.transaction.findAll({
@@ -60,6 +64,19 @@ const addPendingTransaction = async (transaction: PendingTransaction) => {
   return r
 }
 
+const getToken = async (contractAddress) => {
+  return await Token.find({ where: { contractAddress }, raw: true })
+}
+
+const getTokens = async () => {
+  return await Token.findAll({
+    where: {
+      contractAddress: { [Op.ne]: null }
+    },
+    raw: true }
+  )
+}
+
 async function close() {
   await qbDB.models.sequelize.close()
 }
@@ -67,5 +84,7 @@ async function close() {
 export default {
   getTransactionHistory,
   addPendingTransaction,
+  getToken,
+  getTokens,
   close
 }

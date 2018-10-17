@@ -1,8 +1,10 @@
 import User from '../users/controller'
 import Config from '../config'
+import * as Joi from 'joi'
 import * as HttpStatus from "http-status-codes"
-import utils from "../lib/utils"
+import database from "../database"
 import log from '../logging'
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -19,19 +21,34 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
 ).methods
 
 const getTokens = async (req, res) => {
-  let publicBalance = undefined
-
-  const privateBalance = await User.getBalances(req.query.from)
+  let publicTokens = undefined
+  const tokens = await database.getTokens()
+  for (const token of tokens) {
+    let balance = await User.getBalance(req.query.from, token.contractAddress)
+    delete token.id
+    delete token.brandId
+    token.balance = balance
+    token.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+  }
 
   if (req.query.public) {
-    publicBalance = await User.getPublicBalance(req.query.from)
+    publicTokens = [ await User.getQBXToken(req.query.from) ]
   }
 
   return res.json({
-    private: privateBalance,
-    public: publicBalance
+    private: tokens,
+    public: publicTokens
   })
 }
+
+const getTokenSchema = Joi.object().keys({
+  params: Joi.object().keys({
+    contract: validation.ethereumAddress().required()
+  }),
+  query: Joi.object().keys({
+    from: validation.ethereumAddress().alphanum()
+  })
+})
 
 /**
  * Returns a specific Loyalty Token in the private ecosystem
@@ -40,25 +57,30 @@ const getTokens = async (req, res) => {
  * @return {json} The result.
  */
 const getToken = async (req, res) => {
-  const publicBalance = 0
-
+  req = validation.validateRequestInput(req, getTokenSchema)
   const contractAddress = req.params.contract
-
-  if (!contractAddress) {
+  if (!contractAddress)
     res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
-  }
-  try {
-    const privateBalance = await User.getBalanceOnContract(
-      req.query.from,
-      contractAddress
-    )
 
-    return res.json({
-      private: privateBalance,
-      public: publicBalance
-    })
+  if (contractAddress === Config.getQBXAddress()) {
+    const qbx = await User.getQBXToken()
+    return res.json(qbx) //TODO: we should remove the 'private' property from here
+  }
+
+  try {
+    const token = await database.getToken(contractAddress)
+    if (token) {
+      const balance = await User.getBalance(req.query.from, contractAddress)
+      delete token.id
+      delete token.brandId
+      token.balance = balance
+      token.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+      return res.json({ private: token }) //TODO: we should remove the 'private' property from here
+    } else {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token has not been found'})
+    }
   } catch (e) {
-    if (utils.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
+    if (validation.isInvalidWeb3AddressMessage(e.message, contractAddress.toLowerCase()) ||
         e.message.includes('is not a contract address')) {
       log.error(e.message)
       res.status(HttpStatus.BAD_REQUEST).json({ message: e.message})

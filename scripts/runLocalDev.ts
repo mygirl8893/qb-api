@@ -46,6 +46,8 @@ async function launch() {
     rate: TOKEN.rate,
     totalSupply: 10 ** 27, // this is innacurate pick a valid value from the actual chain
     decimals: TOKEN.decimals,
+    description: 'carpets for everyone',
+    website: 'magiccarpets.com'
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()

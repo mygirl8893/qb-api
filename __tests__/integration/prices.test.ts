@@ -253,7 +253,7 @@ describe('Prices API Integration', () => {
       .get(`/prices/history`)
       .query(pricesParams)
     expect(response.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(response.body.message).toEqual('Missing "from" parameter.')
+    expect(response.body.message).toContain('from')
   })
 
   it('Get historical values of invalid LoyaltyToken', async () => {

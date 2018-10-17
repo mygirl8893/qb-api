@@ -134,6 +134,10 @@ describe('Network, Users and Tokens API', () => {
     expect(token.name).toBe(TOKEN.name)
     expect(token.symbol).toBe(TOKEN.symbol)
     expect(token.decimals).toBe(TOKEN.decimals)
+    expect(token.website).toBe(TOKEN.website)
+    expect(token.description).toBe(TOKEN.description)
+    expect(token.rate).toBe(TOKEN.rate)
+    expect(token).toHaveProperty('logoUrl')
     expect(token.balance).toBe('0')
     expect(token.totalSupply).toBe(`${privateChain.initialLoyaltyTokenAmount}`)
   })
@@ -149,6 +153,10 @@ describe('Network, Users and Tokens API', () => {
     expect(token.name).toBe(TOKEN.name)
     expect(token.symbol).toBe(TOKEN.symbol)
     expect(token.decimals).toBe(TOKEN.decimals)
+    expect(token.website).toBe(TOKEN.website)
+    expect(token.description).toBe(TOKEN.description)
+    expect(token.rate).toBe(TOKEN.rate)
+    expect(token).toHaveProperty('logoUrl')
     expect(token.balance).toBe(`${privateChain.initialLoyaltyTokenAmount}`)
     expect(token.totalSupply).toBe(`${privateChain.initialLoyaltyTokenAmount}`)
   })
@@ -161,7 +169,7 @@ describe('Network, Users and Tokens API', () => {
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
     // is not a contract address
-    expect(r.body.message.includes(`Provided address "${badAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+    expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
   })
 
   it('Fails to get token for non-existent contract address', async () => {
@@ -171,6 +179,6 @@ describe('Network, Users and Tokens API', () => {
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
-    expect(r.body.message.includes(`is not a contract address`)).toBeTruthy()
+    expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
   })
 })

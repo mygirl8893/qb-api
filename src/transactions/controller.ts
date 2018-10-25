@@ -167,7 +167,7 @@ const buildRawTransactionSchema = Joi.object().keys({
     from: validation.ethereumAddress().required(),
     to: validation.ethereumAddress().required(),
     contractAddress: validation.ethereumAddress().required(),
-    transferAmount: Joi.number().integer().greater(0).required()
+    transferAmount: Joi.required()
   })
 })
 const buildRawTransaction = async (req, res) => {

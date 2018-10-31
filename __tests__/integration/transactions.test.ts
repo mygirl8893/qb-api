@@ -107,6 +107,21 @@ describe('Transactions API Integration', () => {
     expect(transactionsResponse.body).toHaveLength(0)
   })
 
+  it('Builds raw transaction with a high transfer amount', async () => {
+
+    // in the case of high transfer amount we need to use an explicit string so js doesn't reduce it
+    // to scientific notation when it calls toString
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: '1000000000000000000000', // > Number.MAX_SAFE_INTEGER
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+  })
+
   it('Executes 1 transaction and the history now has 1 transaction', async () => {
     const rawTransactionParams = {
       from: ACCOUNTS[0].address,

@@ -10,6 +10,7 @@ import TokenController from '../tokens/controller'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
+import { valid } from "semver";
 
 
 const web3 = Config.getPrivateWeb3()
@@ -167,7 +168,7 @@ const buildRawTransactionSchema = Joi.object().keys({
     from: validation.ethereumAddress().required(),
     to: validation.ethereumAddress().required(),
     contractAddress: validation.ethereumAddress().required(),
-    transferAmount: Joi.required()
+    transferAmount: validation.bigPositiveIntAsString().required()
   })
 })
 const buildRawTransaction = async (req, res) => {

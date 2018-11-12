@@ -10,7 +10,6 @@ import TokenController from '../tokens/controller'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
-import { valid } from "semver";
 
 
 const web3 = Config.getPrivateWeb3()

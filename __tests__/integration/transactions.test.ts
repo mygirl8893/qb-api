@@ -50,12 +50,17 @@ describe('Transactions API Integration', () => {
   let testDbConn = null
   let web3Conn: Web3Connection = null
   let apiDBConn = null
+  let totalTransactionsSoFar = 0
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
+
+    const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    const r = await testDbConn.updateMinedStatus(txHash, txReceipt.blockNumber)
+    const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block)
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
+    totalTransactionsSoFar++
   }
 
   beforeAll(async () => {
@@ -250,12 +255,52 @@ describe('Transactions API Integration', () => {
     const historicalTransactions = transactionsHistory.body
     const someTransaction = historicalTransactions[0]
 
-    const txDataResponse = await request(app).get(`/transactions/${someTransaction.hash}`)
+    const txDataResponse = await request(app).get(`/transactions/${someTransaction.hash.toUpperCase()}`)
     const singleTx = txDataResponse.body
 
-    expect(singleTx.hash).toBe(someTransaction.hash)
-    expect(singleTx.from.toLowerCase()).toBe(someTransaction.from)
-    expect(singleTx.to.toLowerCase()).toBe(someTransaction.to)
+    someTransaction.confirms = 0
+    someTransaction.contract = someTransaction.contractAddress
+    delete someTransaction.contractAddress
+    delete someTransaction.id
+    delete someTransaction.tokenId
+
+    // adjusted for proper comparison
+    singleTx.from = singleTx.from.toLowerCase()
+    someTransaction.status = true
+    expect(singleTx).toEqual(someTransaction)
+  })
+
+  it('Pushes 1 extra transaction which before mining confirmation is NOT FOUND', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 1,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    const rawTransaction = rawTransactionResponse.body
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    const pendingTxResponse = await request(app).get(`/transactions/${sendTransactionResponse.body.hash}`)
+    expect(pendingTxResponse.status).toBe(HttpStatus.NOT_FOUND)
+
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    const processedTxResponse = await request(app).get(`/transactions/${sendTransactionResponse.body.hash}`)
+    expect(processedTxResponse.status).toBe(HttpStatus.OK)
+
+    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    expect(transactionsAfterResponse.body.length).toBe(totalTransactionsSoFar)
   })
 
   it('Returns transaction history using defined limit and offset', async () => {
@@ -286,7 +331,7 @@ describe('Transactions API Integration', () => {
     const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
-    expect(transactionsAfterResponse.body).toHaveLength(6)
+    expect(transactionsAfterResponse.body).toHaveLength(totalTransactionsSoFar)
   })
 
   it('Returns transaction history using max value for limit when exceeded', async () => {
@@ -388,6 +433,34 @@ describe('Transactions API Integration', () => {
     expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
   })
 
+  it('Rejects 1 transfer signed with the wrong key', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 1,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+
+    const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
   it('Rejects 1 transfer with the wrong nonce', async () => {
 
     const rawTransactionParams = {
@@ -418,40 +491,12 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
-  it('Rejects 1 transfer signed with the wrong key', async () => {
-
-    const rawTransactionParams = {
-      from: ACCOUNTS[0].address,
-      to: ACCOUNTS[1].address,
-      transferAmount: 10,
-      contractAddress: privateChain.loyaltyTokenContractAddress
-    }
-
-    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
-    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
-
-    const rawTransaction = rawTransactionResponse.body
-
-    const privateKey = Buffer.from(ACCOUNTS[1].secretKey, 'hex')
-    const transaction = new Tx(rawTransaction)
-    transaction.sign(privateKey)
-    const serializedTx = transaction.serialize().toString('hex')
-
-    const postTransferParams = {
-      data: serializedTx
-    }
-
-    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
-
-    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
-  })
-
   it('Rejects 1 transfer with the wrong "to" address', async () => {
 
     const rawTransactionParams = {
       from: ACCOUNTS[0].address,
       to: ACCOUNTS[1].address,
-      transferAmount: 10,
+      transferAmount: 1,
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 

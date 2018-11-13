@@ -10,7 +10,6 @@ import TokenController from '../tokens/controller'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
-import { valid } from "semver";
 
 
 const web3 = Config.getPrivateWeb3()
@@ -49,6 +48,8 @@ const getTx = async (txHash) => {
 
   const token = await database.getToken(transaction.contract)
   delete token.balance
+  delete token.id
+  delete token.brandId
 
   transaction.token = token || null
   return transaction
@@ -61,14 +62,25 @@ const txBelongsTo = (address, tx, decodedTx) => (
 )
 
 const getTransactionSchema = Joi.object().keys({
-  params: {
+  params: Joi.object().keys({
     hash: validation.ethereumHash().required(),
-  }
+  })
 })
 const getTransaction = async (req, res) => {
   req = validation.validateRequestInput(req, getTransactionSchema)
-  const tx = await getTx(req.params.hash)
-  return res.json(tx) // TODO: improve response
+
+  const storedTx = await database.getTransaction(req.params.hash)
+
+
+  if (storedTx && storedTx.state !== 'pending') {
+    const tx = await getTx(req.params.hash)
+    tx.state = 'processed'
+    return res.json(tx)
+  } else {
+    log.error(`Transaction ${req.params.hash} is not yet processed`)
+    res.status(HttpStatus.NOT_FOUND).json({message: `Transaction is not yet processed.`})
+  }
+
 }
 
 const DEFAULT_HISTORY_LIMIT = 100

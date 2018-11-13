@@ -42,9 +42,14 @@ function ethereumHash()  {
   return Joi.string().alphanum().length(66, 'utf8')
 }
 
+function bigPositiveIntAsString() {
+  return Joi.string().regex(/^(0|[1-9][0-9]*)$/)
+}
+
 export default {
   validateRequestInput,
   isInvalidWeb3AddressMessage,
   ethereumAddress,
-  ethereumHash
+  ethereumHash,
+  bigPositiveIntAsString
 }

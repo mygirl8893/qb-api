@@ -77,8 +77,12 @@ const getTransaction = async (req, res) => {
     tx.state = 'processed'
     return res.json(tx)
   } else {
-    log.error(`Transaction ${req.params.hash} is not yet processed`)
-    res.status(HttpStatus.NOT_FOUND).json({message: `Transaction is not yet processed.`})
+    if (storedTx) {
+      log.error(`Transaction ${req.params.hash} is in pending state.`)
+    } else {
+      log.error(`Transaction ${req.params.hash} does not exist.`)
+    }
+    res.status(HttpStatus.NOT_FOUND).json({message: `Transaction does not exist.`})
   }
 
 }

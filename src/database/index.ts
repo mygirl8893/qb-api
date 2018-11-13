@@ -27,7 +27,6 @@ const getTransactionHistory = async (address: string, limit: number, offset: num
     delete t.dataValues.fromAddress
 
     if (t.token) {
-      t.token.totalSupply = parseInt(t.token.totalSupply)
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
     }

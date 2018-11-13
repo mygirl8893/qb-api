@@ -48,6 +48,8 @@ const getTx = async (txHash) => {
 
   const token = await database.getToken(transaction.contract)
   delete token.balance
+  delete token.id
+  delete token.brandId
 
   transaction.token = token || null
   return transaction
@@ -71,9 +73,11 @@ const getTransaction = async (req, res) => {
 
   if (storedTx.state !== 'pending') {
     const tx = await getTx(req.params.hash)
-    return res.json(tx) // TODO: improve response
+    tx.state = 'processed'
+    return res.json(tx)
   } else {
-    res.json(storedTx)
+    log.error(`Transaction ${req.params.hash} is not yet processed`)
+    res.status(HttpStatus.NOT_FOUND).json({message: `Transaction is not yet processed.`})
   }
 
 }

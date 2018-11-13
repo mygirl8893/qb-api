@@ -53,8 +53,11 @@ describe('Transactions API Integration', () => {
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
+
+    const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    const r = await testDbConn.updateMinedStatus(txHash, txReceipt.blockNumber)
+    const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block)
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
   }
 
@@ -185,6 +188,21 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.state).toBe('processed')
     expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
   })
+
+  // it('Fetches transaction by hash', async () => {
+  //   const historyResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+  //
+  //   expect(historyResponse.status).toBe(HttpStatus.OK)
+  //   const transactions = historyResponse.body
+  //
+  //   expect(transactions).toHaveLength(1)
+  //   const singleTransaction = transactions[0]
+  //
+  //   const txByHashResponse = await request(app).get(`/transactions/${singleTransaction.hash}`)
+  //   const txByHash = txByHashResponse.body
+  //
+  //   expect(singleTransaction).toEqual(txByHash)
+  // })
 
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
     const rawTransactionParams = {

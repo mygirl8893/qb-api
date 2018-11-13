@@ -1,5 +1,6 @@
 import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
+import { add } from "winston";
 
 const Token = qbDB.models.token
 const Op = sequelize.Op;
@@ -35,6 +36,16 @@ const getTransactionHistory = async (address: string, limit: number, offset: num
   })
 
   return transactions
+}
+
+const getTransaction = async (hash: string) => {
+  const transaction = await await qbDB.models.transaction.findAll({
+    where: {
+      hash: hash,
+    },
+    include: [qbDB.models.token]
+  })
+  return transaction
 }
 
 interface PendingTransaction {
@@ -82,6 +93,7 @@ async function close() {
 }
 
 export default {
+  getTransaction,
   getTransactionHistory,
   addPendingTransaction,
   getToken,

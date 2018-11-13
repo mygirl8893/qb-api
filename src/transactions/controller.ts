@@ -60,14 +60,22 @@ const txBelongsTo = (address, tx, decodedTx) => (
 )
 
 const getTransactionSchema = Joi.object().keys({
-  params: {
+  params: Joi.object().keys({
     hash: validation.ethereumHash().required(),
-  }
+  })
 })
 const getTransaction = async (req, res) => {
   req = validation.validateRequestInput(req, getTransactionSchema)
-  const tx = await getTx(req.params.hash)
-  return res.json(tx) // TODO: improve response
+
+  const storedTx = await database.getTransaction(req.params.hash)
+
+  if (storedTx.state !== 'pending') {
+    const tx = await getTx(req.params.hash)
+    return res.json(tx) // TODO: improve response
+  } else {
+    res.json(storedTx)
+  }
+
 }
 
 const DEFAULT_HISTORY_LIMIT = 100

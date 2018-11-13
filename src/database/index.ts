@@ -1,6 +1,5 @@
 import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
-import { add } from "winston";
 
 const Token = qbDB.models.token
 const Op = sequelize.Op;

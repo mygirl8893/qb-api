@@ -189,21 +189,6 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
   })
 
-  // it('Fetches transaction by hash', async () => {
-  //   const historyResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
-  //
-  //   expect(historyResponse.status).toBe(HttpStatus.OK)
-  //   const transactions = historyResponse.body
-  //
-  //   expect(transactions).toHaveLength(1)
-  //   const singleTransaction = transactions[0]
-  //
-  //   const txByHashResponse = await request(app).get(`/transactions/${singleTransaction.hash}`)
-  //   const txByHash = txByHashResponse.body
-  //
-  //   expect(singleTransaction).toEqual(txByHash)
-  // })
-
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
     const rawTransactionParams = {
         from: ACCOUNTS[1].address,

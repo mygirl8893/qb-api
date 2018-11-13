@@ -1,6 +1,8 @@
 import utils from '../src/lib/utils'
 import log from '../src/logging'
 import * as qbDB from 'qb-db-migrations'
+import * as abiDecoder from 'abi-decoder'
+import { BigNumber } from 'bignumber.js'
 
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
@@ -22,6 +24,50 @@ const waitForAppToBeReady = async (config) => {
 
 async function setupDatabaseTables() {
   await qbDB.runMigrations(qbDB.models.sequelize, true)
+}
+
+function makeStoreableTransaction(original, receipt, block) {
+
+  const decoded = abiDecoder.decodeMethod(original.input)
+
+  if (!decoded) { // it's not a loyalty token transaction
+    return null
+  }
+
+  if (decoded.name !== 'transfer') {
+    log.info(`Encountered loyalty transaction of type: ${decoded.name}. Skipping.`)
+    return null
+  }
+
+  const transaction = JSON.parse(JSON.stringify(original))
+
+  transaction.status = receipt.status
+  transaction.contractAddress = transaction.to
+
+  transaction.toAddress =
+    decoded && decoded.params[0] && decoded.params[0].value
+      ? decoded.params[0].value
+      : transaction.to
+  transaction.toAddress = transaction.toAddress.toLowerCase()
+  delete transaction.to
+  transaction.fromAddress = transaction.from.toLowerCase()
+  delete transaction.from
+
+  transaction.value =
+    decoded && decoded.params && decoded.params[1].value
+      ? new BigNumber(decoded.params[1].value).toString(10)
+      : transaction.value.toString(10)
+  transaction.timestamp = block.timestamp
+  transaction.confirms = 0
+  transaction.state = 'processed'
+
+  delete transaction.gas
+  delete transaction.gasPrice
+  delete transaction.v
+  delete transaction.r
+  delete transaction.s
+
+  return transaction
 }
 
 class TestDatabaseConn {
@@ -53,12 +99,10 @@ class TestDatabaseConn {
     log.info('Successfully setup database.')
   }
 
-  async updateMinedStatus(txHash, blockNumber) {
-    const r = await qbDB.models.transaction.update({
-      blockNumber: blockNumber,
-      state: 'processed',
-      tokenId: this.testToken.id
-    }, { where: { hash: txHash }})
+  async updateMinedStatus(tx, txReceipt, block) {
+    const storeable = makeStoreableTransaction(tx, txReceipt, block)
+    storeable.tokenId = this.testToken.id
+    const r = await qbDB.models.transaction.update(storeable, { where: { hash: tx.hash }})
     return r
   }
 

@@ -35,7 +35,7 @@ interface TestToken {
 
 class TestPrivateChain {
   public setupBlockCount: number
-  public initialLoyaltyTokenAmount: number
+  public initialLoyaltyTokenAmount: string
   public loyaltyTokenContractAddress: string = null
   public tokenDBContractAddress: string = null
   private accounts: [TestAccount]
@@ -146,7 +146,7 @@ class TestPrivateChain {
 
     log.info(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
 
-    this.initialLoyaltyTokenAmount = 1000000
+    this.initialLoyaltyTokenAmount = '1000000'
 
     const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address,
       this.initialLoyaltyTokenAmount).send({

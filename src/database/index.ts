@@ -37,7 +37,7 @@ const getTransactionHistory = async (address: string, limit: number, offset: num
 }
 
 const getTransaction = async (hash: string) => {
-  const transaction = await qbDB.models.transaction.findAll({
+  const transaction = await qbDB.models.transaction.find({
     where: {
       hash: hash,
     },

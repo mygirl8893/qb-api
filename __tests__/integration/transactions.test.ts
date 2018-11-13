@@ -253,7 +253,7 @@ describe('Transactions API Integration', () => {
     const historicalTransactions = transactionsHistory.body
     const someTransaction = historicalTransactions[0]
 
-    const txDataResponse = await request(app).get(`/transactions/${someTransaction.hash}`)
+    const txDataResponse = await request(app).get(`/transactions/${someTransaction.hash.toUpperCase()}`)
     const singleTx = txDataResponse.body
 
     someTransaction.confirms = 0

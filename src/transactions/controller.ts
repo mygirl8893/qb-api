@@ -71,7 +71,8 @@ const getTransaction = async (req, res) => {
 
   const storedTx = await database.getTransaction(req.params.hash)
 
-  if (storedTx.state !== 'pending') {
+
+  if (storedTx && storedTx.state !== 'pending') {
     const tx = await getTx(req.params.hash)
     tx.state = 'processed'
     return res.json(tx)

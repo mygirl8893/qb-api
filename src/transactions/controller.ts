@@ -48,6 +48,8 @@ const getTx = async (txHash) => {
 
   const token = await database.getToken(transaction.contract)
   delete token.balance
+  delete token.id
+  delete token.brandId
 
   transaction.token = token || null
   return transaction
@@ -60,14 +62,29 @@ const txBelongsTo = (address, tx, decodedTx) => (
 )
 
 const getTransactionSchema = Joi.object().keys({
-  params: {
+  params: Joi.object().keys({
     hash: validation.ethereumHash().required(),
-  }
+  })
 })
 const getTransaction = async (req, res) => {
   req = validation.validateRequestInput(req, getTransactionSchema)
-  const tx = await getTx(req.params.hash)
-  return res.json(tx) // TODO: improve response
+
+  const storedTx = await database.getTransaction(req.params.hash)
+
+
+  if (storedTx && storedTx.state !== 'pending') {
+    const tx = await getTx(req.params.hash)
+    tx.state = 'processed'
+    return res.json(tx)
+  } else {
+    if (storedTx) {
+      log.error(`Transaction ${req.params.hash} is in pending state.`)
+    } else {
+      log.error(`Transaction ${req.params.hash} does not exist.`)
+    }
+    res.status(HttpStatus.NOT_FOUND).json({message: `Transaction does not exist.`})
+  }
+
 }
 
 const DEFAULT_HISTORY_LIMIT = 100
@@ -167,7 +184,7 @@ const buildRawTransactionSchema = Joi.object().keys({
     from: validation.ethereumAddress().required(),
     to: validation.ethereumAddress().required(),
     contractAddress: validation.ethereumAddress().required(),
-    transferAmount: Joi.required()
+    transferAmount: validation.bigPositiveIntAsString().required()
   })
 })
 const buildRawTransaction = async (req, res) => {

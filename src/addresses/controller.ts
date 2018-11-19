@@ -11,6 +11,9 @@ const web3 = Config.getPrivateWeb3()
 const getAddressSchema = Joi.object().keys({
   params: Joi.object().keys({
     address: validation.ethereumAddress().required()
+  }),
+  query: Joi.object().keys({
+    public: Joi.boolean().optional()
   })
 })
 async function getAddress(req, res) {
@@ -33,7 +36,9 @@ async function getAddress(req, res) {
       })
     }
 
-    qbxBalance = await User.getQBXToken(address)
+    if (req.query.public) {
+      qbxBalance = await User.getQBXToken(address)
+    }
   } catch (e) {
     if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
       log.error(e.message)
@@ -43,17 +48,22 @@ async function getAddress(req, res) {
     }
   }
 
-  res.json({
+  const response = {
     transactionCount: transactionCount,
     balances: {
       private: tokenBalances,
-      public: [{
-        symbol: qbxBalance.symbol,
-        balance: qbxBalance.balance,
-        contractAddress: qbxBalance.contractAddress
-      }]
+      public: undefined
     }
-  })
+  }
+
+  if (req.query.public) {
+    response.balances.public = [{
+      symbol: qbxBalance.symbol,
+      balance: qbxBalance.balance,
+      contractAddress: qbxBalance.contractAddress
+    }]
+  }
+  res.json(response)
 }
 
 export default {

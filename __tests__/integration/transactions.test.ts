@@ -532,7 +532,7 @@ describe('Transactions API Integration', () => {
         "private": [
           {
             "symbol": TOKEN.symbol,
-            "amount": privateChain.initialLoyaltyTokenAmount - txCount, // assuming all value 1
+            "amount": (privateChain.initialLoyaltyTokenAmount - txCount).toString(), // assuming all value 1
             "contractAddress": privateChain.loyaltyTokenContractAddress
           }
         ],
@@ -546,7 +546,7 @@ describe('Transactions API Integration', () => {
       }
     }
 
-    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}`)
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)
     expect(r.status).toBe(HttpStatus.OK)
     expect(r.body).toEqual(expectedAddress)
   })

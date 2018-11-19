@@ -35,11 +35,11 @@ function validateRequestInput(req: express.Request, schema): express.Request {
 }
 
 function ethereumAddress()  {
-  return Joi.string().alphanum().length(42, 'utf8')
+  return Joi.string().length(42, 'utf8').regex(/^0(x|X)[a-fA-F0-9]{40}$/)
 }
 
 function ethereumHash()  {
-  return Joi.string().alphanum().length(66, 'utf8')
+  return Joi.string().length(66, 'utf8').regex(/^0(x|X)[a-fA-F0-9]{64}$/)
 }
 
 function bigPositiveIntAsString() {

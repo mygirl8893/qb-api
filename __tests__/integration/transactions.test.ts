@@ -413,7 +413,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badContractAddress}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badContractAddress}"`)).toBeTruthy()
   })
 
   it('Rejects 1 raw transaction request with bad from address', async () => {
@@ -430,7 +430,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badFromAddress.toLowerCase()}"`)).toBeTruthy()
   })
 
   it('Rejects 1 transfer signed with the wrong key', async () => {

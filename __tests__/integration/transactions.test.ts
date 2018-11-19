@@ -51,6 +51,7 @@ describe('Transactions API Integration', () => {
   let web3Conn: Web3Connection = null
   let apiDBConn = null
   let totalTransactionsSoFar = 0
+  let Config = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -83,7 +84,7 @@ describe('Transactions API Integration', () => {
 
 
       app = require('../../app').default
-      const Config = require('../../src/config').default
+      Config = require('../../src/config').default
 
       apiDBConn = require('../../src/database').default
 
@@ -519,6 +520,35 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets address by hash', async () => {
+
+    const txCount = 6
+
+    const expectedAddress = {
+      "transactionCount": txCount,
+      "balances": {
+        "private": [
+          {
+            "symbol": TOKEN.symbol,
+            "amount": privateChain.initialLoyaltyTokenAmount - txCount, // assuming all value 1
+            "contractAddress": privateChain.loyaltyTokenContractAddress
+          }
+        ],
+        "public": [
+          {
+            "symbol": "QBX",
+            "balance": "0",
+            "contractAddress": Config.getQBXAddress()
+          }
+        ]
+      }
+    }
+
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}`)
+    expect(r.status).toBe(HttpStatus.OK)
+    expect(r.body).toEqual(expectedAddress)
   })
 })
 

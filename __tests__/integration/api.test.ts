@@ -40,7 +40,7 @@ APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.setTimeout(180000)
 
-describe('Network, Users and Tokens API', () => {
+describe('Network, Users, Tokens API', () => {
   let app = null
   let privateChain = null
   let testDbConn = null

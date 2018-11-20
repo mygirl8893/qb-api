@@ -529,21 +529,19 @@ describe('Transactions API Integration', () => {
     const expectedAddress = {
       "transactionCount": txCount,
       "balances": {
-        "private": [
-          {
-            "symbol": TOKEN.symbol,
-            "amount": (privateChain.initialLoyaltyTokenAmount - txCount).toString(), // assuming all value 1
-            "contractAddress": privateChain.loyaltyTokenContractAddress
-          }
-        ],
-        "public": [
-          {
-            "symbol": "QBX",
+        "private": {
+        },
+        "public": {
+          "QBX": {
             "balance": "0",
             "contractAddress": Config.getQBXAddress()
           }
-        ]
+        }
       }
+    }
+    expectedAddress.balances.private[TOKEN.symbol] = {
+      "balance": (privateChain.initialLoyaltyTokenAmount - txCount).toString(), // assuming all value 1
+      "contractAddress": privateChain.loyaltyTokenContractAddress
     }
 
     const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)

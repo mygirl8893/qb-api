@@ -21,7 +21,7 @@ async function getAddress(req, res) {
   const address = req.params.address
 
   let transactionCount = null
-  const tokenBalances = []
+  const tokenBalances = {}
   let qbxBalance = null
   try {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
@@ -29,11 +29,10 @@ async function getAddress(req, res) {
     for (const token of tokens) {
       let balance = await User.getBalance(address, token.contractAddress)
 
-      tokenBalances.push({
-        symbol: token.symbol,
-        amount: balance,
+      tokenBalances[token.symbol] = {
+        balance: balance,
         contractAddress: token.contractAddress
-      })
+      }
     }
 
     if (req.query.public) {
@@ -57,12 +56,13 @@ async function getAddress(req, res) {
   }
 
   if (req.query.public) {
-    response.balances.public = [{
-      symbol: qbxBalance.symbol,
-      balance: qbxBalance.balance,
-      contractAddress: qbxBalance.contractAddress
-    }]
+    response.balances.public = {}
+    response.balances.public[qbxBalance.symbol] = {
+        balance: qbxBalance.balance,
+        contractAddress: qbxBalance.contractAddress
+      }
   }
+
   res.json(response)
 }
 

@@ -20,7 +20,7 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   {}
 ).methods
 
-const getTokens = async (req, res) => {
+async function getTokens(req, res) {
   let publicTokens = undefined
   const tokens = await database.getTokens()
   for (const token of tokens) {
@@ -56,7 +56,7 @@ const getTokenSchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getToken = async (req, res) => {
+async function getToken(req, res) {
   req = validation.validateRequestInput(req, getTokenSchema)
   const contractAddress = req.params.contract
   if (!contractAddress)

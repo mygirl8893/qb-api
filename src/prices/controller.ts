@@ -8,7 +8,7 @@ import validation from '../validation'
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
 
-const tokenRate = async (tokenAddress) => {
+async function tokenRate(tokenAddress) {
   const TokenDB = TokenController.tokenDB()
   const token = await TokenDB.getToken(tokenAddress).call()
   const tokenRate = Number(token['2'])
@@ -29,7 +29,7 @@ const getPriceSchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getPrice = async (req, res) => {
+async function getPrice(req, res) {
   req = validation.validateRequestInput(req, getPriceSchema)
   const {from, to} = req.query
 
@@ -71,7 +71,7 @@ const getHistorySchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getHistory = async (req, res) => {
+async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
 

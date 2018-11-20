@@ -47,7 +47,7 @@ const getInfoSchema = Joi.object().keys({
     from: validation.ethereumAddress().required(),
   }
 })
-const getInfo = async function (req, res) {
+async function getInfo(req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
   req = validation.validateRequestInput(req, getInfoSchema)
   const address = req.params.from

@@ -51,6 +51,7 @@ describe('Transactions API Integration', () => {
   let web3Conn: Web3Connection = null
   let apiDBConn = null
   let totalTransactionsSoFar = 0
+  let Config = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -83,7 +84,7 @@ describe('Transactions API Integration', () => {
 
 
       app = require('../../app').default
-      const Config = require('../../src/config').default
+      Config = require('../../src/config').default
 
       apiDBConn = require('../../src/database').default
 
@@ -413,7 +414,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badContractAddress}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badContractAddress}"`)).toBeTruthy()
   })
 
   it('Rejects 1 raw transaction request with bad from address', async () => {
@@ -430,7 +431,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badFromAddress.toLowerCase()}"`)).toBeTruthy()
   })
 
   it('Rejects 1 transfer signed with the wrong key', async () => {
@@ -519,6 +520,33 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets address by hash', async () => {
+
+    const txCount = 6
+
+    const expectedAddress = {
+      "transactionCount": txCount,
+      "balances": {
+        "private": {
+        },
+        "public": {
+          "QBX": {
+            "balance": "0",
+            "contractAddress": Config.getQBXAddress()
+          }
+        }
+      }
+    }
+    expectedAddress.balances.private[TOKEN.symbol] = {
+      "balance": (privateChain.initialLoyaltyTokenAmount - txCount).toString(), // assuming all value 1
+      "contractAddress": privateChain.loyaltyTokenContractAddress
+    }
+
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)
+    expect(r.status).toBe(HttpStatus.OK)
+    expect(r.body).toEqual(expectedAddress)
   })
 })
 

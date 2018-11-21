@@ -2,9 +2,9 @@ import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
 
 const Token = qbDB.models.token
-const Op = sequelize.Op;
+const Op = sequelize.Op
 
-const getTransactionHistory = async (address: string, limit: number, offset: number) => {
+async function getTransactionHistory(address: string, limit: number, offset: number) {
   const transactions = await qbDB.models.transaction.findAll({
     where: {
       $or: {
@@ -36,7 +36,7 @@ const getTransactionHistory = async (address: string, limit: number, offset: num
   return transactions
 }
 
-const getTransaction = async (hash: string) => {
+async function getTransaction(hash: string) {
   const transaction = await qbDB.models.transaction.find({
     where: {
       hash: hash,
@@ -58,7 +58,7 @@ interface PendingTransaction {
   Security NOTE: sequelize escapes the inputs if the '?' placeholder is used
  */
 
-const addPendingTransaction = async (transaction: PendingTransaction) => {
+async function addPendingTransaction(transaction: PendingTransaction) {
   const keys = Object.keys(transaction)
 
   /* insert if the primary key (transaction hash) is not present; do nothing otherwise.
@@ -73,11 +73,11 @@ const addPendingTransaction = async (transaction: PendingTransaction) => {
   return r
 }
 
-const getToken = async (contractAddress) => {
+async function getToken(contractAddress: string) {
   return await Token.find({ where: { contractAddress }, raw: true })
 }
 
-const getTokens = async () => {
+async function getTokens() {
   return await Token.findAll({
     where: {
       contractAddress: { [Op.ne]: null }

@@ -1,21 +1,9 @@
 [
   {
     "constant": true,
-    "inputs": [],
-    "name": "mintingFinished",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
+    "inputs": [
+
     ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
     "name": "name",
     "outputs": [
       {
@@ -42,7 +30,7 @@
     "name": "approve",
     "outputs": [
       {
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
@@ -51,8 +39,26 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_disable",
+        "type": "bool"
+      }
+    ],
+    "name": "disableTransfers",
+    "outputs": [
+
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
-    "inputs": [],
+    "inputs": [
+
+    ],
     "name": "totalSupply",
     "outputs": [
       {
@@ -83,7 +89,7 @@
     "name": "transferFrom",
     "outputs": [
       {
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
@@ -93,7 +99,9 @@
   },
   {
     "constant": true,
-    "inputs": [],
+    "inputs": [
+
+    ],
     "name": "decimals",
     "outputs": [
       {
@@ -103,6 +111,38 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+
+    ],
+    "name": "acceptOwnership",
+    "outputs": [
+
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -117,35 +157,9 @@
         "type": "uint256"
       }
     ],
-    "name": "mint",
+    "name": "issue",
     "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_spender",
-        "type": "address"
-      },
-      {
-        "name": "_subtractedValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "decreaseApproval",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
+
     ],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -154,39 +168,8 @@
   {
     "constant": true,
     "inputs": [
-      {
-        "name": "_owner",
-        "type": "address"
-      }
+
     ],
-    "name": "balanceOf",
-    "outputs": [
-      {
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "finishMinting",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -200,7 +183,9 @@
   },
   {
     "constant": true,
-    "inputs": [],
+    "inputs": [
+
+    ],
     "name": "symbol",
     "outputs": [
       {
@@ -210,6 +195,26 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_from",
+        "type": "address"
+      },
+      {
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "destroy",
+    "outputs": [
+
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -227,30 +232,7 @@
     "name": "transfer",
     "outputs": [
       {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_spender",
-        "type": "address"
-      },
-      {
-        "name": "_addedValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseApproval",
-    "outputs": [
-      {
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
@@ -285,117 +267,16 @@
     "constant": false,
     "inputs": [
       {
-        "name": "newOwner",
+        "name": "_newOwner",
         "type": "address"
       }
     ],
     "name": "transferOwnership",
-    "outputs": [],
+    "outputs": [
+
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "name": "tokenSymbol",
-        "type": "string"
-      },
-      {
-        "name": "tokenName",
-        "type": "string"
-      },
-      {
-        "name": "tokenDecimals",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Mint",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [],
-    "name": "MintFinished",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Transfer",
-    "type": "event"
   }
 ]

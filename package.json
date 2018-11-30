@@ -55,7 +55,7 @@
     "joi": "^13.7.0",
     "morgan": "^1.9.0",
     "mysql2": "^1.6.1",
-    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v1.1.0",
+    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v1.0.0",
     "sequelize": "^4.38.0",
     "swagger": "^0.7.5",
     "swagger-jsdoc": "^1.9.7",

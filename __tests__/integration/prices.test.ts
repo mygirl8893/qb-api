@@ -54,6 +54,7 @@ describe('Prices API Integration', () => {
   let app = null
   let privateChain = null
   let apiDbConn = null
+  let testDbConn = null
   beforeAll(async () => {
 
     try {
@@ -64,6 +65,9 @@ describe('Prices API Integration', () => {
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
+      testDbConn = new APITesting.TestDatabaseConn()
+      await testDbConn.setup(TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default

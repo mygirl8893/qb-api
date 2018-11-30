@@ -4,6 +4,7 @@ import TokenController from '../tokens/controller'
 import * as Joi from 'joi'
 import log from '../logging'
 import validation from '../validation'
+import database from '../database'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
@@ -35,7 +36,12 @@ async function getPrice(req, res) {
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
-  const rate = await tokenRate(from)
+
+  const token = await database.getToken(from)
+  if (!token) {
+    return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
+  }
+  const rate = token.rate
 
   let statusCode = HttpStatus.OK
   let results = {}
@@ -74,6 +80,7 @@ const getHistorySchema = Joi.object().keys({
 async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
+
 
   const rate = await tokenRate(from)
   let statusCode = HttpStatus.OK

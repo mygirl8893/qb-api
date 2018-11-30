@@ -41,7 +41,6 @@ export default {
   getPublicRPC: () => envtConfig.rpc.public,
   getPrivateRPC: () => envtConfig.rpc.private,
   getTokenABI: () => Config.tokenABI,
-  getTokenDBABI: () => Config.tokenDBABI,
   getEnv: () => env,
   getSwaggerConfig: () => SwaggerConfig,
   getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,

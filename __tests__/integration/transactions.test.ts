@@ -27,7 +27,6 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -69,7 +68,6 @@ describe('Transactions API Integration', () => {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
-      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
@@ -524,7 +522,7 @@ describe('Transactions API Integration', () => {
 
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 6
+    const txCount = 4
 
     const expectedAddress = {
       "transactionCount": txCount,
@@ -540,7 +538,7 @@ describe('Transactions API Integration', () => {
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      "balance": (privateChain.initialLoyaltyTokenAmount - txCount).toString(), // assuming all value 1
+      "balance": (privateChain.initialLoyaltyTokenAmount - 6).toString(), // assuming all value 1
       "contractAddress": privateChain.loyaltyTokenContractAddress
     }
 

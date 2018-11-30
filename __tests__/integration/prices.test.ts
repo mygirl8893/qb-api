@@ -274,8 +274,8 @@ describe('Prices API Integration', () => {
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
-    expect(response.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
+    expect(response.status).toBe(HttpStatus.NOT_FOUND)
+    expect(response.body.message).toEqual(`Token with address ${INVALID_TOKEN_ADDRESS} does not exist.`)
   })
 
   it('Get historical values of LoyaltyToken MCW should fail if multiple currencies are passed', async () => {

@@ -8,12 +8,6 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-const tokenDB = () => new web3.eth.Contract(
-  Config.getTokenDBABI(),
-  Config.getTokenDBAddress(),
-  {}
-).methods
-
 const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   Config.getTokenABI(),
   contractAddress,
@@ -97,6 +91,5 @@ async function getToken(req, res) {
 export default {
   getToken,
   getTokens,
-  tokenDB,
   loyaltyToken
 }

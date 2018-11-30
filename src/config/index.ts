@@ -35,7 +35,6 @@ let web3ConnectionsAreReady = false
 export default {
   getPort: () => envtConfig.port,
   getChainID: () => envtConfig.chainID,
-  getTokenDBAddress: () => envtConfig.tokenDB,
   getQBXAddress: () => Config.qbxContract,
   getPrivateWeb3: () => web3Private,
   getPublicWeb3: () => web3Public,
@@ -44,7 +43,6 @@ export default {
   getTokenABI: () => Config.tokenABI,
   getTokenDBABI: () => Config.tokenDBABI,
   getEnv: () => env,
-  getStatusMessage: (code) => Config.statusMsgs[code],
   getSwaggerConfig: () => SwaggerConfig,
   getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
   getS3Url: () => envtConfig.S3Url,

@@ -7,7 +7,6 @@ const Config = {
       private: process.env.RPC_HOST || 'http://10.0.10.250:28002',
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: '0x7c21ac5994ea0c2dc965f6cd998f38a8a896de3c',
     chainID: 29746197,
     port: process.env.PORT,
     S3Url: 'http://tokens.qiibee.com'
@@ -17,7 +16,6 @@ const Config = {
       private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
     port: process.env.PORT,
     S3Url: 'http://tokensbeta.qiibee.com'
   },
@@ -26,7 +24,6 @@ const Config = {
       private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    tokenDB: process.env.TOKEN_DB_CONTRACT_ADDRESS,
     port: process.env.PORT,
     S3Url: 'http://tokenstesting.qiibee.com'
   },
@@ -42,12 +39,6 @@ const Config = {
   tokenABI: JSON.parse(
     fs.readFileSync(
       path.resolve(__dirname, '../contracts/loyaltyToken.json'),
-      'utf-8'
-    )
-  ),
-  tokenDBABI: JSON.parse(
-    fs.readFileSync(
-      path.resolve(__dirname, '../contracts/tokenDB.json'),
       'utf-8'
     )
   ),

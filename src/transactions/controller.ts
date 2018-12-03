@@ -129,12 +129,9 @@ async function transfer(req, res) {
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
-    const Token = TokenController.tokenDB()
+    const loyaltyToken = await database.getToken(txData.to)
 
-    const loyaltyToken = await Token.getToken(txData.to).call()
-
-    if (
-      typeof loyaltyToken[0] === 'undefined' ||
+    if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')
     ) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Loyalty Token not found' }) // TODO: use Error object

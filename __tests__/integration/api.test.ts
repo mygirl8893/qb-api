@@ -23,7 +23,6 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -52,7 +51,6 @@ describe('Network, Users, Tokens API', () => {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
-      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress

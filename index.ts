@@ -5,23 +5,15 @@ import * as fs from "fs";
 import * as path from "path";
 
 const loyaltyTokenABI = config.tokenABI
-const { tokenDBABI } = config
 
 const loyaltyTokenCode = fs.readFileSync(
   path.resolve(__dirname, 'src/contracts/loyaltyToken.sol'),
   'utf-8'
 )
 
-const tokenDBCode = fs.readFileSync(
-  path.resolve(__dirname, 'src/contracts/tokenDB.sol'),
-  'utf-8'
-)
-
 export default {
   loyaltyTokenABI,
-  tokenDBABI,
   TestPrivateChain,
   apiTesting,
-  loyaltyTokenCode,
-  tokenDBCode
+  loyaltyTokenCode
 }

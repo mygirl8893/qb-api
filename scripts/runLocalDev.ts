@@ -53,10 +53,6 @@ async function launch() {
   const testDbConn = new apiTesting.TestDatabaseConn()
   await testDbConn.setup(token)
 
-  const configValues = require('../src/config/config')
-
-  configValues.default.development.tokenDB = testPrivateChain.tokenDBContractAddress
-
   const app = require('../app')
   const Config = require('../src/config').default
 

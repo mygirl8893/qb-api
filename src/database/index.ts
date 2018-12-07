@@ -10,6 +10,7 @@ async function getTransactionHistory(address: string, limit: number, offset: num
       $or: {
         toAddress: { $eq: address},
         fromAddress: { $eq: address},
+        contractAddress: {$eq: address}
       }
     },
     order: [ ['blockNumber', 'DESC'] ],

@@ -249,6 +249,13 @@ describe('Transactions API Integration', () => {
     }
   })
 
+  it('Gets history by contract address', async () => {
+
+    const transactionsHistory = await request(app).get(`/transactions/${privateChain.loyaltyTokenContractAddress}/history`)
+    const historicalTransactions = transactionsHistory.body
+    expect(historicalTransactions).toHaveLength( 6)
+  })
+
   it('Returns individual transaction by hash', async () =>{
     const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
     const historicalTransactions = transactionsHistory.body

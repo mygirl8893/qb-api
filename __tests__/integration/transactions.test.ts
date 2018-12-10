@@ -58,7 +58,7 @@ describe('Transactions API Integration', () => {
     const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
     const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
-    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block)
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address])
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
     totalTransactionsSoFar++
   }
@@ -188,6 +188,8 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
     expect(singleTransaction.state).toBe('processed')
     expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
+    expect(singleTransaction.txType).toBe('reward')
+    expect(singleTransaction.contractFunction).toBe('transfer')
   })
 
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
@@ -242,6 +244,8 @@ describe('Transactions API Integration', () => {
       expect(tx.from.toLowerCase()).toBe(ACCOUNTS[1].address)
       expect(tx.to.toLowerCase()).toBe(ACCOUNTS[0].address)
       expect(tx.state).toBe('processed')
+      expect(tx.txType).toBe('redeem')
+      expect(tx.contractFunction).toBe('transfer')
 
       // check that the transactions are ordered DESC by blockNumber
       expect(tx.blockNumber).toBeLessThanOrEqual(previousBlockNumber)
@@ -262,6 +266,8 @@ describe('Transactions API Integration', () => {
     delete someTransaction.contractAddress
     delete someTransaction.id
     delete someTransaction.tokenId
+    delete someTransaction.contractFunction
+    delete someTransaction.txType
 
     // adjusted for proper comparison
     singleTx.from = singleTx.from.toLowerCase()

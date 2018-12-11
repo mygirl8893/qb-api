@@ -60,6 +60,7 @@ function makeStoreableTransaction(original, receipt, block) {
   transaction.timestamp = block.timestamp
   transaction.confirms = 0
   transaction.state = 'processed'
+  transaction.contractFunction = decoded.name
 
   delete transaction.gas
   delete transaction.gasPrice
@@ -99,9 +100,19 @@ class TestDatabaseConn {
     log.info('Successfully setup database.')
   }
 
-  async updateMinedStatus(tx, txReceipt, block) {
+  async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
     const storeable = makeStoreableTransaction(tx, txReceipt, block)
     storeable.tokenId = this.testToken.id
+
+    if (storeable.contractFunction === 'transfer') {
+      const lowerCased = brandAddresses.map(a => a.toLowerCase())
+      const addressSet = new Set(lowerCased)
+      if (addressSet.has(storeable.toAddress.toLowerCase())) {
+        storeable.txType = 'redeem'
+      } else if (addressSet.has(storeable.fromAddress.toLowerCase())) {
+        storeable.txType = 'reward'
+      }
+    }
     const r = await qbDB.models.transaction.update(storeable, { where: { hash: tx.hash }})
     return r
   }

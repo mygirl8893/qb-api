@@ -37,7 +37,6 @@ class TestPrivateChain {
   public setupBlockCount: number
   public initialLoyaltyTokenAmount: string
   public loyaltyTokenContractAddress: string = null
-  public tokenDBContractAddress: string = null
   private accounts: [TestAccount]
   private token: TestToken
   private port: number
@@ -116,35 +115,6 @@ class TestPrivateChain {
     this.loyaltyTokenContractAddress = loyaltyTokenContractInstance.options.address
     loyaltyTokenContract.options.address = this.loyaltyTokenContractAddress
     log.info(`Loyalty Token contract deployed successfully. The address is ${this.loyaltyTokenContractAddress}`)
-
-    log.info("Compiling token DB contract..")
-
-    const tokenDBContract = getContract(privateWeb3,
-      path.resolve(__dirname, '../../src/contracts/tokenDB.sol'),
-      ':TokenDB')
-
-    log.info('Deploying the token DB contract..')
-
-    const tokenDBContractInstance = await tokenDBContract.deploy().send({
-      from: this.accounts[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    const tokenDBContractAddress = tokenDBContractInstance.options.address
-    tokenDBContract.options.address = tokenDBContractAddress
-    this.tokenDBContractAddress = tokenDBContractAddress
-
-    log.info(`Token DB contract deployed successfully. The address is ${this.tokenDBContractAddress}`)
-
-    const setTokenReceipt = await tokenDBContract.methods
-      .setToken(this.loyaltyTokenContractAddress, this.token.symbol, this.token.name, this.token.rate).send({
-        from: this.accounts[0].address,
-        gas: 1500000,
-        gasPrice: '30'
-      })
-
-    log.info(`Loyalty Token added to token DB in a transaction with hash ${setTokenReceipt.transactionHash}`)
 
     this.initialLoyaltyTokenAmount = '1000000'
 

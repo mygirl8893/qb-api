@@ -30,7 +30,6 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -54,16 +53,19 @@ describe('Prices API Integration', () => {
   let app = null
   let privateChain = null
   let apiDbConn = null
+  let testDbConn = null
   beforeAll(async () => {
 
     try {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
-      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+
+      testDbConn = new APITesting.TestDatabaseConn()
+      await testDbConn.setup(TOKEN)
 
       app = require('../../app').default
       const Config = require('../../src/config').default
@@ -270,8 +272,8 @@ describe('Prices API Integration', () => {
     const response = await request(app)
       .get(`/prices/history`)
       .query(pricesParams)
-    expect(response.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(response.body.message).toEqual('LoyaltyToken contract address is invalid.')
+    expect(response.status).toBe(HttpStatus.NOT_FOUND)
+    expect(response.body.message).toEqual(`Token with address ${INVALID_TOKEN_ADDRESS} does not exist.`)
   })
 
   it('Get historical values of LoyaltyToken MCW should fail if multiple currencies are passed', async () => {

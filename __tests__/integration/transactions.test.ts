@@ -27,7 +27,6 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -51,6 +50,7 @@ describe('Transactions API Integration', () => {
   let web3Conn: Web3Connection = null
   let apiDBConn = null
   let totalTransactionsSoFar = 0
+  let Config = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -58,7 +58,7 @@ describe('Transactions API Integration', () => {
     const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
     const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
-    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block)
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address])
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
     totalTransactionsSoFar++
   }
@@ -68,7 +68,6 @@ describe('Transactions API Integration', () => {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
-      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
@@ -83,7 +82,7 @@ describe('Transactions API Integration', () => {
 
 
       app = require('../../app').default
-      const Config = require('../../src/config').default
+      Config = require('../../src/config').default
 
       apiDBConn = require('../../src/database').default
 
@@ -189,6 +188,8 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
     expect(singleTransaction.state).toBe('processed')
     expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
+    expect(singleTransaction.txType).toBe('reward')
+    expect(singleTransaction.contractFunction).toBe('transfer')
   })
 
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
@@ -243,11 +244,20 @@ describe('Transactions API Integration', () => {
       expect(tx.from.toLowerCase()).toBe(ACCOUNTS[1].address)
       expect(tx.to.toLowerCase()).toBe(ACCOUNTS[0].address)
       expect(tx.state).toBe('processed')
+      expect(tx.txType).toBe('redeem')
+      expect(tx.contractFunction).toBe('transfer')
 
       // check that the transactions are ordered DESC by blockNumber
       expect(tx.blockNumber).toBeLessThanOrEqual(previousBlockNumber)
       previousBlockNumber = tx.blockNumber
     }
+  })
+
+  it('Gets history by contract address', async () => {
+
+    const transactionsHistory = await request(app).get(`/transactions/${privateChain.loyaltyTokenContractAddress}/history`)
+    const historicalTransactions = transactionsHistory.body
+    expect(historicalTransactions).toHaveLength( 6)
   })
 
   it('Returns individual transaction by hash', async () =>{
@@ -263,6 +273,8 @@ describe('Transactions API Integration', () => {
     delete someTransaction.contractAddress
     delete someTransaction.id
     delete someTransaction.tokenId
+    delete someTransaction.contractFunction
+    delete someTransaction.txType
 
     // adjusted for proper comparison
     singleTx.from = singleTx.from.toLowerCase()
@@ -413,7 +425,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badContractAddress}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badContractAddress}"`)).toBeTruthy()
   })
 
   it('Rejects 1 raw transaction request with bad from address', async () => {
@@ -430,7 +442,7 @@ describe('Transactions API Integration', () => {
     const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
 
     expect(rawTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
-    expect(rawTransactionResponse.body.message.includes(`Provided address "${badFromAddress.toLowerCase()}" is invalid`)).toBeTruthy()
+    expect(rawTransactionResponse.body.message.includes(`"${badFromAddress.toLowerCase()}"`)).toBeTruthy()
   })
 
   it('Rejects 1 transfer signed with the wrong key', async () => {
@@ -519,6 +531,33 @@ describe('Transactions API Integration', () => {
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
 
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets address by hash', async () => {
+
+    const txCount = 4
+
+    const expectedAddress = {
+      "transactionCount": txCount,
+      "balances": {
+        "private": {
+        },
+        "public": {
+          "QBX": {
+            "balance": "0",
+            "contractAddress": Config.getQBXAddress()
+          }
+        }
+      }
+    }
+    expectedAddress.balances.private[TOKEN.symbol] = {
+      "balance": (privateChain.initialLoyaltyTokenAmount - 6).toString(), // assuming all value 1
+      "contractAddress": privateChain.loyaltyTokenContractAddress
+    }
+
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)
+    expect(r.status).toBe(HttpStatus.OK)
+    expect(r.body).toEqual(expectedAddress)
   })
 })
 

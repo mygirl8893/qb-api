@@ -17,6 +17,7 @@ import transactionsRouter from './src/transactions/router'
 import tokensRouter from './src/tokens/router'
 import usersRouter from './src/users/router'
 import pricesRouter from './src/prices/router'
+import addressesRouter from './src/addresses/router'
 
 import log from './src/logging'
 
@@ -48,6 +49,7 @@ app.use('/transactions', transactionsRouter)
 app.use('/tokens', tokensRouter)
 app.use('/users', usersRouter)
 app.use('/prices', pricesRouter)
+app.use('/addresses', addressesRouter)
 app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use((req, res, next) => {

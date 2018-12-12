@@ -8,19 +8,13 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-const tokenDB = () => new web3.eth.Contract(
-  Config.getTokenDBABI(),
-  Config.getTokenDBAddress(),
-  {}
-).methods
-
 const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   Config.getTokenABI(),
   contractAddress,
   {}
 ).methods
 
-const getTokens = async (req, res) => {
+async function getTokens(req, res) {
   let publicTokens = undefined
   const tokens = await database.getTokens()
   for (const token of tokens) {
@@ -56,7 +50,7 @@ const getTokenSchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getToken = async (req, res) => {
+async function getToken(req, res) {
   req = validation.validateRequestInput(req, getTokenSchema)
   const contractAddress = req.params.contract
   if (!contractAddress)
@@ -97,6 +91,5 @@ const getToken = async (req, res) => {
 export default {
   getToken,
   getTokens,
-  tokenDB,
   loyaltyToken
 }

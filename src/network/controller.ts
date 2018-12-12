@@ -2,7 +2,7 @@ import Config from '../config'
 
 const web3 = Config.getPrivateWeb3()
 
-const getInfo = async (req, res) => {
+async function getInfo(req, res) {
   const latestBlockNumber = await web3.eth.getBlockNumber(),
     latestBlock = await web3.eth.getBlock(latestBlockNumber)
 

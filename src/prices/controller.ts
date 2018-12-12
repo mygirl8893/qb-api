@@ -1,19 +1,12 @@
 import axios from "axios/index"
 import * as HttpStatus from 'http-status-codes'
-import TokenController from '../tokens/controller'
 import * as Joi from 'joi'
 import log from '../logging'
 import validation from '../validation'
+import database from '../database'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001
-
-const tokenRate = async (tokenAddress) => {
-  const TokenDB = TokenController.tokenDB()
-  const token = await TokenDB.getToken(tokenAddress).call()
-  const tokenRate = Number(token['2'])
-  return tokenRate !== 0 ? tokenRate : undefined
-}
 
 const getPriceSchema = Joi.object().keys({
   query: Joi.object().keys({
@@ -29,13 +22,18 @@ const getPriceSchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getPrice = async (req, res) => {
+async function getPrice(req, res) {
   req = validation.validateRequestInput(req, getPriceSchema)
   const {from, to} = req.query
 
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
-  const rate = await tokenRate(from)
+
+  const token = await database.getToken(from)
+  if (!token) {
+    return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
+  }
+  const rate = token.rate
 
   let statusCode = HttpStatus.OK
   let results = {}
@@ -71,35 +69,34 @@ const getHistorySchema = Joi.object().keys({
  * @param {object} res - respond object.
  * @return {json} The result.
  */
-const getHistory = async (req, res) => {
+async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
 
-  const rate = await tokenRate(from)
+
+  const token = await database.getToken(from)
+  if (!token) {
+    return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
+  }
+  const rate = token.rate
   let statusCode = HttpStatus.OK
 
-  if (rate) {
-    const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
-    log.info(`Querying cryptocompare: ${api}`)
-    const { status, data } = await axios.get(api)
+  const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
+  log.info(`Querying cryptocompare: ${api}`)
+  const { status, data } = await axios.get(api)
 
-    if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
-      log.info(`Cryptocompare request failed: ${data.message}`)
-      statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
-      let results = {message: data.Message}
-      return res.status(statusCode).json(results)
-    } else {
-      let results = []
-      for (let entry of data.Data) {
-        const qbxFiat = QBX_ETH * entry.close
-        const fiat = qbxFiat / rate
-        results.push({time: entry.time, price: fiat.toFixed(10)})
-      }
-      return res.status(statusCode).json(results)
-    }
+  if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
+    log.info(`Cryptocompare request failed: ${data.message}`)
+    statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
+    let results = {message: data.Message}
+    return res.status(statusCode).json(results)
   } else {
-    statusCode = HttpStatus.BAD_REQUEST
-    let results = {message: 'LoyaltyToken contract address is invalid.'}
+    let results = []
+    for (let entry of data.Data) {
+      const qbxFiat = QBX_ETH * entry.close
+      const fiat = qbxFiat / rate
+      results.push({time: entry.time, price: fiat.toFixed(10)})
+    }
     return res.status(statusCode).json(results)
   }
 }

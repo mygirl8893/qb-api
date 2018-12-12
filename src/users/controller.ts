@@ -9,7 +9,7 @@ import validation from '../validation'
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
 
-const getBalance = async (from = null, contractAddress) => {
+async function getBalance(from: string = null, contractAddress: string): Promise<string> {
   const Token= TokenController.loyaltyToken(contractAddress.toLowerCase())
   let balance = '0'
   if (from) {
@@ -19,7 +19,7 @@ const getBalance = async (from = null, contractAddress) => {
   return balance
 }
 
-const getQBXToken = async (from = null) => {
+async function getQBXToken(from: string = null) {
   const QiibeeToken = new web3Pub.eth.Contract(Config.getTokenABI(), Config.getQBXAddress(), {}).methods
   const totalSupply = await QiibeeToken.totalSupply().call()
   let balance = 0
@@ -39,7 +39,6 @@ const getQBXToken = async (from = null) => {
       description: 'Loyalty on the blockchain.',
       website: 'https://www.qiibee.com',
       logoUrl: 'https://s3.eu-central-1.amazonaws.com/tokens.qiibee/qbx/logo.png'
-
     }
 }
 
@@ -48,7 +47,7 @@ const getInfoSchema = Joi.object().keys({
     from: validation.ethereumAddress().required(),
   }
 })
-const getInfo = async function (req, res) {
+async function getInfo(req, res) {
   // TODO: include more info? Otherwise, just rename this route to /users/{from}/transactions.
   req = validation.validateRequestInput(req, getInfoSchema)
   const address = req.params.from

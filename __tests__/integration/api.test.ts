@@ -23,7 +23,6 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  tokenDB: 'ADDRESS_PLACEHOLDER_UNTIL_CONTRACT_DEPLOYMENT',
   port: 3000
 }
 
@@ -40,7 +39,7 @@ APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.setTimeout(180000)
 
-describe('Network, Users and Tokens API', () => {
+describe('Network, Users, Tokens API', () => {
   let app = null
   let privateChain = null
   let testDbConn = null
@@ -52,7 +51,6 @@ describe('Network, Users and Tokens API', () => {
       privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
 
       await privateChain.setup()
-      INTEGRATION_TEST_CONFIGURATION.tokenDB = privateChain.tokenDBContractAddress
 
       TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
       TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
@@ -108,7 +106,7 @@ describe('Network, Users and Tokens API', () => {
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
-    expect(r.body.message.includes(`Provided address "${badAddress}" is invalid`)).toBeTruthy()
+    expect(r.body.message.includes(`"${badAddress}"`)).toBeTruthy()
   })
 
   it('Fails to get user info for an address with 0 transactions', async () => {
@@ -169,7 +167,7 @@ describe('Network, Users and Tokens API', () => {
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
     // is not a contract address
-    expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
+    expect(r.body.message.includes(`"${badAddress}"`)).toBeTruthy()
   })
 
   it('Fails to get token for non-existent contract address', async () => {

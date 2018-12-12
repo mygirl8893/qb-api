@@ -14,7 +14,7 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-const getTx = async (txHash) => {
+async function getTx(txHash) {
   const endBlockNumber = await web3.eth.getBlock('latest'),
     transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
 
@@ -66,7 +66,7 @@ const getTransactionSchema = Joi.object().keys({
     hash: validation.ethereumHash().required(),
   })
 })
-const getTransaction = async (req, res) => {
+async function getTransaction(req, res) {
   req = validation.validateRequestInput(req, getTransactionSchema)
 
   const storedTx = await database.getTransaction(req.params.hash)
@@ -98,7 +98,7 @@ const getHistorySchema = Joi.object().keys({
     address: validation.ethereumAddress().required()
   })
 })
-const getHistory = async (req, res) => {
+async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
   let {limit, offset} = req.query
 
@@ -117,7 +117,7 @@ const transferSchema = Joi.object().keys({
     data: Joi.string().required()
   })
 })
-const transfer = async (req, res) => {
+async function transfer(req, res) {
   req = validation.validateRequestInput(req, transferSchema)
 
   abiDecoder.addABI(Config.getTokenABI())
@@ -129,12 +129,9 @@ const transfer = async (req, res) => {
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
-    const Token = TokenController.tokenDB()
+    const loyaltyToken = await database.getToken(txData.to)
 
-    const loyaltyToken = await Token.getToken(txData.to).call()
-
-    if (
-      typeof loyaltyToken[0] === 'undefined' ||
+    if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')
     ) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Loyalty Token not found' }) // TODO: use Error object
@@ -187,7 +184,7 @@ const buildRawTransactionSchema = Joi.object().keys({
     transferAmount: validation.bigPositiveIntAsString().required()
   })
 })
-const buildRawTransaction = async (req, res) => {
+async function buildRawTransaction(req, res) {
   req = validation.validateRequestInput(req, buildRawTransactionSchema)
   const { from, to, contractAddress, transferAmount } = req.query
 

@@ -74,9 +74,14 @@ async function addPendingTransaction(transaction: PendingTransaction) {
   return r
 }
 
-async function getToken(contractAddress: string) {
+async function getTokenByContractAddress(contractAddress: string) {
   return await Token.find({ where: { contractAddress }, raw: true })
 }
+
+async function getTokenBySymbol(symbol: string) {
+  return await Token.find({ where: { symbol }, raw: true })
+}
+
 
 async function getTokens() {
   return await Token.findAll({
@@ -95,7 +100,8 @@ export default {
   getTransaction,
   getTransactionHistory,
   addPendingTransaction,
-  getToken,
+  getTokenByContractAddress,
+  getTokenBySymbol,
   getTokens,
   close
 }

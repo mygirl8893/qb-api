@@ -29,7 +29,7 @@ async function getPrice(req, res) {
   const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
 
-  const token = await database.getToken(from)
+  const token = await database.getTokenByContractAddress(from)
   if (!token) {
     return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
   }
@@ -74,7 +74,7 @@ async function getHistory(req, res) {
   const { from, to, limit, aggregate, frequency} = req.query
 
 
-  const token = await database.getToken(from)
+  const token = await database.getTokenByContractAddress(from)
   if (!token) {
     return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
   }

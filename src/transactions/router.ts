@@ -78,6 +78,51 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
 
 /**
  * @swagger
+ * /transactions/:
+ *   get:
+ *     tags:
+ *       - Transactions
+ *     description: Returns the transaction {hash} information
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: symbol
+ *         description: Token symbol to filter by.
+ *         in: path
+ *         required: false
+ *         type: string
+ *       - name: contractAddress
+ *         description: Token contract address to filter by.
+ *         in: path
+ *         required: false
+ *         type: string
+ *       - name: limit
+ *         description: Define what is the maximum number of transactions the response can contain (Default is 100, maximum is 100).
+ *         in: query
+ *         required: false
+ *         type: integer
+ *       - name: offset
+ *         description: define the offset (how many transactions to be skipped) for the query.
+ *         in: query
+ *         required: false
+ *         type: integer
+ *       - name: wallet
+ *         description: Wallet address to filter by (wallet == to || wallet == from)
+ *         in: path
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *          description: Returns a JSON file containing the information relative to the transaction {hash}
+ *       400:
+ *          description: Request failed due to wrong parameters, see error message
+ *       500:
+ *          description: Request failed, see error message
+ */
+router.get('/', LibAPI.wrap(Controller.getTransactions))
+
+/**
+ * @swagger
  * /transactions/{from}/history:
  *   get:
  *     tags:

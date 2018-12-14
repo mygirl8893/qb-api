@@ -5,7 +5,9 @@ const Token = qbDB.models.token
 const Op = sequelize.Op
 
 
-async function getTransactions(limit: number, offset: number, symbol: string, contractAddress: string) {
+async function getTransactions(limit: number, offset: number, symbol: string,
+                               contractAddress: string,
+                               walletAddress: string) {
   const tokenFilters = {}
   if (symbol) {
     // @ts-ignore
@@ -16,7 +18,17 @@ async function getTransactions(limit: number, offset: number, symbol: string, co
     tokenFilters.contractAddress = contractAddress
   }
 
+  const txFilters = {}
+  if (walletAddress) {
+    // @ts-ignore
+    txFilters.$or = {
+      toAddress: { $eq: walletAddress},
+      fromAddress: { $eq: walletAddress}
+    }
+  }
+
   const transactions = await qbDB.models.transaction.findAll({
+    where: txFilters,
     order: [ ['blockNumber', 'DESC'] ],
     limit: limit,
     offset: offset,

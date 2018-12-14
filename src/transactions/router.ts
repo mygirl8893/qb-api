@@ -106,6 +106,11 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *         in: query
  *         required: false
  *         type: integer
+ *       - name: wallet
+ *         description: Wallet address to filter by (wallet == to || wallet == from)
+ *         in: path
+ *         required: true
+ *         type: string
  *     responses:
  *       200:
  *          description: Returns a JSON file containing the information relative to the transaction {hash}

@@ -84,11 +84,27 @@ async function getTransaction(req, res) {
     }
     res.status(HttpStatus.NOT_FOUND).json({message: `Transaction does not exist.`})
   }
-
 }
 
 const DEFAULT_HISTORY_LIMIT = 100
 const MAX_HISTORY_LIMIT = 100
+
+const getTransactionsSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
+    offset: Joi.number().integer().min(0).default(0),
+    symbol: Joi.string().max(64).example('QBX'),
+    contractAddress: validation.ethereumAddress(),
+  })
+})
+async function getTransactions(req, res) {
+  req = validation.validateRequestInput(req, getTransactionsSchema)
+  let {limit, offset, symbol, contractAddress} = req.query
+  limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
+  const history = await database.getTransactions(limit, offset, symbol, contractAddress)
+  return res.json(history)
+}
+
 const getHistorySchema = Joi.object().keys({
   query: Joi.object().keys({
     limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
@@ -239,6 +255,7 @@ async function buildRawTransaction(req, res) {
 export default {
   buildRawTransaction,
   getTransaction,
+  getTransactions,
   getHistory,
   transfer,
 }

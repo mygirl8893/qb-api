@@ -295,11 +295,34 @@ describe('Transactions API Integration', () => {
     }
   })
 
-  it('Gets history by contract address', async () => {
-
-    const transactionsHistory = await request(app).get(`/transactions/${privateChain.loyaltyTokenContractAddress}/history`)
+  it('Gets transactions by contract address', async () => {
+    const transactionsHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(transactionsHistory.status).toBe(HttpStatus.OK)
     const historicalTransactions = transactionsHistory.body
     expect(historicalTransactions).toHaveLength( 6)
+  })
+
+  it('Gets transactions by symbol and they match with those by contract address', async () => {
+    const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}`)
+    const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
+    expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
+    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+
+    const transactionsHistoryByContractAddress = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(transactionsHistoryBySymbol.body).toEqual(transactionsHistoryByContractAddress.body)
+  })
+
+  it('Gets transactions by contract address with limit and offset', async () => {
+    const offset = 1
+    const limit = 2
+    const transactionsHistory = await request(app)
+      .get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}&offset=${offset}&limit=${limit}`)
+    const historicalTransactions = transactionsHistory.body
+    expect(transactionsHistory.status).toBe(HttpStatus.OK)
+    expect(historicalTransactions).toHaveLength( 2)
+
+    const entireTransactionHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(historicalTransactions).toEqual(entireTransactionHistory.body.slice(offset, offset + limit))
   })
 
   it('Returns individual transaction by hash', async () =>{

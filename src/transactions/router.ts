@@ -16,22 +16,27 @@ const router = express.Router()
  *     parameters:
  *       - name: from
  *         description: Address of the sender.
- *         in: path
+ *         in: query
  *         required: true
  *         type: string
  *       - name: to
  *         description: Beneficiary address of the loyalty tokens.
- *         in: path
+ *         in: query
  *         required: true
  *         type: string
  *       - name: contractAddress
- *         description: Loyalty Token contract address.
- *         in: path
- *         required: true
+ *         description: Loyalty Token contract address. Supply contract address XOR token symbol.
+ *         in: query
+ *         required: false
+ *         type: string
+ *       - name: symbol
+ *         description: Loyalty Token symbol. Supply contract address XOR token symbol.
+ *         in: query
+ *         required: false
  *         type: string
  *       - name: transferAmount
  *         description: Amount of loyalty tokens being sent.
- *         in: path
+ *         in: query
  *         required: true
  *         type: string
  *     responses:
@@ -39,6 +44,8 @@ const router = express.Router()
  *          description: Returns a transaction-like JSON array ready to be used for creating a transaction
  *       400:
  *         description: Request failed due to wrong parameters, see error message
+ *       404:
+ *         description: Request failed because the token is not found
  *       500:
  *          description: Request failed, see error message
  */

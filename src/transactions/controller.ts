@@ -95,14 +95,14 @@ const getTransactionsSchema = Joi.object().keys({
     offset: Joi.number().integer().min(0).default(0),
     symbol: Joi.string().max(64).example('QBX'),
     contractAddress: validation.ethereumAddress(),
-    walletAddress: validation.ethereumAddress()
+    wallet: validation.ethereumAddress()
   })
 })
 async function getTransactions(req, res) {
   req = validation.validateRequestInput(req, getTransactionsSchema)
-  let {limit, offset, symbol, contractAddress, walletAddress} = req.query
+  let {limit, offset, symbol, contractAddress, wallet} = req.query
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
-  const history = await database.getTransactions(limit, offset, symbol, contractAddress, walletAddress)
+  const history = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
   return res.json(history)
 }
 

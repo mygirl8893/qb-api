@@ -312,6 +312,13 @@ describe('Transactions API Integration', () => {
     expect(transactionsHistoryBySymbol.body).toEqual(transactionsHistoryByContractAddress.body)
   })
 
+  it('Gets transactions by symbol with wallet filter', async () => {
+    const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}&wallet=${ACCOUNTS[0].address}`)
+    const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
+    expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
+    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+  })
+
   it('Gets transactions by contract address with limit and offset', async () => {
     const offset = 1
     const limit = 2

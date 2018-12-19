@@ -192,6 +192,48 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.contractFunction).toBe('transfer')
   })
 
+  it('Builds raw transaction with token symbol', async () => {
+    const rawTransactionParamsWithContractAddress = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: '10',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+    const rawTransactionParamsWithSymbol = JSON.parse(JSON.stringify(rawTransactionParamsWithContractAddress))
+    delete rawTransactionParamsWithSymbol.contractAddress
+    rawTransactionParamsWithSymbol.symbol = TOKEN.symbol
+
+    const responseFromContractAddress = await request(app).get(`/transactions/raw`).query(rawTransactionParamsWithContractAddress)
+    const responseFromSymbol = await request(app).get(`/transactions/raw`).query(rawTransactionParamsWithContractAddress)
+
+    expect(responseFromSymbol.body).toEqual(responseFromContractAddress.body)
+  })
+
+  it('Fails to build raw transaction when both token symbol and contractAddress', async () => {
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: '10',
+      contractAddress: privateChain.loyaltyTokenContractAddress,
+      symbol: TOKEN.symbol
+    }
+
+    const response = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Rejects raw transaction request because of missing token symbol', async () => {
+    const rawTransactionParamsWithSymbol = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: '10',
+      symbol: 'LULZ'
+    }
+
+    const responseFromSymbol = await request(app).get(`/transactions/raw`).query(rawTransactionParamsWithSymbol)
+    expect(responseFromSymbol.status).toEqual(HttpStatus.NOT_FOUND)
+  })
+
   it('Executes 5 transactions successfully with incrementing nonce', async () => {
     const rawTransactionParams = {
         from: ACCOUNTS[1].address,
@@ -253,11 +295,41 @@ describe('Transactions API Integration', () => {
     }
   })
 
-  it('Gets history by contract address', async () => {
-
-    const transactionsHistory = await request(app).get(`/transactions/${privateChain.loyaltyTokenContractAddress}/history`)
+  it('Gets transactions by contract address', async () => {
+    const transactionsHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(transactionsHistory.status).toBe(HttpStatus.OK)
     const historicalTransactions = transactionsHistory.body
     expect(historicalTransactions).toHaveLength( 6)
+  })
+
+  it('Gets transactions by symbol and they match with those by contract address', async () => {
+    const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}`)
+    const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
+    expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
+    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+
+    const transactionsHistoryByContractAddress = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(transactionsHistoryBySymbol.body).toEqual(transactionsHistoryByContractAddress.body)
+  })
+
+  it('Gets transactions by symbol with wallet filter', async () => {
+    const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}&wallet=${ACCOUNTS[0].address}`)
+    const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
+    expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
+    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+  })
+
+  it('Gets transactions by contract address with limit and offset', async () => {
+    const offset = 1
+    const limit = 2
+    const transactionsHistory = await request(app)
+      .get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}&offset=${offset}&limit=${limit}`)
+    const historicalTransactions = transactionsHistory.body
+    expect(transactionsHistory.status).toBe(HttpStatus.OK)
+    expect(historicalTransactions).toHaveLength( 2)
+
+    const entireTransactionHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    expect(historicalTransactions).toEqual(entireTransactionHistory.body.slice(offset, offset + limit))
   })
 
   it('Returns individual transaction by hash', async () =>{

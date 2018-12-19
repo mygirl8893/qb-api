@@ -4,13 +4,51 @@ import * as qbDB from 'qb-db-migrations'
 const Token = qbDB.models.token
 const Op = sequelize.Op
 
+
+async function getTransactions(limit: number, offset: number, symbol: string,
+                               contractAddress: string,
+                               walletAddress: string) {
+  const tokenFilters = {}
+  if (symbol) {
+    // @ts-ignore
+    tokenFilters.symbol = symbol
+  }
+  if (contractAddress) {
+    // @ts-ignore
+    tokenFilters.contractAddress = contractAddress
+  }
+
+  const txFilters = {}
+  if (walletAddress) {
+    // @ts-ignore
+    txFilters.$or = {
+      toAddress: { $eq: walletAddress},
+      fromAddress: { $eq: walletAddress}
+    }
+  }
+
+  const transactions = await qbDB.models.transaction.findAll({
+    where: txFilters,
+    order: [ ['blockNumber', 'DESC'] ],
+    limit: limit,
+    offset: offset,
+    include: [{
+      model: qbDB.models.token,
+      where: {
+        $and: tokenFilters
+      }
+    }]
+  })
+  formatTransactionsList(transactions)
+  return transactions
+}
+
 async function getTransactionHistory(address: string, limit: number, offset: number) {
   const transactions = await qbDB.models.transaction.findAll({
     where: {
       $or: {
         toAddress: { $eq: address},
-        fromAddress: { $eq: address},
-        contractAddress: {$eq: address}
+        fromAddress: { $eq: address}
       }
     },
     order: [ ['blockNumber', 'DESC'] ],
@@ -18,7 +56,11 @@ async function getTransactionHistory(address: string, limit: number, offset: num
     offset: offset,
     include: [qbDB.models.token]
   })
+  formatTransactionsList(transactions)
+  return transactions
+}
 
+function formatTransactionsList(transactions) {
   transactions.forEach((t) => {
     t.dataValues.to = t.toAddress
     delete t.dataValues.toAddress
@@ -33,8 +75,6 @@ async function getTransactionHistory(address: string, limit: number, offset: num
 
     delete t.dataValues.confirms
   })
-
-  return transactions
 }
 
 async function getTransaction(hash: string) {
@@ -74,9 +114,14 @@ async function addPendingTransaction(transaction: PendingTransaction) {
   return r
 }
 
-async function getToken(contractAddress: string) {
+async function getTokenByContractAddress(contractAddress: string) {
   return await Token.find({ where: { contractAddress }, raw: true })
 }
+
+async function getTokenBySymbol(symbol: string) {
+  return await Token.find({ where: { symbol }, raw: true })
+}
+
 
 async function getTokens() {
   return await Token.findAll({
@@ -93,9 +138,11 @@ async function close() {
 
 export default {
   getTransaction,
+  getTransactions,
   getTransactionHistory,
   addPendingTransaction,
-  getToken,
+  getTokenByContractAddress,
+  getTokenBySymbol,
   getTokens,
   close
 }

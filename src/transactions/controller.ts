@@ -46,7 +46,7 @@ async function getTx(txHash) {
   delete transaction.r
   delete transaction.s
 
-  const token = await database.getToken(transaction.contract)
+  const token = await database.getTokenByContractAddress(transaction.contract)
   delete token.balance
   delete token.id
   delete token.brandId
@@ -84,11 +84,28 @@ async function getTransaction(req, res) {
     }
     res.status(HttpStatus.NOT_FOUND).json({message: `Transaction does not exist.`})
   }
-
 }
 
 const DEFAULT_HISTORY_LIMIT = 100
 const MAX_HISTORY_LIMIT = 100
+
+const getTransactionsSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
+    offset: Joi.number().integer().min(0).default(0),
+    symbol: Joi.string().max(64).example('QBX'),
+    contractAddress: validation.ethereumAddress(),
+    wallet: validation.ethereumAddress()
+  })
+})
+async function getTransactions(req, res) {
+  req = validation.validateRequestInput(req, getTransactionsSchema)
+  let {limit, offset, symbol, contractAddress, wallet} = req.query
+  limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
+  const history = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
+  return res.json(history)
+}
+
 const getHistorySchema = Joi.object().keys({
   query: Joi.object().keys({
     limit: Joi.number().integer().min(1).default(DEFAULT_HISTORY_LIMIT),
@@ -129,7 +146,7 @@ async function transfer(req, res) {
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
-    const loyaltyToken = await database.getToken(txData.to)
+    const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
     if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')
@@ -180,15 +197,29 @@ const buildRawTransactionSchema = Joi.object().keys({
   query: Joi.object().keys({
     from: validation.ethereumAddress().required(),
     to: validation.ethereumAddress().required(),
-    contractAddress: validation.ethereumAddress().required(),
+    contractAddress: validation.ethereumAddress(),
+    symbol: Joi.string().min(1).max(64).example('QBX'),
     transferAmount: validation.bigPositiveIntAsString().required()
-  })
+  }).or('contractAddress', 'symbol')
 })
 async function buildRawTransaction(req, res) {
   req = validation.validateRequestInput(req, buildRawTransactionSchema)
-  const { from, to, contractAddress, transferAmount } = req.query
-
+  const { from, to, symbol, transferAmount } = req.query
+  let contractAddress = req.query.contractAddress
   try {
+    if (contractAddress && symbol) {
+      const errorMessage = `Cannot refer to token by both contractAddress and symbol at the same time. Use one or the other.`
+      log.error(errorMessage)
+      return res.status(HttpStatus.BAD_REQUEST).json({message: errorMessage})
+    }
+
+    if (!contractAddress) {
+      const storedToken = await database.getTokenBySymbol(symbol)
+      if (!storedToken) {
+        return res.status(HttpStatus.NOT_FOUND).json({message: `Token with symbol ${symbol} not found.`})
+      }
+      contractAddress = storedToken.contractAddress
+    }
     const Token = new web3.eth.Contract(Config.getTokenABI(), contractAddress, {
       from
     }).methods
@@ -225,6 +256,7 @@ async function buildRawTransaction(req, res) {
 export default {
   buildRawTransaction,
   getTransaction,
+  getTransactions,
   getHistory,
   transfer,
 }

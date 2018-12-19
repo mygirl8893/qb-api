@@ -62,7 +62,7 @@ async function getToken(req, res) {
   }
 
   try {
-    const token = await database.getToken(contractAddress)
+    const token = await database.getTokenByContractAddress(contractAddress)
     if (token) {
       const balance = await User.getBalance(req.query.from, contractAddress)
       delete token.id

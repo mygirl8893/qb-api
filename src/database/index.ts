@@ -28,7 +28,10 @@ async function getTransactions(limit: number, offset: number, symbol: string,
   }
 
   const transactions = await qbDB.models.transaction.findAll({
-    where: txFilters,
+    where: {
+      txType: {$ne: 'migration'},
+
+    },
     order: [ ['blockNumber', 'DESC'] ],
     limit: limit,
     offset: offset,
@@ -46,9 +49,12 @@ async function getTransactions(limit: number, offset: number, symbol: string,
 async function getTransactionHistory(address: string, limit: number, offset: number) {
   const transactions = await qbDB.models.transaction.findAll({
     where: {
-      $or: {
-        toAddress: { $eq: address},
-        fromAddress: { $eq: address}
+      $and: {
+        txType: {$ne: 'migration'},
+        $or: {
+          toAddress: { $eq: address},
+          fromAddress: { $eq: address}
+        }
       }
     },
     order: [ ['blockNumber', 'DESC'] ],

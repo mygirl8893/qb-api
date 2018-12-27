@@ -7,6 +7,7 @@ import Tx = require('ethereumjs-tx')
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 import log from '../../src/logging'
+import database from "../../src/database";
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -190,6 +191,30 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.hash).toBe(sendTransactionResponse.body.hash)
     expect(singleTransaction.txType).toBe('reward')
     expect(singleTransaction.contractFunction).toBe('transfer')
+  })
+
+  it ('Filters out migration type of transaction', async () => {
+
+    const fakeTxHash = '0x18e7c2739bab5ea18cb0d9123ba3fc16f9fb3ba039d4a8811089d9f2647d63e6'
+    const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    const historicalTransaction = transactionsHistory.body[0]
+    const storeableTransaction = {
+      hash: fakeTxHash,
+      fromAddress: historicalTransaction.from,
+      toAddress: historicalTransaction.to,
+      contractAddress: historicalTransaction.contractAddress,
+      state: 'pending',
+      txType: 'migration'
+    }
+    await database.addPendingTransaction(storeableTransaction)
+
+    const transactionsResponse = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const txHashes = transactionsResponse.body.map(tx => tx.hash)
+    expect(txHashes).toEqual(expect.not.arrayContaining([fakeTxHash]))
+
+    const transactionsHistoryResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    const txHashesFromHistory = transactionsHistoryResponse.body.map(tx => tx.hash)
+    expect(txHashesFromHistory).toEqual(expect.not.arrayContaining([fakeTxHash]))
   })
 
   it('Builds raw transaction with token symbol', async () => {

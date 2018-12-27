@@ -1,3 +1,4 @@
+// tslint:disable-next-line
 const Web3 = require('web3')
 import Config from './config'
 import SwaggerConfig from './swagger'
@@ -9,7 +10,8 @@ const web3Private = new Web3(envtConfig.rpc.private)
 const web3Public = new Web3(envtConfig.rpc.public)
 let web3ConnectionsAreReady = false
 
-; (async () => {
+;
+(async () => {
   await Promise.all([
     web3Private.eth.net.isListening().catch(() => {
       throw new Error('Could not connect to Web3 (private)')

@@ -10,7 +10,8 @@ const router = express.Router()
  *   get:
  *     tags:
  *       - Users
- *     description: Returns information about the user on the private chain. Currently, only retrieving the transactions count.
+ *     description: Returns information about the user on the private chain.
+ *                  Currently, only retrieving the transactions count.
  *     produces:
  *       - application/json
  *     parameters:

@@ -10,7 +10,7 @@ const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
 
 async function getBalance(from: string = null, contractAddress: string): Promise<string> {
-  const Token= TokenController.loyaltyToken(contractAddress.toLowerCase())
+  const Token = TokenController.loyaltyToken(contractAddress.toLowerCase())
   let balance = '0'
   if (from) {
     balance = await Token.balanceOf(from.toLowerCase()).call()
@@ -44,7 +44,7 @@ async function getQBXToken(from: string = null) {
 
 const getInfoSchema = Joi.object().keys({
   params: {
-    from: validation.ethereumAddress().required(),
+    from: validation.ethereumAddress().required()
   }
 })
 async function getInfo(req, res) {
@@ -56,7 +56,7 @@ async function getInfo(req, res) {
     const transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const info = {
       address,
-      transactionCount: transactionCount
+      transactionCount
     }
     res.json(info)
   } catch (e) {

@@ -10,7 +10,8 @@ const router = express.Router()
  *   get:
  *     tags:
  *       - Prices
- *     description: Returns the FIAT price of one unit of a given Loyalty Token. This endpoint uses a third-party provider to get the ETH echange rate.
+ *     description: Returns the FIAT price of one unit of a given Loyalty Token. This endpoint uses
+ *                  a third-party provider to get the ETH echange rate.
  *     produces:
  *       - application/json
  *     parameters:
@@ -41,7 +42,8 @@ router.get('/', LibAPI.wrap(Controller.getPrice))
  *   get:
  *     tags:
  *       - Prices
- *     description: Returns the historical FIAT price values of one unit of a given Loyalty Token for a desired currency. This endpoint uses a third-party provider to get the ETH echange rate.
+ *     description: Returns the historical FIAT price values of one unit of a given Loyalty Token
+ *                  for a desired currency. This endpoint uses a third-party provider to get the ETH exchange rate.
  *     produces:
  *       - application/json
  *     parameters:
@@ -66,7 +68,8 @@ router.get('/', LibAPI.wrap(Controller.getPrice))
  *         required: false
  *         type: string
  *       - name: aggregate
- *         description: Time period to aggregate the data over (for daily it's days, for hourly it's hours and for minute it's minutes). Default is 3.
+ *         description: Time period to aggregate the data over (for daily it's days, for hourly
+ *                      it's hours and for minute it's minutes). Default is 3.
  *         in: query
  *         required: false
  *         type: string

@@ -1,0 +1,26 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:latest"
+    ],
+    "jsRules": {},
+    "rules": {
+      "semicolon": {
+        "options": ["never"]
+      },
+      "quotemark": {
+        "options": ["single", "avoid-escape"]
+      },
+      "trailing-comma": {
+        "options": {
+          "esSpecCompliant": true,
+          "multiline": "never",
+          "singleline": "never"
+        }
+      },
+      "object-literal-sort-keys": false,
+      "ordered-imports": false,
+      "interface-name": false
+    },
+    "rulesDirectory": []
+}

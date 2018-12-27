@@ -1,8 +1,8 @@
 import User from '../users/controller'
 import Config from '../config'
 import * as Joi from 'joi'
-import * as HttpStatus from "http-status-codes"
-import database from "../database"
+import * as HttpStatus from 'http-status-codes'
+import database from '../database'
 import log from '../logging'
 import validation from '../validation'
 
@@ -15,10 +15,10 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
 ).methods
 
 async function getTokens(req, res) {
-  let publicTokens = undefined
+  let publicTokens
   const tokens = await database.getTokens()
   for (const token of tokens) {
-    let balance = await User.getBalance(req.query.from, token.contractAddress)
+    const balance = await User.getBalance(req.query.from, token.contractAddress)
     delete token.id
     delete token.brandId
     token.balance = balance
@@ -53,12 +53,13 @@ const getTokenSchema = Joi.object().keys({
 async function getToken(req, res) {
   req = validation.validateRequestInput(req, getTokenSchema)
   const contractAddress = req.params.contract
-  if (!contractAddress)
+  if (!contractAddress) {
     res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing input contractAddress.'})
+  }
 
   if (contractAddress === Config.getQBXAddress()) {
     const qbx = await User.getQBXToken()
-    return res.json(qbx) //TODO: we should remove the 'private' property from here
+    return res.json(qbx) // TODO: we should remove the 'private' property from here
   }
 
   try {
@@ -69,7 +70,7 @@ async function getToken(req, res) {
       delete token.brandId
       token.balance = balance
       token.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
-      return res.json({ private: token }) //TODO: we should remove the 'private' property from here
+      return res.json({ private: token }) // TODO: we should remove the 'private' property from here
     } else {
       res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token has not been found'})
     }

@@ -210,10 +210,12 @@ describe('Transactions API Integration', () => {
 
     const transactionsResponse = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
     const txHashes = transactionsResponse.body.map(tx => tx.hash)
+    // @ts-ignore
     expect(txHashes).toEqual(expect.not.arrayContaining([fakeTxHash]))
 
     const transactionsHistoryResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
     const txHashesFromHistory = transactionsHistoryResponse.body.map(tx => tx.hash)
+    // @ts-ignore
     expect(txHashesFromHistory).toEqual(expect.not.arrayContaining([fakeTxHash]))
   })
 

@@ -72,11 +72,9 @@ function makeStoreableTransaction(original, receipt, block) {
 }
 
 class TestDatabaseConn {
-  testToken
-  constructor() {
-  }
+  private testToken
 
-  async setup(existingToken): Promise<void> {
+  public async setup(existingToken): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()
@@ -100,12 +98,12 @@ class TestDatabaseConn {
     log.info('Successfully setup database.')
   }
 
-  async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
+  public async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
     const storeable = makeStoreableTransaction(tx, txReceipt, block)
     storeable.tokenId = this.testToken.id
 
     if (storeable.contractFunction === 'transfer') {
-      const lowerCased = brandAddresses.map(a => a.toLowerCase())
+      const lowerCased = brandAddresses.map((a) => a.toLowerCase())
       const addressSet = new Set(lowerCased)
       if (addressSet.has(storeable.toAddress.toLowerCase())) {
         storeable.txType = 'redeem'
@@ -117,7 +115,7 @@ class TestDatabaseConn {
     return r
   }
 
-  async close() {
+  public async close() {
     await qbDB.models.sequelize.close()
   }
 }

@@ -1,11 +1,10 @@
+// tslint:disable-next-line
 const Web3 = require('web3')
 import * as childProcess from 'child_process'
 import * as solc from 'solc'
 import * as fs from 'fs'
 import * as path from 'path'
 import log from '../../src/logging'
-import utils from '../../src/lib/utils'
-import { ChildProcess } from "child_process";
 
 function getContract(web3, sourceFile, contractName) {
   const loyaltyTokenCode = fs.readFileSync(sourceFile)
@@ -40,14 +39,14 @@ class TestPrivateChain {
   private accounts: [TestAccount]
   private token: TestToken
   private port: number
-  private ganacheChildProcess: ChildProcess
+  private ganacheChildProcess: childProcess.ChildProcess
   constructor(accounts, token, port) {
     this.accounts = accounts
     this.token = token
     this.port = port
   }
 
-  async setup() {
+  public async setup() {
 
     log.info('Setting up test environment..')
 
@@ -59,7 +58,8 @@ class TestPrivateChain {
       accountsArguments += ` --account="0x${account.secretKey},${account.balance}"`
     })
 
-    const launchGanacheCmd = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${this.port} ${accountsArguments}`
+    const launchGanacheCmd
+      = `./node_modules/ganache-cli/build/cli.node.js --gasLimit 0xfffffffffff --port ${this.port} ${accountsArguments}`
 
     log.info(`Executing command ${launchGanacheCmd} to launch blockchain test network..`)
 
@@ -67,7 +67,7 @@ class TestPrivateChain {
 
     // wait for it to start by waiting for the 'Listening on' std output
     // if it never returns data, jest will eventually timeout
-    let error = ""
+    let error = ''
     const result = await new Promise((resolve) => {
       this.ganacheChildProcess.stdout.on('data', (data) => {
         const dataString = data.toString()
@@ -81,7 +81,9 @@ class TestPrivateChain {
       })
     })
 
-    if (!result) throw `Failed setting up the test context: ${error}`
+    if (!result) {
+      throw new Error(`Failed setting up the test context: ${error}`)
+    }
 
     log.info('Test network launched. Connecting to it with Web3..')
 
@@ -131,7 +133,7 @@ class TestPrivateChain {
     this.setupBlockCount = latestBlock.number
   }
 
-  async tearDown() {
+  public async tearDown() {
     log.info('Killing the test chain..')
     log.info(`Killing ganacheChildProcess with PID ${this.ganacheChildProcess.pid}...`)
     this.ganacheChildProcess.kill()
@@ -139,7 +141,7 @@ class TestPrivateChain {
     await new Promise((resolve) => {
       this.ganacheChildProcess.on('exit', (err, signal) => {
         log.info(`ganacheChildProcess killed? ${this.ganacheChildProcess.killed}`)
-        log.info(`ganacheChildProcess exited with code ${signal}`);
+        log.info(`ganacheChildProcess exited with code ${signal}`)
         resolve(signal)
       })
     })
@@ -172,6 +174,5 @@ class TestPrivateChain {
     log.info('Done with sending a kill signal.')
   }
 }
-
 
 export default TestPrivateChain

@@ -13,7 +13,8 @@
     "serve": "node dist/server.js",
     "startmon": "nodemon server.js",
     "localenv": "ts-node scripts/runLocalDev.ts",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "lint": "./node_modules/.bin/tslint --project ."
   },
   "engines": {
     "node": ">= 8.11 <9",

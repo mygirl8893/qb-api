@@ -93,8 +93,8 @@ describe('Prices API Integration', () => {
 
   it('Gets price of LoyaltyToken MCW in USD successfully', async () => {
     const CURR = 'USD'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.OK,
         data: {
           USD: ETH_PRICE_USD
@@ -118,8 +118,8 @@ describe('Prices API Integration', () => {
 
   it('Gets price of LoyaltyToken MCW in multiple currencies successfully', async () => {
     const CURR = 'USD,CHF,EUR'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.OK,
         data: {
           USD: ETH_PRICE_USD,
@@ -168,8 +168,8 @@ describe('Prices API Integration', () => {
 
   it('Gets price of LoyaltyToken MCW should fail if currency unknown', async () => {
     const CURR = 'AAA'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
         status: HttpStatus.BAD_REQUEST,
         data: {
           Response: 'Error',
@@ -241,8 +241,8 @@ describe('Prices API Integration', () => {
 
   it('Get historical values of LoyaltyToken MCW should fail if from is empty', async () => {
     const CURR = 'USD'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
       status: HttpStatus.BAD_REQUEST,
       data: {
         Response: 'Error',
@@ -286,8 +286,8 @@ describe('Prices API Integration', () => {
 
   it('Get historical values of LoyaltyToken MCW should fail if multiple currencies are passed', async () => {
     const CURR = 'USD,CHF'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
       status: HttpStatus.OK,
       data: {
         Response: 'Error',
@@ -314,8 +314,8 @@ describe('Prices API Integration', () => {
 
   it('Get historical values of Loyalty token in USD with limit 30, aggregate 1, frequency minutes', async () => {
     const CURR = 'USD,CHF'
-    ;
-    (axios.get as any).mockImplementation(async () => ({
+    // tslint:disable-next-line
+    ;(axios.get as any).mockImplementation(async () => ({
       status: HttpStatus.OK,
       data: {
         Response: 'Success',

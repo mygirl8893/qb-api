@@ -12,7 +12,6 @@
       },
       "trailing-comma": {
         "options": {
-          "esSpecCompliant": true,
           "multiline": "never",
           "singleline": "never"
         }
@@ -31,7 +30,6 @@
       },
       "trailing-comma": {
         "options": {
-          "esSpecCompliant": true,
           "multiline": "never",
           "singleline": "never"
         }

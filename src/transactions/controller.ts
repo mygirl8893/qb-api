@@ -1,22 +1,20 @@
-import * as abiDecoder from 'abi-decoder'
 import unsign = require('@warren-bank/ethereumjs-tx-unsign')
+import * as abiDecoder from 'abi-decoder'
+import {BigNumber } from 'bignumber.js'
 import EthereumTx = require('ethereumjs-tx')
-import  {BigNumber } from 'bignumber.js'
-import * as Joi from 'joi'
 import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
 
 import Config from '../config'
-import TokenController from '../tokens/controller'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
 
-
 const web3 = Config.getPrivateWeb3()
 
 async function getTx(txHash) {
-  const endBlockNumber = await web3.eth.getBlock('latest'),
-    transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
+  const endBlockNumber = await web3.eth.getBlock('latest')
+  const transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
 
   const transaction = await web3.eth.getTransaction(txHash.toLowerCase())
 
@@ -63,14 +61,13 @@ const txBelongsTo = (address, tx, decodedTx) => (
 
 const getTransactionSchema = Joi.object().keys({
   params: Joi.object().keys({
-    hash: validation.ethereumHash().required(),
+    hash: validation.ethereumHash().required()
   })
 })
 async function getTransaction(req, res) {
   req = validation.validateRequestInput(req, getTransactionSchema)
 
   const storedTx = await database.getTransaction(req.params.hash)
-
 
   if (storedTx && storedTx.state !== 'pending') {
     const tx = await getTx(req.params.hash)
@@ -100,7 +97,8 @@ const getTransactionsSchema = Joi.object().keys({
 })
 async function getTransactions(req, res) {
   req = validation.validateRequestInput(req, getTransactionsSchema)
-  let {limit, offset, symbol, contractAddress, wallet} = req.query
+  const { offset, symbol, contractAddress, wallet } = req.query
+  let { limit } = req.query
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
   const history = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
   return res.json(history)
@@ -117,8 +115,8 @@ const getHistorySchema = Joi.object().keys({
 })
 async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
-  let {limit, offset} = req.query
-
+  const offset = req.query.offset
+  let limit = req.query.limit
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
 
   const address = req.params.address.toLowerCase()
@@ -157,10 +155,10 @@ async function transfer(req, res) {
     const sendSignedTransactionPromise = web3.eth.sendSignedTransaction(req.body.data)
 
     const transactionHash = await new Promise((resolve, reject) => {
-      sendSignedTransactionPromise.once('transactionHash', txHash => {
+      sendSignedTransactionPromise.once('transactionHash', (txHash) => {
         resolve(txHash)
       })
-      sendSignedTransactionPromise.on('error', error => {
+      sendSignedTransactionPromise.on('error', (error) => {
         reject(error)
       })
     })
@@ -170,7 +168,7 @@ async function transfer(req, res) {
     const storeableTransaction = {
       hash: transactionHash as string,
       fromAddress: sender,
-      toAddress: toAddress,
+      toAddress,
       contractAddress: txData.to,
       state: 'pending'
     }
@@ -208,7 +206,8 @@ async function buildRawTransaction(req, res) {
   let contractAddress = req.query.contractAddress
   try {
     if (contractAddress && symbol) {
-      const errorMessage = `Cannot refer to token by both contractAddress and symbol at the same time. Use one or the other.`
+      const errorMessage = `Cannot refer to token by both contractAddress
+                            and symbol at the same time. Use one or the other.`
       log.error(errorMessage)
       return res.status(HttpStatus.BAD_REQUEST).json({message: errorMessage})
     }
@@ -258,5 +257,5 @@ export default {
   getTransaction,
   getTransactions,
   getHistory,
-  transfer,
+  transfer
 }

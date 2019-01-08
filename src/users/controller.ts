@@ -1,9 +1,9 @@
 import { BigNumber } from 'bignumber.js'
-import Config from '../config'
-import TokenController from '../tokens/controller'
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
+import Config from '../config'
 import log from '../logging'
+import TokenController from '../tokens/controller'
 import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()

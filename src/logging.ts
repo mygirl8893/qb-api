@@ -1,5 +1,5 @@
-import * as winston from 'winston'
 import * as httpContext from 'express-http-context'
+import * as winston from 'winston'
 
 const requestIdFormat = winston.format((info, opts) => {
   const reqId = httpContext.get('reqId')

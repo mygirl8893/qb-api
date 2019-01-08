@@ -1,7 +1,7 @@
-import TestPrivateChain from '../__tests__/integration/testPrivateChain'
-import apiTesting from '../__tests__/apiTesting'
-import * as Tx from 'ethereumjs-tx'
 import axios from 'axios'
+import * as Tx from 'ethereumjs-tx'
+import apiTesting from '../__tests__/apiTesting'
+import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import log from '../src/logging'
 
 /*

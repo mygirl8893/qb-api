@@ -1,8 +1,8 @@
-import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
+import * as request from 'supertest'
+import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import log from '../../src/logging'
 
 const PRIVATE_WEB3_PORT = 8545
 

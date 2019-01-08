@@ -1,9 +1,9 @@
 // tslint:disable-next-line
 const Web3 = require('web3')
 import * as childProcess from 'child_process'
-import * as solc from 'solc'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as solc from 'solc'
 import log from '../../src/logging'
 
 function getContract(web3, sourceFile, contractName) {

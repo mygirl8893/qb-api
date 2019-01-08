@@ -1,10 +1,10 @@
-import validation from '../validation'
-import * as Joi from 'joi'
-import database from '../database'
-import User from '../users/controller'
-import Config from '../config'
-import log from '../logging'
 import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
+import Config from '../config'
+import database from '../database'
+import log from '../logging'
+import User from '../users/controller'
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 

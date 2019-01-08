@@ -35,7 +35,7 @@
         }
       },
       "object-literal-sort-keys": false,
-      "ordered-imports": false,
+      "ordered-imports": true,
       "interface-name": false,
       "no-implicit-dependencies": [true, "dev"]
     },

@@ -1,9 +1,9 @@
 import axios from 'axios'
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
+import database from '../database'
 import log from '../logging'
 import validation from '../validation'
-import database from '../database'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
 const QBX_ETH = 0.0001

@@ -109,7 +109,7 @@ router.get('/:hash', LibAPI.wrap(Controller.getTransaction))
  *       - name: wallet
  *         description: Wallet address to filter by (wallet == to || wallet == from)
  *         in: path
- *         required: true
+ *         required: false
  *         type: string
  *     responses:
  *       200:

@@ -1,7 +1,7 @@
-import TestPrivateChain from '../__tests__/integration/testPrivateChain'
-import apiTesting from '../__tests__/apiTesting'
+import axios from 'axios'
 import * as Tx from 'ethereumjs-tx'
-import axios from 'axios/index'
+import apiTesting from '../__tests__/apiTesting'
+import TestPrivateChain from '../__tests__/integration/testPrivateChain'
 import log from '../src/logging'
 
 /*
@@ -25,8 +25,8 @@ const ACCOUNTS = [{
   }]
 
 const TOKEN = {
-    name: "MagicCarpetsWorld",
-    symbol: "MCW",
+    name: 'MagicCarpetsWorld',
+    symbol: 'MCW',
     decimals: 18,
     rate: 100
   }
@@ -68,7 +68,7 @@ async function launch() {
 }
 
 async function seed() {
-  log.info("Get raw transaction.")
+  log.info('Get raw transaction.')
 
   const rawTransactionRequest = {
     params: {
@@ -100,28 +100,27 @@ async function seed() {
 
   log.info(sendTransactionResponse)
 
-  log.info("Query transaction history again.")
+  log.info('Query transaction history again.')
 
   const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
 
   log.info(newRawHistoryResponse.data)
 }
 
-;(async () => {
-
+(async () => {
   const command = process.argv[2]
-  switch(command) {
+  switch (command) {
     case 'launch':
       await launch()
-      break;
+      break
 
     case 'seed':
       await seed()
-      break;
+      break
     default:
       log.error(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)
   }
 
-})().catch(e => {
+})().catch((e) => {
   log.error(`${e.stack}`)
 })

@@ -1,10 +1,10 @@
-import validation from '../validation'
-import * as Joi from 'joi'
-import database from '../database'
-import User from '../users/controller'
-import Config from '../config'
-import log from "../logging";
 import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
+import Config from '../config'
+import database from '../database'
+import log from '../logging'
+import User from '../users/controller'
+import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -27,10 +27,10 @@ async function getAddress(req, res) {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const tokens = await database.getTokens()
     for (const token of tokens) {
-      let balance = await User.getBalance(address, token.contractAddress)
+      const balance = await User.getBalance(address, token.contractAddress)
 
       tokenBalances[token.symbol] = {
-        balance: balance,
+        balance,
         contractAddress: token.contractAddress
       }
     }
@@ -48,7 +48,7 @@ async function getAddress(req, res) {
   }
 
   const response = {
-    transactionCount: transactionCount,
+    transactionCount,
     balances: {
       private: tokenBalances,
       public: undefined

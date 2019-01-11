@@ -1,5 +1,5 @@
-import * as winston from 'winston'
 import * as httpContext from 'express-http-context'
+import * as winston from 'winston'
 
 const requestIdFormat = winston.format((info, opts) => {
   const reqId = httpContext.get('reqId')
@@ -13,8 +13,8 @@ const logger = winston.createLogger({
     new winston.transports.File({
       filename: `${__dirname}/app.log`,
       handleExceptions: true,
-      level: 'info',
-    }),
+      level: 'info'
+    })
   ],
   exitOnError: false
 })

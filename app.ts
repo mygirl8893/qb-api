@@ -1,28 +1,28 @@
+import * as bodyParser from 'body-parser'
+import * as cors from 'cors'
 import * as express from 'express'
 import * as pretty from 'express-prettify'
-import * as cors from 'cors'
-import * as bodyParser from 'body-parser'
 
-import * as swaggerUi from 'swagger-ui-express'
-import *  as swaggerJSDoc from 'swagger-jsdoc'
-import * as morgan from 'morgan'
-import * as HttpStatus from 'http-status-codes'
-import * as uuid from 'uuid'
 import * as httpContext from 'express-http-context'
+import * as HttpStatus from 'http-status-codes'
+import * as morgan from 'morgan'
+import * as swaggerJSDoc from 'swagger-jsdoc'
+import * as swaggerUi from 'swagger-ui-express'
+import * as uuid from 'uuid'
 
 import Config from './src/config'
 
-import networkRouter from './src/network/router'
-import transactionsRouter from './src/transactions/router'
-import tokensRouter from './src/tokens/router'
-import usersRouter from './src/users/router'
-import pricesRouter from './src/prices/router'
 import addressesRouter from './src/addresses/router'
+import networkRouter from './src/network/router'
+import pricesRouter from './src/prices/router'
+import tokensRouter from './src/tokens/router'
+import transactionsRouter from './src/transactions/router'
+import usersRouter from './src/users/router'
 
 import log from './src/logging'
 
-const app = express(),
-  swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
+const app = express()
+const swaggerSpec = swaggerJSDoc(Config.getSwaggerConfig())
 
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -31,18 +31,18 @@ app.use(pretty({ query: 'pretty' }))
 
 app.use(httpContext.middleware)
 // Run the context for each request. Assign a unique identifier to each request
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
   httpContext.set('reqId', uuid.v1())
   next()
 })
 
 class WinstonStream {
-  write(message: string) {
+  public write(message: string) {
     log.info(message)
   }
 }
 const winstonStream = new WinstonStream()
-app.use(morgan("combined", { "stream": winstonStream }))
+app.use(morgan('combined', { stream: winstonStream }))
 
 app.use('/net', networkRouter)
 app.use('/transactions', transactionsRouter)

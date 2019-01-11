@@ -1,8 +1,8 @@
-import utils from '../src/lib/utils'
-import log from '../src/logging'
-import * as qbDB from 'qb-db-migrations'
 import * as abiDecoder from 'abi-decoder'
 import { BigNumber } from 'bignumber.js'
+import * as qbDB from 'qb-db-migrations'
+import utils from '../src/lib/utils'
+import log from '../src/logging'
 
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
@@ -72,11 +72,9 @@ function makeStoreableTransaction(original, receipt, block) {
 }
 
 class TestDatabaseConn {
-  testToken
-  constructor() {
-  }
+  private testToken
 
-  async setup(existingToken): Promise<void> {
+  public async setup(existingToken): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()
@@ -100,12 +98,13 @@ class TestDatabaseConn {
     log.info('Successfully setup database.')
   }
 
-  async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
+  public async updateMinedStatus(tx, txReceipt, block, brandAddresses, chainId) {
     const storeable = makeStoreableTransaction(tx, txReceipt, block)
+    storeable.chainId = chainId
     storeable.tokenId = this.testToken.id
 
     if (storeable.contractFunction === 'transfer') {
-      const lowerCased = brandAddresses.map(a => a.toLowerCase())
+      const lowerCased = brandAddresses.map((a) => a.toLowerCase())
       const addressSet = new Set(lowerCased)
       if (addressSet.has(storeable.toAddress.toLowerCase())) {
         storeable.txType = 'redeem'
@@ -117,7 +116,7 @@ class TestDatabaseConn {
     return r
   }
 
-  async close() {
+  public async close() {
     await qbDB.models.sequelize.close()
   }
 }

@@ -3,8 +3,8 @@ import Config from '../config'
 const web3 = Config.getPrivateWeb3()
 
 async function getInfo(req, res) {
-  const latestBlockNumber = await web3.eth.getBlockNumber(),
-    latestBlock = await web3.eth.getBlock(latestBlockNumber)
+  const latestBlockNumber = await web3.eth.getBlockNumber()
+  const latestBlock = await web3.eth.getBlock(latestBlockNumber)
 
   delete latestBlock.gasUsed
   delete latestBlock.gasLimit

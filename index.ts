@@ -1,8 +1,8 @@
-import config from './src/config/config'
-import TestPrivateChain from './__tests__/integration/testPrivateChain'
+import * as fs from 'fs'
+import * as path from 'path'
 import apiTesting from './__tests__/apiTesting'
-import * as fs from "fs";
-import * as path from "path";
+import TestPrivateChain from './__tests__/integration/testPrivateChain'
+import config from './src/config/config'
 
 const loyaltyTokenABI = config.tokenABI
 

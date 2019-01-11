@@ -1,6 +1,6 @@
 import * as express from 'express'
-import Controller from './controller'
 import LibAPI from '../lib/utils'
+import Controller from './controller'
 
 const router = express.Router()
 
@@ -10,7 +10,8 @@ const router = express.Router()
  *   get:
  *     tags:
  *       - Users
- *     description: Returns information about the user on the private chain. Currently, only retrieving the transactions count.
+ *     description: Returns information about the user on the private chain.
+ *                  Currently, only retrieving the transactions count.
  *     produces:
  *       - application/json
  *     parameters:

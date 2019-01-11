@@ -11,14 +11,17 @@ function validateRequestInput(req: express.Request, schema): express.Request {
   const objectToValidate = {}
 
   if (Joi.reach(schema, 'params')) {
+    // tslint:disable-next-line
     objectToValidate['params'] = req.params
   }
 
   if (Joi.reach(schema, 'query')) {
+    // tslint:disable-next-line
     objectToValidate['query'] = req.query
   }
 
   if (Joi.reach(schema, 'body')) {
+    // tslint:disable-next-line
     objectToValidate['body'] = req.body
   }
 
@@ -26,6 +29,7 @@ function validateRequestInput(req: express.Request, schema): express.Request {
   if (error) {
     log.info(`${error}`)
     const throwableError = new Error(error)
+    // tslint:disable-next-line
     throwableError['status'] = HttpStatus.BAD_REQUEST
     throw throwableError
   } else {

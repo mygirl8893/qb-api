@@ -170,7 +170,8 @@ async function transfer(req, res) {
       fromAddress: sender,
       toAddress,
       contractAddress: txData.to,
-      state: 'pending'
+      state: 'pending',
+      chainId: Config.getChainID()
     }
 
     await database.addPendingTransaction(storeableTransaction)

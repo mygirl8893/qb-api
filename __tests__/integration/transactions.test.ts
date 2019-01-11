@@ -61,7 +61,7 @@ describe('Transactions API Integration', () => {
     const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
     const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
-    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address])
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address], Config.getChainID())
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
     totalTransactionsSoFar++
   }
@@ -355,6 +355,7 @@ describe('Transactions API Integration', () => {
     delete someTransaction.tokenId
     delete someTransaction.contractFunction
     delete someTransaction.txType
+    delete someTransaction.chainId
 
     // adjusted for proper comparison
     singleTx.from = singleTx.from.toLowerCase()

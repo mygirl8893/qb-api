@@ -98,8 +98,9 @@ class TestDatabaseConn {
     log.info('Successfully setup database.')
   }
 
-  public async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
+  public async updateMinedStatus(tx, txReceipt, block, brandAddresses, chainId) {
     const storeable = makeStoreableTransaction(tx, txReceipt, block)
+    storeable.chainId = chainId
     storeable.tokenId = this.testToken.id
 
     if (storeable.contractFunction === 'transfer') {

@@ -5,10 +5,10 @@
  * @param Promise
  * @returns {function(...[*]): *}
  */
-const wrap = fn => (...args) => fn(...args).catch(args[2])
+const wrap = (fn) => (...args) => fn(...args).catch(args[2])
 
 function sleep(ms: number) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
 }

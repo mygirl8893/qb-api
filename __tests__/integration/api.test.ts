@@ -1,8 +1,8 @@
-import * as request from 'supertest'
 import * as HttpStatus from 'http-status-codes'
+import * as request from 'supertest'
+import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import log from '../../src/logging'
 
 const PRIVATE_WEB3_PORT = 8545
 
@@ -32,7 +32,9 @@ const TOKEN = {
   decimals: 18,
   rate: 100,
   description: 'Magic is in the air.',
-  website: 'otherworldlymagicalcarpets.com'
+  website: 'otherworldlymagicalcarpets.com',
+  totalSupply: undefined,
+  contractAddress: undefined
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
@@ -52,8 +54,8 @@ describe('Network, Users, Tokens API', () => {
 
       await privateChain.setup()
 
-      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
-      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+      TOKEN.totalSupply = privateChain.initialLoyaltyTokenAmount
+      TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
 
       testDbConn = new APITesting.TestDatabaseConn()
       await testDbConn.setup(TOKEN)
@@ -142,7 +144,8 @@ describe('Network, Users, Tokens API', () => {
 
   it('Gets token by contract address successfully', async () => {
 
-    const r = await request(app).get(`/tokens/${privateChain.loyaltyTokenContractAddress.toLowerCase()}?from=${ACCOUNTS[0].address}`)
+    const r = await request(app)
+      .get(`/tokens/${privateChain.loyaltyTokenContractAddress.toLowerCase()}?from=${ACCOUNTS[0].address}`)
 
     expect(r.status).toBe(HttpStatus.OK)
     const token = r.body.private
@@ -161,7 +164,8 @@ describe('Network, Users, Tokens API', () => {
 
   it('Fails to get token for invalid contract address', async () => {
 
-    const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
+    const badAddress = privateChain.loyaltyTokenContractAddress
+                        .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + 'xx'
     const r = await request(app).get(`/tokens/${badAddress}`)
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
@@ -172,7 +176,8 @@ describe('Network, Users, Tokens API', () => {
 
   it('Fails to get token for non-existent contract address', async () => {
 
-    const badAddress = privateChain.loyaltyTokenContractAddress.substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + '11'
+    const badAddress = privateChain.loyaltyTokenContractAddress
+                        .substring(0, privateChain.loyaltyTokenContractAddress.length - 2) + '11'
     const r = await request(app).get(`/tokens/${badAddress}`)
 
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)

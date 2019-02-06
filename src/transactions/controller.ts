@@ -147,7 +147,8 @@ async function transfer(req, res) {
     const toAddress = decodedTx.params[0].value
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
-    if (toAddress === Config.getTempExchangeWalletAddress()) {
+    const tempExchangeWallets = await database.getTempExchangeWallets()
+    if (tempExchangeWallets.map(w => w.address).includes(toAddress)) {
       log.info(`Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
       const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
       const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))

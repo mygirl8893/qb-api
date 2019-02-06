@@ -74,7 +74,7 @@ function makeStoreableTransaction(original, receipt, block) {
 class TestDatabaseConn {
   private testToken
 
-  public async setup(existingToken): Promise<void> {
+  public async setup(existingToken, tempWalletAddress: string): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()
@@ -94,6 +94,10 @@ class TestDatabaseConn {
     nonDeployedToken.symbol = 'SDS'
     nonDeployedToken.name = 'Not deployed token'
     await qbDB.models.token.create(nonDeployedToken)
+
+    await qbDB.models.tempExchangeWallet.create({
+      address: tempWalletAddress
+    })
 
     log.info('Successfully setup database.')
   }

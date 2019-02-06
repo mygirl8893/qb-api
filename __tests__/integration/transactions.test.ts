@@ -91,7 +91,7 @@ describe('Transactions API Integration', () => {
 
       testDbConn = new APITesting.TestDatabaseConn()
 
-      await testDbConn.setup(TOKEN)
+      await testDbConn.setup(TOKEN, TEMP_EXCHANGE_WALLET_ADDRESS)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()

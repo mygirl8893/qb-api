@@ -9,6 +9,8 @@ import Config from '../config'
 import database from '../database'
 import log from '../logging'
 import validation from '../validation'
+import qbxFeeCalculator from '../lib/qbxFeeCalculator'
+import publicBlockchain from '../lib/publicBlockchain'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -140,11 +142,26 @@ async function transfer(req, res) {
   try {
     const signedTransaction = new EthereumTx(req.body.data)
     const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
-
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
+
+    if (toAddress === Config.getTempExchangeWalletAddress()) {
+      log.info(`Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
+      const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
+      const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
+      const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, '10000')
+      const qbxTxValueComputationData = await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
+      if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan( new BigNumber('0'))) {
+        const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
+          Estimated gas: ${estimatedGas.toString()} computation results: ${JSON.stringify(qbxTxValueComputationData)}`
+        log.error(errMessage)
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
+      } else {
+        log.info(`Exchange transaction is valid. Proceeding..`)
+      }
+    }
 
     if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')
@@ -153,7 +170,6 @@ async function transfer(req, res) {
     }
 
     const sendSignedTransactionPromise = web3.eth.sendSignedTransaction(req.body.data)
-
     const transactionHash = await new Promise((resolve, reject) => {
       sendSignedTransactionPromise.once('transactionHash', (txHash) => {
         resolve(txHash)
@@ -162,7 +178,6 @@ async function transfer(req, res) {
         reject(error)
       })
     })
-
     log.info(`Successfully sent transaction  with hash ${transactionHash}`)
 
     const storeableTransaction = {
@@ -173,11 +188,8 @@ async function transfer(req, res) {
       state: 'pending',
       chainId: Config.getChainID()
     }
-
     await database.addPendingTransaction(storeableTransaction)
-
     const result = { hash: transactionHash, status: 'pending'}
-
     return res.json(result)
 
   } catch (e) {

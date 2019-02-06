@@ -4,6 +4,8 @@ const Web3 = require('web3')
 import Tx = require('ethereumjs-tx')
 import * as HttpStatus from 'http-status-codes'
 import * as request from 'supertest'
+import * as nock from 'nock'
+import BigNumber from 'bignumber.js'
 
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
@@ -21,12 +23,23 @@ const ACCOUNTS = [{
   address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
   secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
   balance: START_BALANCE
+}, {
+  address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
+  secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
+  balance: START_BALANCE
 }]
+
+const TEMP_EXCHANGE_WALLET_ADDRESS = ACCOUNTS[2].address
 
 const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+  },
+  tempExchangeWalletAddress: TEMP_EXCHANGE_WALLET_ADDRESS,
+  coinsuperAPIKeys: {
+    accessKey: '',
+    secretKey: ''
   },
   port: 3000
 }
@@ -54,6 +67,7 @@ describe('Transactions API Integration', () => {
   let apiDBConn = null
   let totalTransactionsSoFar = 0
   let Config = null
+  let estimateTxGasMock = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -87,6 +101,9 @@ describe('Transactions API Integration', () => {
       Config = require('../../src/config').default
 
       apiDBConn = require('../../src/database').default
+
+      const publicBlockchain = require('../../src/lib/publicBlockchain')
+      estimateTxGasMock = jest.spyOn(publicBlockchain.default, 'estimateTxGas')
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -618,9 +635,70 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
+  it('Successfully processes exchange transaction', async () => {
+    const gasPrice = '0'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: "20"
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+    const rawTransaction = rawTransactionResponse.body
+
+    expect(rawTransaction.from).toBe(rawTransactionParams.from)
+    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+  })
+
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 4
+    const txCount = 5
 
     const expectedAddress = {
       transactionCount: txCount,
@@ -636,7 +714,7 @@ describe('Transactions API Integration', () => {
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      balance: (privateChain.initialLoyaltyTokenAmount - 6).toString(), // assuming all value 1
+      balance: (privateChain.initialLoyaltyTokenAmount - 4006).toString(), // assuming all value 1
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 

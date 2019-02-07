@@ -35,6 +35,9 @@ const TOKEN = {
     rate: 100
   }
 
+const BRAND_ADDRESS = ACCOUNTS[0].address
+const TEMP_EXCHANGE_WALLET_ADDRESS = ACCOUNTS[2].address
+
 async function launch() {
 
   const testPrivateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
@@ -55,7 +58,7 @@ async function launch() {
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()
-  await testDbConn.setup(token, ACCOUNTS[2].address, ACCOUNTS[0].address)
+  await testDbConn.setup(token, BRAND_ADDRESS, TEMP_EXCHANGE_WALLET_ADDRESS)
 
   const app = require('../app')
   const Config = require('../src/config').default
@@ -71,23 +74,19 @@ async function launch() {
 
 }
 
-async function seed() {
+async function sendTransaction(from, to, transferAmount) {
   log.info('Get raw transaction.')
-
   const rawTransactionRequest = {
     params: {
-      from: ACCOUNTS[0].address,
-      to: ACCOUNTS[1].address,
-      transferAmount: 10,
+      from,
+      to,
+      transferAmount,
       contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B'
     }
   }
-
   const baseUrl = `http://localhost:${API_PORT}`
-
   const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
-
-  log.info(rawTransactionResponse.data)
+  log.info(JSON.stringify(rawTransactionResponse.data))
 
   const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
   const transaction = new Tx(rawTransactionResponse.data)
@@ -99,16 +98,47 @@ async function seed() {
   }
 
   log.info('POST signed transaction..')
-
   const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, transferRequest)
-
-  log.info(sendTransactionResponse)
-
+  log.info(JSON.stringify(sendTransactionResponse.data))
   log.info('Query transaction history again.')
-
   const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
+  log.info(JSON.stringify(newRawHistoryResponse.data))
+}
 
-  log.info(newRawHistoryResponse.data)
+async function seed() {
+  log.info('Get raw transaction.')
+  const rawTransactionRequest = {
+    params: {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[1].address,
+      transferAmount: 10,
+      contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B'
+    }
+  }
+  const baseUrl = `http://localhost:${API_PORT}`
+  const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
+
+  log.info(JSON.stringify(rawTransactionResponse.data))
+
+  const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
+  const transaction = new Tx(rawTransactionResponse.data)
+  transaction.sign(privateKey)
+  const serializedTx = transaction.serialize().toString('hex')
+
+  const transferRequest = {
+    data: '0x' + serializedTx
+  }
+
+  log.info('POST signed transaction..')
+  const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, transferRequest)
+  log.info(JSON.stringify(sendTransactionResponse.data))
+  log.info('Query transaction history again.')
+  const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
+  log.info(JSON.stringify(newRawHistoryResponse.data))
+}
+
+async function sendExchangeTransaction() {
+
 }
 
 (async () => {
@@ -117,9 +147,11 @@ async function seed() {
     case 'launch':
       await launch()
       break
-
-    case 'seed':
-      await seed()
+    case 'transfer':
+      await sendTransaction(BRAND_ADDRESS, ACCOUNTS[1].address, 10)
+      break
+    case 'exchange':
+      await sendTransaction(ACCOUNTS[1].address, TEMP_EXCHANGE_WALLET_ADDRESS, 10)
       break
     default:
       log.error(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)

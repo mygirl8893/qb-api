@@ -7,10 +7,10 @@ import * as Joi from 'joi'
 
 import Config from '../config'
 import database from '../database'
+import publicBlockchain from '../lib/publicBlockchain'
+import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import log from '../logging'
 import validation from '../validation'
-import qbxFeeCalculator from '../lib/qbxFeeCalculator'
-import publicBlockchain from '../lib/publicBlockchain'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -148,13 +148,15 @@ async function transfer(req, res) {
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
     const tempExchangeWallets = await database.getTempExchangeWallets()
-    if (tempExchangeWallets.map(w => w.address).includes(toAddress)) {
-      log.info(`Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
+    if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
+      log.info(
+        `Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
       const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
       const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
       const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, '10000')
-      const qbxTxValueComputationData = await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
-      if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan( new BigNumber('0'))) {
+      const qbxTxValueComputationData =
+        await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
+      if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
         const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
           Estimated gas: ${estimatedGas.toString()} computation results: ${JSON.stringify(qbxTxValueComputationData)}`
         log.error(errMessage)

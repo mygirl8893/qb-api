@@ -1,11 +1,11 @@
 import Web3Connection from 'web3'
 // tslint:disable-next-line
 const Web3 = require('web3')
+import BigNumber from 'bignumber.js'
 import Tx = require('ethereumjs-tx')
 import * as HttpStatus from 'http-status-codes'
-import * as request from 'supertest'
 import * as nock from 'nock'
-import BigNumber from 'bignumber.js'
+import * as request from 'supertest'
 
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
@@ -646,7 +646,7 @@ describe('Transactions API Integration', () => {
         safeLow: gasPrice.toString(),
         standard : gasPrice.toString(),
         fast: gasPrice.toString(),
-        fastest: "20"
+        fastest: '20'
       })
 
     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'

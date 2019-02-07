@@ -95,7 +95,7 @@ async function seed() {
   const serializedTx = transaction.serialize().toString('hex')
 
   const transferRequest = {
-    data: serializedTx
+    data: '0x' + serializedTx
   }
 
   log.info('POST signed transaction..')

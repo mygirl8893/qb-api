@@ -71,7 +71,7 @@ describe('Prices API Integration', () => {
       TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
 
       testDbConn = new APITesting.TestDatabaseConn()
-      await testDbConn.setup(TOKEN, ACCOUNTS[2].address)
+      await testDbConn.setup(TOKEN, ACCOUNTS[2].address, ACCOUNTS[0].addres)
 
       app = require('../../app').default
       const Config = require('../../src/config').default

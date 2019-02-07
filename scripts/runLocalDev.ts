@@ -55,7 +55,7 @@ async function launch() {
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()
-  await testDbConn.setup(token, ACCOUNTS[2].address)
+  await testDbConn.setup(token, ACCOUNTS[2].address, ACCOUNTS[0].address)
 
   const app = require('../app')
   const Config = require('../src/config').default

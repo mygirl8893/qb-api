@@ -74,7 +74,7 @@ function makeStoreableTransaction(original, receipt, block) {
 class TestDatabaseConn {
   private testToken
 
-  public async setup(existingToken, tempWalletAddress: string): Promise<void> {
+  public async setup(existingToken, tempWalletAddress: string, brandAddress: string): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()
@@ -84,6 +84,7 @@ class TestDatabaseConn {
     }
     await qbDB.models.brand.create(firstBrand)
     const newBrand = await qbDB.models.brand.find({where: {legalName: firstBrand.legalName}})
+    await qbDB.models.brandAddress.create({ address: brandAddress, brandId: newBrand.id })
 
     existingToken.brandId = newBrand.id
     this.testToken = await qbDB.models.token.create(existingToken)

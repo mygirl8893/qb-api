@@ -22,7 +22,11 @@ const ACCOUNTS = [{
     address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
     secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
     balance: START_BALANCE
-  }]
+  }, {
+  address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
+  secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
+  balance: START_BALANCE
+}]
 
 const TOKEN = {
     name: 'MagicCarpetsWorld',
@@ -51,7 +55,7 @@ async function launch() {
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()
-  await testDbConn.setup(token)
+  await testDbConn.setup(token, ACCOUNTS[2].address)
 
   const app = require('../app')
   const Config = require('../src/config').default

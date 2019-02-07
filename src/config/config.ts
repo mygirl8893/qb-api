@@ -30,7 +30,7 @@ const Config = {
   development: {
     rpc: {
       private: 'http://localhost:8545',
-      public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+      public: 'https://localhost:8600'
     },
     port: 3000,
     S3Url: 'http://tokensdevelopment.qiibee.com',

@@ -137,10 +137,6 @@ async function seed() {
   log.info(JSON.stringify(newRawHistoryResponse.data))
 }
 
-async function sendExchangeTransaction() {
-
-}
-
 (async () => {
   const command = process.argv[2]
   switch (command) {

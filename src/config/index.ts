@@ -1,8 +1,8 @@
 // tslint:disable-next-line
 const Web3 = require('web3')
+import log from '../logging'
 import Config from './config'
 import SwaggerConfig from './swagger'
-import log from '../logging'
 
 const env = process.env.NODE_ENV || 'development'
 const envtConfig = Config[env]

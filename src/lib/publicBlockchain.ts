@@ -1,5 +1,5 @@
-import Config from '../config'
 import BigNumber from 'bignumber.js'
+import Config from '../config'
 
 const publicWeb3 = Config.getPublicWeb3()
 

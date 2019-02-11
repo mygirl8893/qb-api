@@ -13,7 +13,7 @@ import TestPrivateChain from './testPrivateChain'
 
 const PRIVATE_WEB3_PORT = 8545
 
-const START_BALANCE = 10 ** 20
+const START_BALANCE = '1000000000000000000000000000000'
 
 const ACCOUNTS = [{
   address: '0x87265a62c60247f862b9149423061b36b460f4bb',
@@ -804,7 +804,7 @@ describe('Transactions API Integration', () => {
 
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 5
+    const txCount = 7
 
     const expectedAddress = {
       transactionCount: txCount,
@@ -820,7 +820,7 @@ describe('Transactions API Integration', () => {
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      balance: (privateChain.initialLoyaltyTokenAmount - 4006).toString(), // assuming all value 1
+      balance: (new BigNumber(ACCOUNTS[0].balance).minus(new BigNumber(4006))).toFixed(), // assuming all value 1
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 

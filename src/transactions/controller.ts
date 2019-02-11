@@ -152,10 +152,10 @@ async function transfer(req, res) {
       if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
         log.info(
           `Transaction detected to be an exchange transaction
-           (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
+           (sends to wallet ${toAddress}`)
         const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
         const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
-        const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, '10000')
+        const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, txValueInQBX.toString())
         const qbxTxValueComputationData =
           await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
         if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {

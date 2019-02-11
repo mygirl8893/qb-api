@@ -121,7 +121,7 @@ async function sendTransaction(from, to, transferAmount) {
       await sendTransaction(BRAND_ADDRESS, ACCOUNTS[1].address, 10)
       break
     case 'exchange':
-      await sendTransaction(ACCOUNTS[1].address, TEMP_EXCHANGE_WALLET_ADDRESS, 10)
+      await sendTransaction(ACCOUNTS[1].address, TEMP_EXCHANGE_WALLET_ADDRESS, '100000000000')
       break
     default:
       log.error(`Wrong command ${command}. Use 'launch' first, run your API, and then 'seed'.`)

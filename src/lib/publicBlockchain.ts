@@ -1,4 +1,5 @@
 import Config from '../config'
+import BigNumber from 'bignumber.js'
 
 const publicWeb3 = Config.getPublicWeb3()
 

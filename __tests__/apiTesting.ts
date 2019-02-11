@@ -4,6 +4,22 @@ import * as qbDB from 'qb-db-migrations'
 import utils from '../src/lib/utils'
 import log from '../src/logging'
 
+const START_BALANCE = '1000000000000000000000000000000'
+
+const ACCOUNTS = [{
+  address: '0x87265a62c60247f862b9149423061b36b460f4bb',
+  secretKey: 'e8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
+  balance: START_BALANCE
+}, {
+  address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
+  secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
+  balance: START_BALANCE
+}, {
+  address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
+  secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
+  balance: START_BALANCE
+}]
+
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
   const Config = require('../src/config/config')
@@ -129,5 +145,6 @@ class TestDatabaseConn {
 export default {
   setupTestConfiguration,
   waitForAppToBeReady,
-  TestDatabaseConn
+  TestDatabaseConn,
+  ACCOUNTS
 }

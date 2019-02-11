@@ -105,38 +105,6 @@ async function sendTransaction(from, to, transferAmount) {
   log.info(JSON.stringify(newRawHistoryResponse.data))
 }
 
-async function seed() {
-  log.info('Get raw transaction.')
-  const rawTransactionRequest = {
-    params: {
-      from: ACCOUNTS[0].address,
-      to: ACCOUNTS[1].address,
-      transferAmount: 10,
-      contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B'
-    }
-  }
-  const baseUrl = `http://localhost:${API_PORT}`
-  const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
-
-  log.info(JSON.stringify(rawTransactionResponse.data))
-
-  const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
-  const transaction = new Tx(rawTransactionResponse.data)
-  transaction.sign(privateKey)
-  const serializedTx = transaction.serialize().toString('hex')
-
-  const transferRequest = {
-    data: '0x' + serializedTx
-  }
-
-  log.info('POST signed transaction..')
-  const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, transferRequest)
-  log.info(JSON.stringify(sendTransactionResponse.data))
-  log.info('Query transaction history again.')
-  const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
-  log.info(JSON.stringify(newRawHistoryResponse.data))
-}
-
 (async () => {
   const command = process.argv[2]
   switch (command) {

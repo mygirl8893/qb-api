@@ -121,8 +121,7 @@ class TestPrivateChain {
 
     let issuedAmount = new BigNumber('0')
     log.info(`Issuing for every account...`)
-    for (let i = 0; i < this.accounts.length; i++) {
-      const account = this.accounts[i]
+    for (const account of this.accounts) {
       const issueTokensReceipt = await loyaltyTokenContract.methods.issue(account.address,
         account.balance).send({
         from: this.accounts[0].address,

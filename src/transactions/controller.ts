@@ -147,24 +147,30 @@ async function transfer(req, res) {
     const toAddress = decodedTx.params[0].value
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
-    const tempExchangeWallets = await database.getTempExchangeWallets()
-    if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
-      log.info(
-        `Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
-      const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
-      const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
-      const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, '10000')
-      const qbxTxValueComputationData =
-        await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
-      if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
-        const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
+    try {
+      const tempExchangeWallets = await database.getTempExchangeWallets()
+      if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
+        log.info(
+          `Transaction detected to be an exchange transaction (sends to wallet ${Config.getTempExchangeWalletAddress()}`)
+        const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
+        const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
+        const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, '10000')
+        const qbxTxValueComputationData =
+          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
+        if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
+          const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
           Estimated gas: ${estimatedGas.toString()} computation results: ${JSON.stringify(qbxTxValueComputationData)}`
-        log.error(errMessage)
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
-      } else {
-        log.info(`Exchange transaction is valid. Proceeding..`)
+          log.error(errMessage)
+          return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
+        } else {
+          log.info(`Exchange transaction is valid. Proceeding..`)
+        }
       }
+    } catch (e) {
+      log.error(`Failed to process potential exchange transaction ${e.stack}`)
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
     }
+
 
     if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')

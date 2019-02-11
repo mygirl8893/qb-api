@@ -58,9 +58,13 @@ async function launch() {
   }
 
   const testDbConn = new apiTesting.TestDatabaseConn()
-  await testDbConn.setup(token, BRAND_ADDRESS, TEMP_EXCHANGE_WALLET_ADDRESS)
+  await testDbConn.setup(token, TEMP_EXCHANGE_WALLET_ADDRESS, BRAND_ADDRESS)
 
   const app = require('../app')
+
+  const ConfigValues = require('../src/config/config').default
+  ConfigValues.qbxContract = '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B'
+
   const Config = require('../src/config').default
 
   const port = process.env.PORT || Config.getPort()
@@ -88,7 +92,10 @@ async function sendTransaction(from, to, transferAmount) {
   const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
   log.info(JSON.stringify(rawTransactionResponse.data))
 
-  const privateKey = new Buffer(ACCOUNTS[0].secretKey, 'hex')
+
+  const account = ACCOUNTS.filter(a => a.address === from)[0]
+
+  const privateKey = new Buffer(account.secretKey, 'hex')
   const transaction = new Tx(rawTransactionResponse.data)
   transaction.sign(privateKey)
   const serializedTx = transaction.serialize().toString('hex')
@@ -101,7 +108,7 @@ async function sendTransaction(from, to, transferAmount) {
   const sendTransactionResponse = await axios.post(`${baseUrl}/transactions/`, transferRequest)
   log.info(JSON.stringify(sendTransactionResponse.data))
   log.info('Query transaction history again.')
-  const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${ACCOUNTS[0].address}/history`)
+  const newRawHistoryResponse = await axios.get(`${baseUrl}/transactions/${from}/history`)
   log.info(JSON.stringify(newRawHistoryResponse.data))
 }
 
@@ -122,5 +129,8 @@ async function sendTransaction(from, to, transferAmount) {
   }
 
 })().catch((e) => {
-  log.error(`${e.stack}`)
+  log.error(`Failed command with ${e.stack}`)
+  if (e.response) {
+    log.error(`Request failed with ${JSON.stringify(e.response.data)}`)
+  }
 })

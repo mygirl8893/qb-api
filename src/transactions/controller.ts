@@ -169,7 +169,7 @@ async function transfer(req, res) {
       }
     } catch (e) {
       log.error(`Failed to process potential exchange transaction ${e.stack}`)
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
     }
 
     if (!loyaltyToken ||

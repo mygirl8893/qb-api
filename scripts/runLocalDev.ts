@@ -92,8 +92,7 @@ async function sendTransaction(from, to, transferAmount) {
   const rawTransactionResponse = await axios.get(`${baseUrl}/transactions/raw`, rawTransactionRequest)
   log.info(JSON.stringify(rawTransactionResponse.data))
 
-
-  const account = ACCOUNTS.filter(a => a.address === from)[0]
+  const account = ACCOUNTS.filter((a) => a.address === from)[0]
 
   const privateKey = new Buffer(account.secretKey, 'hex')
   const transaction = new Tx(rawTransactionResponse.data)

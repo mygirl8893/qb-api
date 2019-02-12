@@ -619,6 +619,28 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
+  async function sendTransaction(rawTransactionParams) {
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+    const rawTransaction = rawTransactionResponse.body
+
+    expect(rawTransaction.from).toBe(rawTransactionParams.from)
+    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    return sendTransactionResponse
+  }
+
   it('Successfully processes exchange transaction', async () => {
     const gasPrice = '0'
     const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
@@ -654,27 +676,9 @@ describe('Transactions API Integration', () => {
       transferAmount: '4000',
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
-
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
 
-    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
-
-    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
-    const rawTransaction = rawTransactionResponse.body
-
-    expect(rawTransaction.from).toBe(rawTransactionParams.from)
-    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
-
-    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
-    const transaction = new Tx(rawTransaction)
-    transaction.sign(privateKey)
-    const serializedTx = transaction.serialize().toString('hex')
-
-    const postTransferParams = {
-      data: serializedTx
-    }
-
-    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
     await markTransactionAsMined(sendTransactionResponse.body.hash)
@@ -717,36 +721,58 @@ describe('Transactions API Integration', () => {
     }
 
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
-
-    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
-
-    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
-    const rawTransaction = rawTransactionResponse.body
-
-    expect(rawTransaction.from).toBe(rawTransactionParams.from)
-    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
-
-    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
-    const transaction = new Tx(rawTransaction)
-    transaction.sign(privateKey)
-    const serializedTx = transaction.serialize().toString('hex')
-
-    const postTransferParams = {
-      data: serializedTx
-    }
-    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
-  it('Rejects exchange transaction because of API failure', async () => {
-    const gasPrice = '5'
-    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+  it('Rejects exchange transaction because of etherchain API failure', async () => {
     const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
     nock(GASPRICE_API_HOST)
       .get('')
       .times(1)
       .reply(500, {
-        message: 'Failed to process request'
+        message: 'etherchain - internal failure.'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+  })
+
+  it('Rejects exchange transaction because of coinsuper API failure', async () => {
+    const gasPrice = '5'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
       })
 
     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
@@ -765,24 +791,7 @@ describe('Transactions API Integration', () => {
     }
 
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
-
-    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
-
-    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
-    const rawTransaction = rawTransactionResponse.body
-
-    expect(rawTransaction.from).toBe(rawTransactionParams.from)
-    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
-
-    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
-    const transaction = new Tx(rawTransaction)
-    transaction.sign(privateKey)
-    const serializedTx = transaction.serialize().toString('hex')
-
-    const postTransferParams = {
-      data: serializedTx
-    }
-    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
   })
 

@@ -645,7 +645,7 @@ describe('Transactions API Integration', () => {
     const gasPrice = '0'
     const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
     const qbxToETHExchangeRate = new BigNumber('0.000000001')
-    nock(GASPRICE_API_HOST)
+    const gasPriceScope = nock(GASPRICE_API_HOST)
       .get('')
       .times(1)
       .reply(200, {
@@ -656,7 +656,7 @@ describe('Transactions API Integration', () => {
       })
 
     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
-    nock(coinsuperOrderBookURL)
+    const coinsuperScope = nock(coinsuperOrderBookURL)
       .post('')
       .times(1)
       .reply(200, {
@@ -682,13 +682,16 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
     await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
   it('Rejects exchange transaction with amount too low', async () => {
     const gasPrice = '5'
     const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
     const qbxToETHExchangeRate = new BigNumber('0.000000001')
-    nock(GASPRICE_API_HOST)
+    const gasPriceScope = nock(GASPRICE_API_HOST)
       .get('')
       .times(1)
       .reply(200, {
@@ -699,7 +702,7 @@ describe('Transactions API Integration', () => {
       })
 
     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
-    nock(coinsuperOrderBookURL)
+    const coinsuperScope = nock(coinsuperOrderBookURL)
       .post('')
       .times(1)
       .reply(200, {
@@ -723,12 +726,15 @@ describe('Transactions API Integration', () => {
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
     const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
   it('Rejects exchange transaction because of etherchain API failure', async () => {
     const qbxToETHExchangeRate = new BigNumber('0.000000001')
     const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
-    nock(GASPRICE_API_HOST)
+    const gasPriceScope = nock(GASPRICE_API_HOST)
       .get('')
       .times(1)
       .reply(500, {
@@ -760,6 +766,7 @@ describe('Transactions API Integration', () => {
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
     const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(gasPriceScope.isDone()).toBeTruthy()
   })
 
   it('Rejects exchange transaction because of coinsuper API failure', async () => {
@@ -776,7 +783,7 @@ describe('Transactions API Integration', () => {
       })
 
     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
-    nock(coinsuperOrderBookURL)
+    const coinsuperScope = nock(coinsuperOrderBookURL)
       .post('')
       .times(1)
       .reply(500, {
@@ -793,6 +800,7 @@ describe('Transactions API Integration', () => {
     estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
     const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
   it('Successfully gets address by hash', async () => {

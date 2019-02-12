@@ -6,6 +6,7 @@ import Config from './../config'
 
 const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
+const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 interface QBXTxValueAndFees {
   qbxTxValue: BigNumber
@@ -20,7 +21,8 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
   const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_PERCENTAGE)
   const estimatedEthFee = estimatedGasAmount.multipliedBy(gasPrice)
   const costOfGasInQBX = estimatedEthFee.dividedBy(qbxToETHExchangeRate)
-  const qbxTxValue = txRawAmountInQBXWei.minus(qbxFee).minus(costOfGasInQBX)
+  const qbxTxValueRaw = txRawAmountInQBXWei.minus(qbxFee).minus(costOfGasInQBX)
+  const qbxTxValue = qbxTxValueRaw.integerValue(BigNumber.ROUND_FLOOR)
   return {
     qbxTxValue,
     qbxFee,
@@ -33,8 +35,6 @@ async function getGasPrice(): Promise<BigNumber> {
   const lastGasPrice = response.data.standard
   return new BigNumber(lastGasPrice)
 }
-
-const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 function getCoinSuperRequestData(params) {
   const paramsForSigning = JSON.parse(JSON.stringify(params))

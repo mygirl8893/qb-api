@@ -133,6 +133,11 @@ async function getTokens() {
   return tokens
 }
 
+async function getTempExchangeWallets() {
+  const response = await qbDB.models.tempExchangeWallet.findAll()
+  return response
+}
+
 async function close() {
   await qbDB.models.sequelize.close()
 }
@@ -145,5 +150,6 @@ export default {
   getTokenByContractAddress,
   getTokenBySymbol,
   getTokens,
+  getTempExchangeWallets,
   close
 }

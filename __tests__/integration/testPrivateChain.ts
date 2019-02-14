@@ -1,5 +1,6 @@
 // tslint:disable-next-line
 const Web3 = require('web3')
+import BigNumber from 'bignumber.js'
 import * as childProcess from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -118,16 +119,19 @@ class TestPrivateChain {
     loyaltyTokenContract.options.address = this.loyaltyTokenContractAddress
     log.info(`Loyalty Token contract deployed successfully. The address is ${this.loyaltyTokenContractAddress}`)
 
-    this.initialLoyaltyTokenAmount = '1000000'
-
-    const issueTokensReceipt = await loyaltyTokenContract.methods.issue(this.accounts[0].address,
-      this.initialLoyaltyTokenAmount).send({
-      from: this.accounts[0].address,
-      gas: 1500000,
-      gasPrice: '30'
-    })
-
-    log.info(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
+    let issuedAmount = new BigNumber('0')
+    log.info(`Issuing for every account...`)
+    for (const account of this.accounts) {
+      const issueTokensReceipt = await loyaltyTokenContract.methods.issue(account.address,
+        account.balance).send({
+        from: this.accounts[0].address,
+        gas: 1500000,
+        gasPrice: '30'
+      })
+      log.info(`Tokens issued successfully with transaction hash ${issueTokensReceipt.hash}`)
+      issuedAmount = issuedAmount.plus(new BigNumber(account.balance))
+    }
+    this.initialLoyaltyTokenAmount = issuedAmount.toFixed()
 
     const latestBlock = await privateWeb3.eth.getBlock('latest')
     this.setupBlockCount = latestBlock.number

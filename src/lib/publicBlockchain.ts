@@ -9,9 +9,18 @@ const contract = new publicWeb3.eth.Contract(
   {}
 )
 
-async function estimateTxGas(to: string, txValue: string) {
-  const gas = await contract.methods.transfer(to, txValue).estimateGas()
-  return new BigNumber(gas)
+async function estimateTxGas(to: string) {
+  const txValue = '0'
+  const gasWeb3Estimate = await contract.methods.transfer(to, txValue).estimateGas()
+  const baseGas = new BigNumber(gasWeb3Estimate)
+  // add 10%
+  const extraGas = baseGas.multipliedBy(0.1)
+  const conservativeGasEstimate = baseGas.plus(extraGas).integerValue(BigNumber.ROUND_FLOOR)
+  const generousGasEstimate = baseGas.multipliedBy(2).integerValue(BigNumber.ROUND_FLOOR)
+  return {
+    conservativeGasEstimate,
+    generousGasEstimate
+  }
 }
 
 export default {

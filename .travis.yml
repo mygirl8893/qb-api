@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 language: node_js
 service_name: travis-pro
 node_js:

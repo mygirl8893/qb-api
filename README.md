@@ -30,7 +30,7 @@ cd qb-api
   - Add your infura token in the placeholder in src/config/config.js
 
 * Setup mysql locally
- - this has been validated to be working with `mysql  Ver 8.0.11 for osx10.13 on x86_64 (Homebrew)`
+ - this has been validated to be working with `mysql  Ver 5.7.24 for osx10.13 on x86_64 (Homebrew)`
  - for OSX you can do `brew install mysql`
  - 	access mysql using the `mysql` program from the terminal
  -  inside the `mysql` console type `CREATE DATABASE qiibee`

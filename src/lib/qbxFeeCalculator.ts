@@ -2,8 +2,8 @@ import axios from 'axios'
 import BigNumber from 'bignumber.js'
 import * as md5 from 'md5'
 import * as utf8 from 'utf8'
-import Config from './../config'
 import log from '../logging'
+import Config from './../config'
 
 const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'

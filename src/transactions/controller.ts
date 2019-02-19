@@ -160,7 +160,7 @@ async function transfer(req, res) {
           await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
         if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
           const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
-          Estimated gas: ${conservativeGasEstimate.toString()} 
+          Estimated gas: ${conservativeGasEstimate.toString()}
           computation results: ${JSON.stringify(qbxTxValueComputationData)}`
           log.error(errMessage)
           return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })

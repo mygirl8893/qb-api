@@ -676,7 +676,12 @@ describe('Transactions API Integration', () => {
       transferAmount: '4000',
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
-    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
 
     const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
@@ -723,7 +728,12 @@ describe('Transactions API Integration', () => {
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
-    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
     const sendTransactionResponse = await sendTransaction(rawTransactionParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
 

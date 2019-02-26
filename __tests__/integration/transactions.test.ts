@@ -813,6 +813,32 @@ describe('Transactions API Integration', () => {
     expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
+  it('Rejects 1 transfer which sends funds to itself', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[0].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
   it('Successfully gets address by hash', async () => {
 
     const txCount = 7

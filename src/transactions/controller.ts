@@ -145,6 +145,13 @@ async function transfer(req, res) {
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
+
+    if (sender.toLowerCase() === toAddress.toLowerCase()) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `Cannot transfer funds to own wallet at ${toAddress}`
+      })
+    }
+
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
     try {

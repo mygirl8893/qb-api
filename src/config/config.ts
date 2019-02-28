@@ -9,7 +9,8 @@ const Config = {
     },
     chainID: 29746197,
     port: process.env.PORT,
-    S3Url: 'http://tokens.qiibee.com'
+    S3Url: 'http://tokens.qiibee.com',
+    tempExchangeWalletAddress: process.env.TEMP_EXCHANGE_WALLET_ADDRESS
   },
   beta: {
     rpc: {
@@ -17,7 +18,8 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     port: process.env.PORT,
-    S3Url: 'http://tokensbeta.qiibee.com'
+    S3Url: 'http://tokensbeta.qiibee.com',
+    tempExchangeWalletAddress: process.env.TEMP_EXCHANGE_WALLET_ADDRESS
   },
   testing: {
     rpc: {
@@ -25,19 +27,21 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     port: process.env.PORT,
-    S3Url: 'http://tokenstesting.qiibee.com'
+    S3Url: 'http://tokenstesting.qiibee.com',
+    tempExchangeWalletAddress: process.env.TEMP_EXCHANGE_WALLET_ADDRESS
   },
   development: {
     rpc: {
       private: 'http://localhost:8545',
-      public: 'https://localhost:8600'
+      public: 'http://localhost:8600'
     },
     port: 3000,
     S3Url: 'http://tokensdevelopment.qiibee.com',
     coinsuperAPIKeys: {
-      accessKey: '',
-      secretKey: ''
-    }
+      accessKey: 'c52eec8c-be4f-4208-ad75-2dcb11202538',
+      secretKey: '8a3c41fa-6be6-4b76-ad42-c15ee05e3f40'
+    },
+    tempExchangeWalletAddress: process.env.TEMP_EXCHANGE_WALLET_ADDRESS
   },
   qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

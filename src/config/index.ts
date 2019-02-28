@@ -46,6 +46,5 @@ export default {
   getSwaggerConfig: () => SwaggerConfig,
   getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
   getS3Url: () => envtConfig.S3Url,
-  getTempExchangeWalletAddress: () => envtConfig.tempExchangeWalletAddress,
   getCoinsuperAPIKeys: () => envtConfig.coinsuperAPIKeys
 }

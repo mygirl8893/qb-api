@@ -58,7 +58,7 @@
     "md5": "^2.2.1",
     "morgan": "^1.9.0",
     "mysql2": "^1.6.1",
-    "pm2": "^3.2.9",
+    "pm2": "^3.3.1",
     "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v1.3.1",
     "sequelize": "^4.38.0",
     "swagger": "^0.7.5",

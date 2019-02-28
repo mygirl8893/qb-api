@@ -9,7 +9,11 @@ const Config = {
     },
     chainID: 29746197,
     port: process.env.PORT,
-    S3Url: 'http://tokens.qiibee.com'
+    S3Url: 'http://tokens.qiibee.com',
+    coinsuperAPIKeys: {
+      accessKey: process.env.COINSUPER_ACCESS_KEY,
+      secretKey: process.env.COINSUPER_SECRET_KEY
+    }
   },
   beta: {
     rpc: {
@@ -17,7 +21,11 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     port: process.env.PORT,
-    S3Url: 'http://tokensbeta.qiibee.com'
+    S3Url: 'http://tokensbeta.qiibee.com',
+    coinsuperAPIKeys: {
+      accessKey: process.env.COINSUPER_ACCESS_KEY,
+      secretKey: process.env.COINSUPER_SECRET_KEY
+    }
   },
   testing: {
     rpc: {
@@ -25,7 +33,11 @@ const Config = {
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
     port: process.env.PORT,
-    S3Url: 'http://tokenstesting.qiibee.com'
+    S3Url: 'http://tokenstesting.qiibee.com',
+    coinsuperAPIKeys: {
+      accessKey: process.env.COINSUPER_ACCESS_KEY,
+      secretKey: process.env.COINSUPER_SECRET_KEY
+    }
   },
   development: {
     rpc: {

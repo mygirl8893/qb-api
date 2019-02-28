@@ -52,18 +52,6 @@ deploy:
       secure: H0OKmegYqCtphBFAHLpCMXQUkJG64inGQoHZFkbMANZ4l3OGeH/D42dgB/n+RvhJ5uFFzMq7vaj4GoSGsWQE3NzNTCW9qxcugW2ZNj7uAwxVMfdJu6h0mTJ8xGjfO4IG1bgSpMEB3K5BcLQ0DNJXRfHs3B1+1pKzv2DLF6ZvQBSwIDauCiCYO79ErTlzbQfv0WdrKC9diqpy/X8uRJo9oWWwcrh3qnUVXUP5jB6rp1PFsU2qNQV2Lxx39oN0sm3aFSuE9E5DM60JBO8Fzfj8DpFKBassLzlFR71qs/Tbpvq8kvrnX/m/oFT46NrcCwmOK4EjG5Rt5nfM3ypzpGHC0yXNTvLxuOad29koMPMXATi3jDrbHjdaRhg7XcRpJWyggklEjXB9Ijh6w6Uud0oLkM5PEjNNlb95ncQN9uxNdBU9GFY4n8ZginAsR3sxZURDkJCxU0Sf2an2VltnEhvp4JZ5+ggeD55Z10/W0ROOC0quIFWIpZ+qMI7Bl5yzVpBC287o8Oh5+NRSwXcL1WbWPkfArsDKbd4v8MX+2NjfwnnejH/q8nKVmCslkwQxYpMk2pYEX52njWyn/sX/njwhzqfbW3fS4+2eP9V4uok2bmWg3dwhlYTLOjO+22VLm9VgsomoINSsm0xA5dMGIPm4t8ufCPngPCXKP+tanDh1FME=
     region: eu-central-1
     app: qbAPI
-    env: qb-api-testing
-    bucket_name: elasticbeanstalk-eu-central-1-233816796838
-    on:
-      repo: qiibee/qb-api
-      all_branches: true
-  - provider: elasticbeanstalk
-    skip_cleanup: true
-    access_key_id: AKIAIE4NIBVBAKOTWSQQ
-    secret_access_key:
-      secure: H0OKmegYqCtphBFAHLpCMXQUkJG64inGQoHZFkbMANZ4l3OGeH/D42dgB/n+RvhJ5uFFzMq7vaj4GoSGsWQE3NzNTCW9qxcugW2ZNj7uAwxVMfdJu6h0mTJ8xGjfO4IG1bgSpMEB3K5BcLQ0DNJXRfHs3B1+1pKzv2DLF6ZvQBSwIDauCiCYO79ErTlzbQfv0WdrKC9diqpy/X8uRJo9oWWwcrh3qnUVXUP5jB6rp1PFsU2qNQV2Lxx39oN0sm3aFSuE9E5DM60JBO8Fzfj8DpFKBassLzlFR71qs/Tbpvq8kvrnX/m/oFT46NrcCwmOK4EjG5Rt5nfM3ypzpGHC0yXNTvLxuOad29koMPMXATi3jDrbHjdaRhg7XcRpJWyggklEjXB9Ijh6w6Uud0oLkM5PEjNNlb95ncQN9uxNdBU9GFY4n8ZginAsR3sxZURDkJCxU0Sf2an2VltnEhvp4JZ5+ggeD55Z10/W0ROOC0quIFWIpZ+qMI7Bl5yzVpBC287o8Oh5+NRSwXcL1WbWPkfArsDKbd4v8MX+2NjfwnnejH/q8nKVmCslkwQxYpMk2pYEX52njWyn/sX/njwhzqfbW3fS4+2eP9V4uok2bmWg3dwhlYTLOjO+22VLm9VgsomoINSsm0xA5dMGIPm4t8ufCPngPCXKP+tanDh1FME=
-    region: eu-central-1
-    app: qbAPI
     env: qb-api-production
     bucket_name: elasticbeanstalk-eu-central-1-233816796838
     on:

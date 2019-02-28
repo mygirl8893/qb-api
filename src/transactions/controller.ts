@@ -145,6 +145,13 @@ async function transfer(req, res) {
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
+
+    if (sender.toLowerCase() === toAddress.toLowerCase()) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `Cannot transfer funds to own wallet at ${toAddress}`
+      })
+    }
+
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
     try {
@@ -155,12 +162,13 @@ async function transfer(req, res) {
            (sends to wallet ${toAddress}`)
         const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
         const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
-        const estimatedGas = await publicBlockchain.estimateTxGas(toAddress, txValueInQBX.toString())
+        const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
         const qbxTxValueComputationData =
-          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, estimatedGas)
+          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
         if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
           const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
-          Estimated gas: ${estimatedGas.toString()} computation results: ${JSON.stringify(qbxTxValueComputationData)}`
+          Estimated gas: ${conservativeGasEstimate.toString()}
+          computation results: ${JSON.stringify(qbxTxValueComputationData)}`
           log.error(errMessage)
           return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
         } else {

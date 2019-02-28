@@ -2,6 +2,7 @@ import axios from 'axios'
 import BigNumber from 'bignumber.js'
 import * as md5 from 'md5'
 import * as utf8 from 'utf8'
+import log from '../logging'
 import Config from './../config'
 
 const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
@@ -12,6 +13,12 @@ interface QBXTxValueAndFees {
   qbxTxValue: BigNumber
   qbxFee: BigNumber
   estimatedEthFee: BigNumber
+}
+
+interface QBXTxValueComputationData {
+  gasPrice: BigNumber
+  qbxToETHExchangeRate: BigNumber,
+  qbxTxValueAndFees: QBXTxValueAndFees
 }
 
 function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
@@ -31,9 +38,17 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
 }
 
 async function getGasPrice(): Promise<BigNumber> {
-  const response = await axios.get(GAS_PRICE_API_URL)
-  const lastGasPrice = response.data.standard
-  return new BigNumber(lastGasPrice)
+  try {
+    log.info(` Requesting ${GAS_PRICE_API_URL}`)
+    const response = await axios.get(GAS_PRICE_API_URL)
+    log.info(` Received response from gas API: ${JSON.stringify(response.data)}`)
+    const lastGasPrice = response.data.standard
+    return new BigNumber(lastGasPrice).integerValue(BigNumber.ROUND_FLOOR)
+  } catch (e) {
+    log.error(`Failed ${GAS_PRICE_API_URL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    throw e
+  }
+
 }
 
 function getCoinSuperRequestData(params) {
@@ -66,16 +81,17 @@ async function getQBXToETHExchangeRate(): Promise<BigNumber> {
     num: 50,
     symbol: 'QBX/ETH'
   })
-  const response = await axios.post(COINSUPER_API_URL + '/market/orderBook', requestData)
-  const qbxToETH = new BigNumber(response.data.data.result.bids[0].limitPrice)
-  return qbxToETH
+  const postURL = COINSUPER_API_URL + '/market/orderBook'
+  try {
+    const response = await axios.post(postURL, requestData)
+    const qbxToETH = new BigNumber(response.data.data.result.bids[0].limitPrice)
+    return qbxToETH
+  } catch (e) {
+    log.error(`Failed ${postURL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    throw e
+  }
 }
 
-interface QBXTxValueComputationData {
-  gasPrice: BigNumber
-  qbxToETHExchangeRate: BigNumber,
-  qbxTxValueAndFees: QBXTxValueAndFees
-}
 async function pullDataAndCalculateQBXTxValue(
   txRawAmountInQBXWei: BigNumber,
   estimatedGasAmount: BigNumber): Promise<QBXTxValueComputationData> {

@@ -11,14 +11,14 @@ const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
 const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 interface QBXTxValueAndFees {
-  qbxTxValue: BigNumber
-  qbxFee: BigNumber
+  qbxTxValue: BigNumber,
+  qbxFee: BigNumber,
   estimatedEthFee: BigNumber,
   costOfGasInQBX: BigNumber
 }
 
 interface QBXTxValueComputationData {
-  gasPrice: BigNumber
+  gasPrice: BigNumber,
   qbxToETHExchangeRate: BigNumber,
   qbxTxValueAndFees: QBXTxValueAndFees
 }

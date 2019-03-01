@@ -5,18 +5,20 @@ import * as utf8 from 'utf8'
 import log from '../logging'
 import Config from './../config'
 
-const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
+const QBX_FEE_FRACTION = new BigNumber(0.01)
+const QBX_FEE_PERCENTAGE = QBX_FEE_FRACTION.multipliedBy(100)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
 const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 interface QBXTxValueAndFees {
-  qbxTxValue: BigNumber
-  qbxFee: BigNumber
-  estimatedEthFee: BigNumber
+  qbxTxValue: BigNumber,
+  qbxFee: BigNumber,
+  estimatedEthFee: BigNumber,
+  costOfGasInQBX: BigNumber
 }
 
 interface QBXTxValueComputationData {
-  gasPrice: BigNumber
+  gasPrice: BigNumber,
   qbxToETHExchangeRate: BigNumber,
   qbxTxValueAndFees: QBXTxValueAndFees
 }
@@ -25,7 +27,7 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
                              estimatedGasAmount: BigNumber,
                              gasPrice: BigNumber,
                              qbxToETHExchangeRate: BigNumber): QBXTxValueAndFees {
-  const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_PERCENTAGE)
+  const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_FRACTION)
   const estimatedEthFee = estimatedGasAmount.multipliedBy(gasPrice)
   const costOfGasInQBX = estimatedEthFee.dividedBy(qbxToETHExchangeRate)
   const qbxTxValueRaw = txRawAmountInQBXWei.minus(qbxFee).minus(costOfGasInQBX)
@@ -33,7 +35,8 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
   return {
     qbxTxValue,
     qbxFee,
-    estimatedEthFee
+    estimatedEthFee,
+    costOfGasInQBX
   }
 }
 
@@ -108,5 +111,6 @@ async function pullDataAndCalculateQBXTxValue(
 }
 
 export default {
-  pullDataAndCalculateQBXTxValue
+  pullDataAndCalculateQBXTxValue,
+  QBX_FEE_PERCENTAGE
 }

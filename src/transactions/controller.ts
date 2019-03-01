@@ -282,10 +282,44 @@ async function buildRawTransaction(req, res) {
   }
 }
 
+const getQBXExchangeValuesSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    symbol: Joi.string().min(1).max(64).example('QBX').required(),
+    transferAmount: validation.bigPositiveIntAsString().required()
+  })
+})
+async function getQBXExchangeValues(req, res) {
+  req = validation.validateRequestInput(req, getQBXExchangeValuesSchema)
+  const transferAmount = req.query.transferAmount
+  const symbol = req.query.symbol
+  log.info(`Fething QBX exchange values for ${transferAmount} ${symbol} tokens.`)
+  const loyaltyToken = await database.getTokenBySymbol(symbol)
+  const tempExchangeWallets = await database.getTempExchangeWallets()
+  const activeTempExchangeWallet = tempExchangeWallets[0].address
+  log.info(`Active exchange wallet address is ${activeTempExchangeWallet}`)
+  const txLoyaltyTokenValue = new BigNumber(transferAmount)
+  const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
+  const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(activeTempExchangeWallet)
+  const qbxTxValueComputationData =
+    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
+  const values = {
+    // percentage, qbxFeeAmount, gasFee and final receive value
+    qbxFeeAmount: qbxTxValueComputationData.qbxTxValueAndFees.qbxFee.toFixed(),
+    qbxFeePercentage: qbxFeeCalculator.QBX_FEE_PERCENTAGE.toFixed(),
+    qbxValueReceived: qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.toFixed(),
+    costOfGasInQBX: qbxTxValueComputationData.qbxTxValueAndFees.costOfGasInQBX.toFixed(),
+    exchangeWalletAddress: activeTempExchangeWallet,
+    loyaltyTokenToQBXRate: loyaltyToken.rate
+  }
+
+  return res.json(values)
+}
+
 export default {
   buildRawTransaction,
   getTransaction,
   getTransactions,
   getHistory,
+  getQBXExchangeValues,
   transfer
 }

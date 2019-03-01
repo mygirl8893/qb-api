@@ -51,6 +51,8 @@ const router = express.Router()
  */
 router.get('/raw', LibAPI.wrap(Controller.buildRawTransaction))
 
+router.get('/qbxExchangeValues', LibAPI.wrap(Controller.getQBXExchangeValues))
+
 /**
  * @swagger
  * /transactions/{txHash}:

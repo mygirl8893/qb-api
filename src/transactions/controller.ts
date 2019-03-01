@@ -286,7 +286,7 @@ const getQBXExchangeValuesSchema = Joi.object().keys({
   query: Joi.object().keys({
     symbol: Joi.string().min(1).max(64).example('QBX').required(),
     transferAmount: validation.bigPositiveIntAsString().required()
-  }).or('contractAddress', 'symbol')
+  })
 })
 async function getQBXExchangeValues(req, res) {
   req = validation.validateRequestInput(req, getQBXExchangeValuesSchema)
@@ -320,6 +320,6 @@ export default {
   getTransaction,
   getTransactions,
   getHistory,
-  transfer,
-  getQBXExchangeValues
+  getQBXExchangeValues,
+  transfer
 }

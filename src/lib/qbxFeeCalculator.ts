@@ -14,7 +14,7 @@ interface QBXTxValueAndFees {
   qbxTxValue: BigNumber
   qbxFee: BigNumber
   estimatedEthFee: BigNumber,
-  costOfGasInQBX
+  costOfGasInQBX: BigNumber
 }
 
 interface QBXTxValueComputationData {

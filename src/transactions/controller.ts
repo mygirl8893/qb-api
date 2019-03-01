@@ -308,7 +308,8 @@ async function getQBXExchangeValues(req, res) {
     qbxFeePercentage: qbxFeeCalculator.QBX_FEE_PERCENTAGE.toFixed(),
     qbxValueReceived: qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.toFixed(),
     costOfGasInQBX: qbxTxValueComputationData.qbxTxValueAndFees.costOfGasInQBX.toFixed(),
-    exchangeWalletAddress: activeTempExchangeWallet
+    exchangeWalletAddress: activeTempExchangeWallet,
+    loyaltyTokenToQBXRate: loyaltyToken.rate
   }
 
   return res.json(values)

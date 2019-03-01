@@ -889,6 +889,7 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000')
     expect(sendTransactionResponse.body.qbxFeeAmount).toBe('4000000000')
     expect(sendTransactionResponse.body.qbxValueReceived).toBe('395000000000')
+    expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBe(TOKEN.rate)
 
     expect(gasPriceScope.isDone()).toBeTruthy()
     expect(coinsuperScope.isDone()).toBeTruthy()

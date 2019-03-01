@@ -134,7 +134,7 @@ async function getTokens() {
 }
 
 async function getTempExchangeWallets() {
-  const response = await qbDB.models.tempExchangeWallet.findAll( {
+  const response = await qbDB.models.tempExchangeWallet.findAll({
     order: [ ['id', 'DESC'] ]
   })
   return response

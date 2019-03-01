@@ -303,7 +303,7 @@ async function getQBXExchangeValues(req, res) {
   const qbxTxValueComputationData =
     await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
   const values = {
-    //percentage, qbxFeeAmount, gasFee and final receive value
+    // percentage, qbxFeeAmount, gasFee and final receive value
     qbxFeeAmount: qbxTxValueComputationData.qbxTxValueAndFees.qbxFee.toFixed(),
     qbxFeePercentage: qbxFeeCalculator.QBX_FEE_PERCENTAGE.toFixed(),
     qbxValueReceived: qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.toFixed(),

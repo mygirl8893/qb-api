@@ -96,6 +96,10 @@ describe('Transactions API Integration', () => {
     }
   })
 
+  beforeEach(async () => {
+    nock.cleanAll()
+  })
+
   afterAll(async () => {
     try {
       await privateChain.tearDown()
@@ -837,6 +841,57 @@ describe('Transactions API Integration', () => {
 
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets qbx exchange values', async () => {
+    const gasPrice = '1'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const transferAmount = '40000000000000'
+
+    const sendTransactionResponse =
+      await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+    expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
+    expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000')
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('4000000000')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('395000000000')
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
   it('Successfully gets address by hash', async () => {

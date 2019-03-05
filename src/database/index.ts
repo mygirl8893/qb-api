@@ -126,7 +126,8 @@ async function getTokenBySymbol(symbol: string) {
 async function getTokens() {
   const tokens = await Token.findAll({
     where: {
-      contractAddress: { [Op.ne]: null }
+      contractAddress: { [Op.ne]: null },
+      hidden: false
     },
     raw: true }
   )

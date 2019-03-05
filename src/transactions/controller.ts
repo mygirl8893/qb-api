@@ -50,6 +50,7 @@ async function getTx(txHash) {
   delete token.balance
   delete token.id
   delete token.brandId
+  delete token.hidden
 
   transaction.token = token || null
   return transaction

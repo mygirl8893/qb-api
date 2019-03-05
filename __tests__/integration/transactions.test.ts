@@ -36,7 +36,8 @@ const TOKEN = {
   description: 'Magic is in the air.',
   website: 'otherworldlymagicalcarpets.com',
   totalSupply: undefined,
-  contractAddress: undefined
+  contractAddress: undefined,
+  hidden: false
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)

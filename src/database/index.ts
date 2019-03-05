@@ -70,6 +70,7 @@ function formatTransactionsList(transactions) {
     if (t.token) {
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
+      delete t.token.dataValues.hidden
     }
 
     delete t.dataValues.confirms

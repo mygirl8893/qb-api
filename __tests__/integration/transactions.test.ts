@@ -1,32 +1,29 @@
 import Web3Connection from 'web3'
 // tslint:disable-next-line
 const Web3 = require('web3')
+import BigNumber from 'bignumber.js'
 import Tx = require('ethereumjs-tx')
 import * as HttpStatus from 'http-status-codes'
+import * as nock from 'nock'
 import * as request from 'supertest'
 
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
 
+const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
-
-const START_BALANCE = 10 ** 20
-
-const ACCOUNTS = [{
-  address: '0x87265a62c60247f862b9149423061b36b460f4bb',
-  secretKey: 'e8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
-  balance: START_BALANCE
-}, {
-  address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
-  secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
-  balance: START_BALANCE
-}]
+const TEMP_EXCHANGE_WALLET_ADDRESS = ACCOUNTS[2].address
 
 const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+  },
+  tempExchangeWalletAddress: TEMP_EXCHANGE_WALLET_ADDRESS,
+  coinsuperAPIKeys: {
+    accessKey: '',
+    secretKey: ''
   },
   port: 3000
 }
@@ -39,7 +36,8 @@ const TOKEN = {
   description: 'Magic is in the air.',
   website: 'otherworldlymagicalcarpets.com',
   totalSupply: undefined,
-  contractAddress: undefined
+  contractAddress: undefined,
+  hidden: false
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
@@ -54,6 +52,7 @@ describe('Transactions API Integration', () => {
   let apiDBConn = null
   let totalTransactionsSoFar = 0
   let Config = null
+  let estimateTxGasMock = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -77,7 +76,7 @@ describe('Transactions API Integration', () => {
 
       testDbConn = new APITesting.TestDatabaseConn()
 
-      await testDbConn.setup(TOKEN)
+      await testDbConn.setup(TOKEN, TEMP_EXCHANGE_WALLET_ADDRESS, ACCOUNTS[0].address)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()
@@ -88,11 +87,18 @@ describe('Transactions API Integration', () => {
 
       apiDBConn = require('../../src/database').default
 
+      const publicBlockchain = require('../../src/lib/publicBlockchain')
+      estimateTxGasMock = jest.spyOn(publicBlockchain.default, 'estimateTxGas')
+
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
       log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
+  })
+
+  beforeEach(async () => {
+    nock.cleanAll()
   })
 
   afterAll(async () => {
@@ -618,9 +624,281 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
+  async function sendTransaction(rawTransactionParams) {
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+    const rawTransaction = rawTransactionResponse.body
+
+    expect(rawTransaction.from).toBe(rawTransactionParams.from)
+    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    return sendTransactionResponse
+  }
+
+  it('Successfully processes exchange transaction', async () => {
+    const gasPrice = '0'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction with amount too low', async () => {
+    const gasPrice = '5'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction because of etherchain API failure', async () => {
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(500, {
+        message: 'etherchain - internal failure.'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(gasPriceScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction because of coinsuper API failure', async () => {
+    const gasPrice = '5'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(500, {
+        message: 'coinsuper - internal failure.'
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects 1 transfer which sends funds to itself', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[0].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets qbx exchange values', async () => {
+    const gasPrice = '1'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toString(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const transferAmount = '40000000000000'
+
+    const sendTransactionResponse =
+      await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+    expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
+    expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000')
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('4000000000')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('395000000000')
+    expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBe(TOKEN.rate)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 4
+    const txCount = 7
 
     const expectedAddress = {
       transactionCount: txCount,
@@ -636,7 +914,7 @@ describe('Transactions API Integration', () => {
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      balance: (privateChain.initialLoyaltyTokenAmount - 6).toString(), // assuming all value 1
+      balance: (new BigNumber(ACCOUNTS[0].balance).minus(new BigNumber(4006))).toFixed(), // assuming all value 1
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 

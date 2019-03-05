@@ -7,6 +7,8 @@ import * as Joi from 'joi'
 
 import Config from '../config'
 import database from '../database'
+import publicBlockchain from '../lib/publicBlockchain'
+import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import log from '../logging'
 import validation from '../validation'
 
@@ -48,6 +50,7 @@ async function getTx(txHash) {
   delete token.balance
   delete token.id
   delete token.brandId
+  delete token.hidden
 
   transaction.token = token || null
   return transaction
@@ -140,11 +143,43 @@ async function transfer(req, res) {
   try {
     const signedTransaction = new EthereumTx(req.body.data)
     const sender = `0x${signedTransaction.getSenderAddress().toString('hex')}`
-
     const { txData } = unsign(req.body.data)
     const decodedTx = abiDecoder.decodeMethod(txData.data)
     const toAddress = decodedTx.params[0].value
+
+    if (sender.toLowerCase() === toAddress.toLowerCase()) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        message: `Cannot transfer funds to own wallet at ${toAddress}`
+      })
+    }
+
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
+
+    try {
+      const tempExchangeWallets = await database.getTempExchangeWallets()
+      if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
+        log.info(
+          `Transaction detected to be an exchange transaction
+           (sends to wallet ${toAddress}`)
+        const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
+        const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
+        const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
+        const qbxTxValueComputationData =
+          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
+        if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
+          const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
+          Estimated gas: ${conservativeGasEstimate.toString()}
+          computation results: ${JSON.stringify(qbxTxValueComputationData)}`
+          log.error(errMessage)
+          return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
+        } else {
+          log.info(`Exchange transaction is valid. Proceeding..`)
+        }
+      }
+    } catch (e) {
+      log.error(`Failed to process potential exchange transaction ${e.stack}`)
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
+    }
 
     if (!loyaltyToken ||
       (decodedTx && decodedTx.name !== 'transfer')
@@ -153,7 +188,6 @@ async function transfer(req, res) {
     }
 
     const sendSignedTransactionPromise = web3.eth.sendSignedTransaction(req.body.data)
-
     const transactionHash = await new Promise((resolve, reject) => {
       sendSignedTransactionPromise.once('transactionHash', (txHash) => {
         resolve(txHash)
@@ -162,7 +196,6 @@ async function transfer(req, res) {
         reject(error)
       })
     })
-
     log.info(`Successfully sent transaction  with hash ${transactionHash}`)
 
     const storeableTransaction = {
@@ -173,11 +206,8 @@ async function transfer(req, res) {
       state: 'pending',
       chainId: Config.getChainID()
     }
-
     await database.addPendingTransaction(storeableTransaction)
-
     const result = { hash: transactionHash, status: 'pending'}
-
     return res.json(result)
 
   } catch (e) {
@@ -253,10 +283,44 @@ async function buildRawTransaction(req, res) {
   }
 }
 
+const getQBXExchangeValuesSchema = Joi.object().keys({
+  query: Joi.object().keys({
+    symbol: Joi.string().min(1).max(64).example('QBX').required(),
+    transferAmount: validation.bigPositiveIntAsString().required()
+  })
+})
+async function getQBXExchangeValues(req, res) {
+  req = validation.validateRequestInput(req, getQBXExchangeValuesSchema)
+  const transferAmount = req.query.transferAmount
+  const symbol = req.query.symbol
+  log.info(`Fething QBX exchange values for ${transferAmount} ${symbol} tokens.`)
+  const loyaltyToken = await database.getTokenBySymbol(symbol)
+  const tempExchangeWallets = await database.getTempExchangeWallets()
+  const activeTempExchangeWallet = tempExchangeWallets[0].address
+  log.info(`Active exchange wallet address is ${activeTempExchangeWallet}`)
+  const txLoyaltyTokenValue = new BigNumber(transferAmount)
+  const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
+  const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(activeTempExchangeWallet)
+  const qbxTxValueComputationData =
+    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
+  const values = {
+    // percentage, qbxFeeAmount, gasFee and final receive value
+    qbxFeeAmount: qbxTxValueComputationData.qbxTxValueAndFees.qbxFee.toFixed(),
+    qbxFeePercentage: qbxFeeCalculator.QBX_FEE_PERCENTAGE.toFixed(),
+    qbxValueReceived: qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.toFixed(),
+    costOfGasInQBX: qbxTxValueComputationData.qbxTxValueAndFees.costOfGasInQBX.toFixed(),
+    exchangeWalletAddress: activeTempExchangeWallet,
+    loyaltyTokenToQBXRate: loyaltyToken.rate
+  }
+
+  return res.json(values)
+}
+
 export default {
   buildRawTransaction,
   getTransaction,
   getTransactions,
   getHistory,
+  getQBXExchangeValues,
   transfer
 }

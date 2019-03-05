@@ -12,6 +12,7 @@ let web3ConnectionsAreReady = false
 
 ;
 (async () => {
+  log.info(`Connecting to private: ${envtConfig.rpc.private} and public ${envtConfig.rpc.public}`)
   await Promise.all([
     web3Private.eth.net.isListening().catch(() => {
       throw new Error('Could not connect to Web3 (private)')
@@ -40,8 +41,10 @@ export default {
   getPublicRPC: () => envtConfig.rpc.public,
   getPrivateRPC: () => envtConfig.rpc.private,
   getTokenABI: () => Config.tokenABI,
+  getQBXTokenABI: () => Config.qbxTokenABI,
   getEnv: () => env,
   getSwaggerConfig: () => SwaggerConfig,
   getWeb3ConnectionsAreReady: () => web3ConnectionsAreReady,
-  getS3Url: () => envtConfig.S3Url
+  getS3Url: () => envtConfig.S3Url,
+  getCoinsuperAPIKeys: () => envtConfig.coinsuperAPIKeys
 }

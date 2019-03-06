@@ -10,6 +10,7 @@ const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
 const ETH_PRICE_CHF = 480
 const ETH_PRICE_QBX = 0.0001
+const DECIMAL_COUNT = 10
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
@@ -115,7 +116,7 @@ describe('Prices API Integration', () => {
     // expect(coinsuperScope.isDone()).toBeTruthy()
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 
@@ -142,9 +143,9 @@ describe('Prices API Integration', () => {
 
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4),
-      CHF: ((ETH_PRICE_QBX * ETH_PRICE_CHF) / TOKEN.rate).toFixed(4),
-      EUR: ((ETH_PRICE_QBX * ETH_PRICE_EUR) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT),
+      CHF: ((ETH_PRICE_QBX * ETH_PRICE_CHF) / TOKEN.rate).toFixed(DECIMAL_COUNT),
+      EUR: ((ETH_PRICE_QBX * ETH_PRICE_EUR) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 
@@ -165,7 +166,7 @@ describe('Prices API Integration', () => {
 
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 

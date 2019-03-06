@@ -1,10 +1,10 @@
 import axios from 'axios'
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
-import database from '../database'
-import log from '../logging'
 import * as NodeCache from 'node-cache'
+import database from '../database'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
+import log from '../logging'
 import validation from '../validation'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
@@ -13,8 +13,7 @@ const QBX_ETH_RATE_KEY = 'QBX_ETH_RATE'
 const cacheTime = 10  // 10 seconds cache
 const pricesCache = new NodeCache({ stdTTL: cacheTime, checkperiod: 0 })
 
-
-async function getCachedQBXETHRate() : Promise<number> {
+async function getCachedQBXETHRate(): Promise<number> {
   const cachedQbxEthRate = pricesCache.get(QBX_ETH_RATE_KEY)
   if (cachedQbxEthRate) {
     // @ts-ignore

@@ -1,10 +1,10 @@
 import axios from 'axios'
+import BigNumber from 'bignumber.js'
 import * as HttpStatus from 'http-status-codes'
 import * as request from 'supertest'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import BigNumber from 'bignumber.js'
 
 const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
@@ -37,7 +37,6 @@ const TOKEN = {
   contractAddress: undefined,
   hidden: false
 }
-
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
@@ -113,7 +112,7 @@ describe('Prices API Integration', () => {
       .get(`/prices`)
       .query(pricesParams)
 
-    //expect(coinsuperScope.isDone()).toBeTruthy()
+    // expect(coinsuperScope.isDone()).toBeTruthy()
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
       USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)

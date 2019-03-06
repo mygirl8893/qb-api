@@ -1,12 +1,9 @@
-import * as nock from 'nock'
 import axios from 'axios'
 import * as HttpStatus from 'http-status-codes'
 import * as request from 'supertest'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import utils from '../../src/lib/utils'
-import qbxFeeCalculator from '../../src/lib/qbxFeeCalculator'
 import BigNumber from 'bignumber.js'
 
 const ETH_PRICE_USD = 500

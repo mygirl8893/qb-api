@@ -88,9 +88,15 @@ async function getQBXToETHExchangeRate(): Promise<BigNumber> {
   try {
     const response = await axios.post(postURL, requestData)
     const qbxToETH = new BigNumber(response.data.data.result.bids[0].limitPrice)
+    log.info(`Fetched QBX/ETH exchange rate from coinsuper: ${qbxToETH.toFixed()}`)
     return qbxToETH
   } catch (e) {
-    log.error(`Failed ${postURL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    if (e.response) {
+      log.error(`Failed ${postURL} request: ${e.stack} ${JSON.stringify(e.response.data)}`)
+    } else {
+      log.error(`Failed ${postURL} request: ${e.stack}`)
+    }
+
     throw e
   }
 }
@@ -112,5 +118,6 @@ async function pullDataAndCalculateQBXTxValue(
 
 export default {
   pullDataAndCalculateQBXTxValue,
+  getQBXToETHExchangeRate,
   QBX_FEE_PERCENTAGE
 }

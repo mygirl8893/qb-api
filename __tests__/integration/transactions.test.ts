@@ -668,7 +668,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -719,7 +719,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -764,7 +764,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -866,7 +866,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }

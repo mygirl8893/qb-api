@@ -1,10 +1,13 @@
+import * as nock from 'nock'
 import axios from 'axios'
 import * as HttpStatus from 'http-status-codes'
 import * as request from 'supertest'
-
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
+import utils from '../../src/lib/utils'
+import qbxFeeCalculator from '../../src/lib/qbxFeeCalculator'
+import BigNumber from 'bignumber.js'
 
 const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
@@ -18,6 +21,10 @@ const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+  },
+  coinsuperAPIKeys: {
+    accessKey: '',
+    secretKey: ''
   },
   port: 3000
 }
@@ -34,6 +41,7 @@ const TOKEN = {
   hidden: false
 }
 
+
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.genMockFromModule('axios')
@@ -46,6 +54,7 @@ describe('Prices API Integration', () => {
   let privateChain = null
   let apiDbConn = null
   let testDbConn = null
+  let getQBXToETHExchangeRateMock = null
   beforeAll(async () => {
 
     try {
@@ -63,6 +72,13 @@ describe('Prices API Integration', () => {
       const Config = require('../../src/config').default
 
       apiDbConn = require('../../src/database').default
+
+      const qbxFeeCalculator = require('../../src/lib/qbxFeeCalculator')
+      getQBXToETHExchangeRateMock = jest.spyOn(qbxFeeCalculator.default, 'getQBXToETHExchangeRate')
+
+      getQBXToETHExchangeRateMock.mockImplementation(() => {
+        return new BigNumber(ETH_PRICE_QBX)
+      })
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -100,6 +116,7 @@ describe('Prices API Integration', () => {
       .get(`/prices`)
       .query(pricesParams)
 
+    //expect(coinsuperScope.isDone()).toBeTruthy()
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
       USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)

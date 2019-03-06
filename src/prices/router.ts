@@ -12,6 +12,7 @@ const router = express.Router()
  *       - Prices
  *     description: Returns the FIAT price of one unit of a given Loyalty Token. This endpoint uses
  *                  a third-party provider to get the ETH echange rate.
+ *                  The QBX/ETH Exchange rate is fetched from the Coinsuper exchange.
  *     produces:
  *       - application/json
  *     parameters:
@@ -44,6 +45,7 @@ router.get('/', LibAPI.wrap(Controller.getPrice))
  *       - Prices
  *     description: Returns the historical FIAT price values of one unit of a given Loyalty Token
  *                  for a desired currency. This endpoint uses a third-party provider to get the ETH exchange rate.
+ *                  The QBX/ETH Exchange rate is fetched from the Coinsuper exchange.
  *     produces:
  *       - application/json
  *     parameters:

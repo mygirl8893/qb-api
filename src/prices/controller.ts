@@ -65,7 +65,7 @@ async function getPrice(req, res) {
     Object.keys(data).forEach((key) => {
       const qbxFiat = qbxETHRate * data[key]
       const fiat = qbxFiat / rate
-      results[key] = fiat.toFixed(8)
+      results[key] = fiat.toFixed(10)
     })
   }
   return res.status(statusCode).json(results)

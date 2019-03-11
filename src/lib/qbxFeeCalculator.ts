@@ -40,13 +40,16 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
   }
 }
 
+const gweiInWei = new BigNumber('1000000000')
+
 async function getGasPrice(): Promise<BigNumber> {
   try {
     log.info(` Requesting ${GAS_PRICE_API_URL}`)
     const response = await axios.get(GAS_PRICE_API_URL)
     log.info(` Received response from gas API: ${JSON.stringify(response.data)}`)
-    const lastGasPrice = response.data.standard
-    return new BigNumber(lastGasPrice).integerValue(BigNumber.ROUND_FLOOR)
+    const lastGasPrice = new BigNumber(response.data.standard)
+    // convert from gew to wei
+    return new BigNumber(lastGasPrice).multipliedBy(gweiInWei)
   } catch (e) {
     log.error(`Failed ${GAS_PRICE_API_URL} request: ${e} ${JSON.stringify(e.response.data)}`)
     throw e

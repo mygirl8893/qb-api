@@ -880,16 +880,16 @@ describe('Transactions API Integration', () => {
       }
     })
 
-    const transferAmount = '40000000000000'
+    const transferAmount = '400000000000000000000'
 
     const sendTransactionResponse =
       await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
     expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
     expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
-    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000')
-    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('4000000000')
-    expect(sendTransactionResponse.body.qbxValueReceived).toBe('395000000000')
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000000000000')
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('40000000000000000')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('2960000000000000000')
     expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBe(TOKEN.rate)
 
     expect(gasPriceScope.isDone()).toBeTruthy()

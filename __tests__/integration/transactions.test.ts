@@ -36,7 +36,8 @@ const TOKEN = {
   description: 'Magic is in the air.',
   website: 'otherworldlymagicalcarpets.com',
   totalSupply: undefined,
-  contractAddress: undefined
+  contractAddress: undefined,
+  hidden: false
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
@@ -94,6 +95,10 @@ describe('Transactions API Integration', () => {
       log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
+  })
+
+  beforeEach(async () => {
+    nock.cleanAll()
   })
 
   afterAll(async () => {
@@ -663,7 +668,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -714,7 +719,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -759,7 +764,7 @@ describe('Transactions API Integration', () => {
         data: {
           result: {
             bids: [{
-              limitPrice: qbxToETHExchangeRate.toString(),
+              limitPrice: qbxToETHExchangeRate.toFixed(),
               amount: '10000'
             }]
           }
@@ -837,6 +842,58 @@ describe('Transactions API Integration', () => {
 
     const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets qbx exchange values', async () => {
+    const gasPrice = '1'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toFixed(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const transferAmount = '400000000000000000000'
+
+    const sendTransactionResponse =
+      await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+    expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
+    expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000000000000')
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('40000000000000000')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('2960000000000000000')
+    expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBe(TOKEN.rate)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
   })
 
   it('Successfully gets address by hash', async () => {

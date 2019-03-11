@@ -1,7 +1,7 @@
 import axios from 'axios'
+import BigNumber from 'bignumber.js'
 import * as HttpStatus from 'http-status-codes'
 import * as request from 'supertest'
-
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
@@ -10,6 +10,7 @@ const ETH_PRICE_USD = 500
 const ETH_PRICE_EUR = 400
 const ETH_PRICE_CHF = 480
 const ETH_PRICE_QBX = 0.0001
+const DECIMAL_COUNT = 10
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
@@ -18,6 +19,10 @@ const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+  },
+  coinsuperAPIKeys: {
+    accessKey: '',
+    secretKey: ''
   },
   port: 3000
 }
@@ -30,7 +35,8 @@ const TOKEN = {
   description: 'Magic is in the air.',
   website: 'otherworldlymagicalcarpets.com',
   totalSupply: undefined,
-  contractAddress: undefined
+  contractAddress: undefined,
+  hidden: false
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
@@ -45,6 +51,7 @@ describe('Prices API Integration', () => {
   let privateChain = null
   let apiDbConn = null
   let testDbConn = null
+  let getQBXToETHExchangeRateMock = null
   beforeAll(async () => {
 
     try {
@@ -62,6 +69,13 @@ describe('Prices API Integration', () => {
       const Config = require('../../src/config').default
 
       apiDbConn = require('../../src/database').default
+
+      const qbxFeeCalculator = require('../../src/lib/qbxFeeCalculator')
+      getQBXToETHExchangeRateMock = jest.spyOn(qbxFeeCalculator.default, 'getQBXToETHExchangeRate')
+
+      getQBXToETHExchangeRateMock.mockImplementation(() => {
+        return new BigNumber(ETH_PRICE_QBX)
+      })
 
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
@@ -99,9 +113,10 @@ describe('Prices API Integration', () => {
       .get(`/prices`)
       .query(pricesParams)
 
+    // expect(coinsuperScope.isDone()).toBeTruthy()
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 
@@ -128,9 +143,9 @@ describe('Prices API Integration', () => {
 
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4),
-      CHF: ((ETH_PRICE_QBX * ETH_PRICE_CHF) / TOKEN.rate).toFixed(4),
-      EUR: ((ETH_PRICE_QBX * ETH_PRICE_EUR) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT),
+      CHF: ((ETH_PRICE_QBX * ETH_PRICE_CHF) / TOKEN.rate).toFixed(DECIMAL_COUNT),
+      EUR: ((ETH_PRICE_QBX * ETH_PRICE_EUR) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 
@@ -151,7 +166,7 @@ describe('Prices API Integration', () => {
 
     expect(response.status).toBe(HttpStatus.OK)
     expect(response.body).toEqual({
-      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(4)
+      USD: ((ETH_PRICE_QBX * ETH_PRICE_USD) / TOKEN.rate).toFixed(DECIMAL_COUNT)
     })
   })
 

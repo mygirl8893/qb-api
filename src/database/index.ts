@@ -70,6 +70,7 @@ function formatTransactionsList(transactions) {
     if (t.token) {
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
+      delete t.token.dataValues.hidden
     }
 
     delete t.dataValues.confirms
@@ -126,7 +127,8 @@ async function getTokenBySymbol(symbol: string) {
 async function getTokens() {
   const tokens = await Token.findAll({
     where: {
-      contractAddress: { [Op.ne]: null }
+      contractAddress: { [Op.ne]: null },
+      hidden: false
     },
     raw: true }
   )
@@ -134,7 +136,9 @@ async function getTokens() {
 }
 
 async function getTempExchangeWallets() {
-  const response = await qbDB.models.tempExchangeWallet.findAll()
+  const response = await qbDB.models.tempExchangeWallet.findAll({
+    order: [ ['id', 'DESC'] ]
+  })
   return response
 }
 

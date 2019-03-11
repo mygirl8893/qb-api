@@ -5,18 +5,20 @@ import * as utf8 from 'utf8'
 import log from '../logging'
 import Config from './../config'
 
-const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
+const QBX_FEE_FRACTION = new BigNumber(0.01)
+const QBX_FEE_PERCENTAGE = QBX_FEE_FRACTION.multipliedBy(100)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
 const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 interface QBXTxValueAndFees {
-  qbxTxValue: BigNumber
-  qbxFee: BigNumber
-  estimatedEthFee: BigNumber
+  qbxTxValue: BigNumber,
+  qbxFee: BigNumber,
+  estimatedEthFee: BigNumber,
+  costOfGasInQBX: BigNumber
 }
 
 interface QBXTxValueComputationData {
-  gasPrice: BigNumber
+  gasPrice: BigNumber,
   qbxToETHExchangeRate: BigNumber,
   qbxTxValueAndFees: QBXTxValueAndFees
 }
@@ -25,7 +27,7 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
                              estimatedGasAmount: BigNumber,
                              gasPrice: BigNumber,
                              qbxToETHExchangeRate: BigNumber): QBXTxValueAndFees {
-  const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_PERCENTAGE)
+  const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_FRACTION)
   const estimatedEthFee = estimatedGasAmount.multipliedBy(gasPrice)
   const costOfGasInQBX = estimatedEthFee.dividedBy(qbxToETHExchangeRate)
   const qbxTxValueRaw = txRawAmountInQBXWei.minus(qbxFee).minus(costOfGasInQBX)
@@ -33,17 +35,21 @@ function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
   return {
     qbxTxValue,
     qbxFee,
-    estimatedEthFee
+    estimatedEthFee,
+    costOfGasInQBX
   }
 }
+
+const gweiInWei = new BigNumber('1000000000')
 
 async function getGasPrice(): Promise<BigNumber> {
   try {
     log.info(` Requesting ${GAS_PRICE_API_URL}`)
     const response = await axios.get(GAS_PRICE_API_URL)
     log.info(` Received response from gas API: ${JSON.stringify(response.data)}`)
-    const lastGasPrice = response.data.standard
-    return new BigNumber(lastGasPrice).integerValue(BigNumber.ROUND_FLOOR)
+    const lastGasPrice = new BigNumber(response.data.standard)
+    // convert from gew to wei
+    return new BigNumber(lastGasPrice).multipliedBy(gweiInWei)
   } catch (e) {
     log.error(`Failed ${GAS_PRICE_API_URL} request: ${e} ${JSON.stringify(e.response.data)}`)
     throw e
@@ -85,9 +91,15 @@ async function getQBXToETHExchangeRate(): Promise<BigNumber> {
   try {
     const response = await axios.post(postURL, requestData)
     const qbxToETH = new BigNumber(response.data.data.result.bids[0].limitPrice)
+    log.info(`Fetched QBX/ETH exchange rate from coinsuper: ${qbxToETH.toFixed()}`)
     return qbxToETH
   } catch (e) {
-    log.error(`Failed ${postURL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    if (e.response) {
+      log.error(`Failed ${postURL} request: ${e.stack} ${JSON.stringify(e.response.data)}`)
+    } else {
+      log.error(`Failed ${postURL} request: ${e.stack}`)
+    }
+
     throw e
   }
 }
@@ -108,5 +120,7 @@ async function pullDataAndCalculateQBXTxValue(
 }
 
 export default {
-  pullDataAndCalculateQBXTxValue
+  pullDataAndCalculateQBXTxValue,
+  getQBXToETHExchangeRate,
+  QBX_FEE_PERCENTAGE
 }

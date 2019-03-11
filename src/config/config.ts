@@ -30,7 +30,7 @@ const Config = {
   testing: {
     rpc: {
       private: process.env.RPC_HOST,
-      public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+      public: process.env.PUBLIC_RPC_HOST
     },
     port: process.env.PORT,
     S3Url: 'http://tokenstesting.qiibee.com',

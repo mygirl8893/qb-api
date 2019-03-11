@@ -51,7 +51,7 @@ const Config = {
       secretKey: ''
     }
   },
-  qbxContract: '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
+  qbxContract: process.env.ETH_NET_QBX_CONTRACT_ADDRESS || '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(
     fs.readFileSync(
       path.resolve(__dirname, '../contracts/loyaltyToken.json'),

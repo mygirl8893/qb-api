@@ -1,12 +1,31 @@
-import axios from "axios/index"
+import axios from 'axios'
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
+import * as NodeCache from 'node-cache'
+import database from '../database'
+import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import log from '../logging'
 import validation from '../validation'
-import database from '../database'
 
 const CRYPTO_COMPARE = 'https://min-api.cryptocompare.com/data'
-const QBX_ETH = 0.0001
+
+const QBX_ETH_RATE_KEY = 'QBX_ETH_RATE'
+const cacheTime = 10  // 10 seconds cache
+const pricesCache = new NodeCache({ stdTTL: cacheTime, checkperiod: 0 })
+
+async function getCachedQBXETHRate(): Promise<number> {
+  const cachedQbxEthRate = pricesCache.get(QBX_ETH_RATE_KEY)
+  if (cachedQbxEthRate) {
+    // @ts-ignore
+    return cachedQbxEthRate
+  } else {
+    const qbxToEthRate = await qbxFeeCalculator.getQBXToETHExchangeRate()
+    const qbxToEthRateAsNumber = qbxToEthRate.toNumber()
+    log.info(`Setting QBX/ETH cache value at ${qbxToEthRateAsNumber}`)
+    pricesCache.set(QBX_ETH_RATE_KEY, qbxToEthRateAsNumber)
+    return qbxToEthRateAsNumber
+  }
+}
 
 const getPriceSchema = Joi.object().keys({
   query: Joi.object().keys({
@@ -26,7 +45,7 @@ async function getPrice(req, res) {
   req = validation.validateRequestInput(req, getPriceSchema)
   const {from, to} = req.query
 
-  const api =`${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
+  const api = `${CRYPTO_COMPARE}/price?extraParams=qiibee&fsym=ETH&tsyms=${to}`
   const { status, data } = await axios.get(api)
 
   const token = await database.getTokenByContractAddress(from)
@@ -42,10 +61,11 @@ async function getPrice(req, res) {
     statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
     results = {message: data.Message}
   } else {
+    const qbxETHRate = await getCachedQBXETHRate()
     Object.keys(data).forEach((key) => {
-      const qbxFiat = QBX_ETH * data[key]
+      const qbxFiat = qbxETHRate * data[key]
       const fiat = qbxFiat / rate
-      results[key] = fiat.toFixed(4)
+      results[key] = fiat.toFixed(10)
     })
   }
   return res.status(statusCode).json(results)
@@ -73,7 +93,6 @@ async function getHistory(req, res) {
   req = validation.validateRequestInput(req, getHistorySchema)
   const { from, to, limit, aggregate, frequency} = req.query
 
-
   const token = await database.getTokenByContractAddress(from)
   if (!token) {
     return res.status(HttpStatus.NOT_FOUND).json({message: `Token with address ${from} does not exist.`})
@@ -81,19 +100,21 @@ async function getHistory(req, res) {
   const rate = token.rate
   let statusCode = HttpStatus.OK
 
-  const api =`${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
+  const api =
+    `${CRYPTO_COMPARE}/histo${frequency}?extraParams=qiibee&fsym=ETH&tsym=${to}&limit=${limit}&aggregate=${aggregate}`
   log.info(`Querying cryptocompare: ${api}`)
   const { status, data } = await axios.get(api)
 
   if (status !== HttpStatus.OK || data.Response === 'Error' || rate === 0) {
     log.info(`Cryptocompare request failed: ${data.message}`)
     statusCode = data.Response ? HttpStatus.BAD_REQUEST : status
-    let results = {message: data.Message}
+    const results = {message: data.Message}
     return res.status(statusCode).json(results)
   } else {
-    let results = []
-    for (let entry of data.Data) {
-      const qbxFiat = QBX_ETH * entry.close
+    const qbxETHRate = await getCachedQBXETHRate()
+    const results = []
+    for (const entry of data.Data) {
+      const qbxFiat = qbxETHRate * entry.close
       const fiat = qbxFiat / rate
       results.push({time: entry.time, price: fiat.toFixed(10)})
     }
@@ -103,5 +124,5 @@ async function getHistory(req, res) {
 
 export default {
   getPrice,
-  getHistory,
+  getHistory
 }

@@ -27,6 +27,7 @@ before_install:
 - sudo service mysql restart
 - mysql -e 'CREATE DATABASE IF NOT EXISTS qiibee;'
 script:
+- npm run lint
 - npm test
 - npm run build
 before_deploy:

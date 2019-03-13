@@ -1,9 +1,8 @@
-import * as sequelize from 'sequelize'
 import * as qbDB from 'qb-db-migrations'
+import * as sequelize from 'sequelize'
 
 const Token = qbDB.models.token
 const Op = sequelize.Op
-
 
 async function getTransactions(limit: number, offset: number, symbol: string,
                                contractAddress: string,
@@ -33,8 +32,8 @@ async function getTransactions(limit: number, offset: number, symbol: string,
 
     },
     order: [ ['blockNumber', 'DESC'] ],
-    limit: limit,
-    offset: offset,
+    limit,
+    offset,
     include: [{
       model: qbDB.models.token,
       where: {
@@ -58,8 +57,8 @@ async function getTransactionHistory(address: string, limit: number, offset: num
       }
     },
     order: [ ['blockNumber', 'DESC'] ],
-    limit: limit,
-    offset: offset,
+    limit,
+    offset,
     include: [qbDB.models.token]
   })
   formatTransactionsList(transactions)
@@ -77,6 +76,7 @@ function formatTransactionsList(transactions) {
     if (t.token) {
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
+      delete t.token.dataValues.hidden
     }
 
     delete t.dataValues.confirms
@@ -86,7 +86,7 @@ function formatTransactionsList(transactions) {
 async function getTransaction(hash: string) {
   const transaction = await qbDB.models.transaction.find({
     where: {
-      hash: hash,
+      hash
     },
     include: [qbDB.models.token]
   })
@@ -114,28 +114,38 @@ async function addPendingTransaction(transaction: PendingTransaction) {
   const r = await qbDB.models.sequelize.query(`INSERT IGNORE INTO transactions
     (${keys.join(',')})
     VALUES (${Array(keys.length).fill('?').join(',')})`, {
-    replacements: keys.map(k => transaction[k]),
+    replacements: keys.map((k) => transaction[k]),
     type: qbDB.models.sequelize.QueryTypes.INSERT
   })
   return r
 }
 
 async function getTokenByContractAddress(contractAddress: string) {
-  return await Token.find({ where: { contractAddress }, raw: true })
+  const token = await Token.find({ where: { contractAddress }, raw: true })
+  return token
 }
 
 async function getTokenBySymbol(symbol: string) {
-  return await Token.find({ where: { symbol }, raw: true })
+  const token = await Token.find({ where: { symbol }, raw: true })
+  return token
 }
 
-
 async function getTokens() {
-  return await Token.findAll({
+  const tokens = await Token.findAll({
     where: {
-      contractAddress: { [Op.ne]: null }
+      contractAddress: { [Op.ne]: null },
+      hidden: false
     },
     raw: true }
   )
+  return tokens
+}
+
+async function getTempExchangeWallets() {
+  const response = await qbDB.models.tempExchangeWallet.findAll({
+    order: [ ['id', 'DESC'] ]
+  })
+  return response
 }
 
 async function close() {
@@ -150,5 +160,6 @@ export default {
   getTokenByContractAddress,
   getTokenBySymbol,
   getTokens,
+  getTempExchangeWallets,
   close
 }

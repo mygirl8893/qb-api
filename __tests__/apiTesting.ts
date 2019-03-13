@@ -1,8 +1,24 @@
-import utils from '../src/lib/utils'
-import log from '../src/logging'
-import * as qbDB from 'qb-db-migrations'
 import * as abiDecoder from 'abi-decoder'
 import { BigNumber } from 'bignumber.js'
+import * as qbDB from 'qb-db-migrations'
+import utils from '../src/lib/utils'
+import log from '../src/logging'
+
+const START_BALANCE = '1000000000000000000000000000000'
+
+const ACCOUNTS = [{
+  address: '0x87265a62c60247f862b9149423061b36b460f4bb',
+  secretKey: 'e8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
+  balance: START_BALANCE
+}, {
+  address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
+  secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
+  balance: START_BALANCE
+}, {
+  address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
+  secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
+  balance: START_BALANCE
+}]
 
 const setupTestConfiguration = (testConfiguration) => {
   // patch the Config module to have a test configuration
@@ -72,11 +88,9 @@ function makeStoreableTransaction(original, receipt, block) {
 }
 
 class TestDatabaseConn {
-  testToken
-  constructor() {
-  }
+  private testToken
 
-  async setup(existingToken): Promise<void> {
+  public async setup(existingToken, tempWalletAddress: string, brandAddress: string): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
 
     await setupDatabaseTables()
@@ -86,6 +100,7 @@ class TestDatabaseConn {
     }
     await qbDB.models.brand.create(firstBrand)
     const newBrand = await qbDB.models.brand.find({where: {legalName: firstBrand.legalName}})
+    await qbDB.models.brandAddress.create({ address: brandAddress, brandId: newBrand.id })
 
     existingToken.brandId = newBrand.id
     this.testToken = await qbDB.models.token.create(existingToken)
@@ -97,15 +112,20 @@ class TestDatabaseConn {
     nonDeployedToken.name = 'Not deployed token'
     await qbDB.models.token.create(nonDeployedToken)
 
+    await qbDB.models.tempExchangeWallet.create({
+      address: tempWalletAddress
+    })
+
     log.info('Successfully setup database.')
   }
 
-  async updateMinedStatus(tx, txReceipt, block, brandAddresses) {
+  public async updateMinedStatus(tx, txReceipt, block, brandAddresses, chainId) {
     const storeable = makeStoreableTransaction(tx, txReceipt, block)
+    storeable.chainId = chainId
     storeable.tokenId = this.testToken.id
 
     if (storeable.contractFunction === 'transfer') {
-      const lowerCased = brandAddresses.map(a => a.toLowerCase())
+      const lowerCased = brandAddresses.map((a) => a.toLowerCase())
       const addressSet = new Set(lowerCased)
       if (addressSet.has(storeable.toAddress.toLowerCase())) {
         storeable.txType = 'redeem'
@@ -117,7 +137,7 @@ class TestDatabaseConn {
     return r
   }
 
-  async close() {
+  public async close() {
     await qbDB.models.sequelize.close()
   }
 }
@@ -125,5 +145,6 @@ class TestDatabaseConn {
 export default {
   setupTestConfiguration,
   waitForAppToBeReady,
-  TestDatabaseConn
+  TestDatabaseConn,
+  ACCOUNTS
 }

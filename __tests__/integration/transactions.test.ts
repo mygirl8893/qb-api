@@ -1,32 +1,30 @@
 import Web3Connection from 'web3'
+// tslint:disable-next-line
 const Web3 = require('web3')
-import * as request from 'supertest'
-import * as HttpStatus from 'http-status-codes'
+import BigNumber from 'bignumber.js'
 import Tx = require('ethereumjs-tx')
+import * as HttpStatus from 'http-status-codes'
+import * as nock from 'nock'
+import * as request from 'supertest'
 
+import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import log from '../../src/logging'
-import database from "../../src/database";
+import database from '../../src/database'
 
+const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
-
-const START_BALANCE = 10 ** 20
-
-const ACCOUNTS = [{
-  address: '0x87265a62c60247f862b9149423061b36b460f4bb',
-  secretKey: 'e8280389ca1303a2712a874707fdd5d8ae0437fab9918f845d26fd9919af5a92',
-  balance: START_BALANCE
-}, {
-  address: '0xb99c958777f024bc4ce992b2a0efb2f1f50a4dcf',
-  secretKey: 'ed095a912033d26dc444d2675b33414f0561af170d58c33f394db8812c87a764',
-  balance: START_BALANCE
-}]
+const TEMP_EXCHANGE_WALLET_ADDRESS = ACCOUNTS[2].address
 
 const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+  },
+  tempExchangeWalletAddress: TEMP_EXCHANGE_WALLET_ADDRESS,
+  coinsuperAPIKeys: {
+    accessKey: '',
+    secretKey: ''
   },
   port: 3000
 }
@@ -37,7 +35,10 @@ const TOKEN = {
   decimals: 18,
   rate: 100,
   description: 'Magic is in the air.',
-  website: 'otherworldlymagicalcarpets.com'
+  website: 'otherworldlymagicalcarpets.com',
+  totalSupply: undefined,
+  contractAddress: undefined,
+  hidden: false
 }
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
@@ -52,6 +53,7 @@ describe('Transactions API Integration', () => {
   let apiDBConn = null
   let totalTransactionsSoFar = 0
   let Config = null
+  let estimateTxGasMock = null
 
   /* this mimics the actions of a listener process which updates  */
   async function markTransactionAsMined(txHash) {
@@ -59,7 +61,7 @@ describe('Transactions API Integration', () => {
     const tx = await web3Conn.eth.getTransaction(txHash)
     const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
     const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
-    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address])
+    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address], Config.getChainID())
     log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
     totalTransactionsSoFar++
   }
@@ -70,28 +72,34 @@ describe('Transactions API Integration', () => {
 
       await privateChain.setup()
 
-      TOKEN['totalSupply'] = privateChain.initialLoyaltyTokenAmount
-      TOKEN['contractAddress'] = privateChain.loyaltyTokenContractAddress
+      TOKEN.totalSupply = privateChain.initialLoyaltyTokenAmount
+      TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
 
       testDbConn = new APITesting.TestDatabaseConn()
 
-      await testDbConn.setup(TOKEN)
+      await testDbConn.setup(TOKEN, TEMP_EXCHANGE_WALLET_ADDRESS, ACCOUNTS[0].address)
 
       web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
       await web3Conn.eth.net.isListening()
       log.info('Web3 connection established.')
-
 
       app = require('../../app').default
       Config = require('../../src/config').default
 
       apiDBConn = require('../../src/database').default
 
+      const publicBlockchain = require('../../src/lib/publicBlockchain')
+      estimateTxGasMock = jest.spyOn(publicBlockchain.default, 'estimateTxGas')
+
       await APITesting.waitForAppToBeReady(Config)
     } catch (e) {
       log.error(`Failed setting up the test context ${e.stack}`)
       throw e
     }
+  })
+
+  beforeEach(async () => {
+    nock.cleanAll()
   })
 
   afterAll(async () => {
@@ -184,7 +192,7 @@ describe('Transactions API Integration', () => {
     expect(singleTransaction.token.name).toBe(TOKEN.name)
     expect(singleTransaction.token.symbol).toBe(TOKEN.symbol)
     expect(singleTransaction.token.decimals).toBe(TOKEN.decimals)
-    expect(singleTransaction.token.totalSupply).toBe(TOKEN['totalSupply'])
+    expect(singleTransaction.token.totalSupply).toBe(TOKEN.totalSupply)
     expect(singleTransaction.from.toLowerCase()).toBe(ACCOUNTS[0].address)
     expect(singleTransaction.to.toLowerCase()).toBe(ACCOUNTS[1].address)
     expect(singleTransaction.state).toBe('processed')
@@ -230,8 +238,10 @@ describe('Transactions API Integration', () => {
     delete rawTransactionParamsWithSymbol.contractAddress
     rawTransactionParamsWithSymbol.symbol = TOKEN.symbol
 
-    const responseFromContractAddress = await request(app).get(`/transactions/raw`).query(rawTransactionParamsWithContractAddress)
-    const responseFromSymbol = await request(app).get(`/transactions/raw`).query(rawTransactionParamsWithContractAddress)
+    const responseFromContractAddress = await request(app).get(`/transactions/raw`)
+                                                          .query(rawTransactionParamsWithContractAddress)
+    const responseFromSymbol = await request(app).get(`/transactions/raw`)
+                                                  .query(rawTransactionParamsWithContractAddress)
 
     expect(responseFromSymbol.body).toEqual(responseFromContractAddress.body)
   })
@@ -309,7 +319,7 @@ describe('Transactions API Integration', () => {
       expect(tx.token.name).toBe(TOKEN.name)
       expect(tx.token.symbol).toBe(TOKEN.symbol)
       expect(tx.token.decimals).toBe(TOKEN.decimals)
-      expect(tx.token.totalSupply).toBe(TOKEN['totalSupply'])
+      expect(tx.token.totalSupply).toBe(TOKEN.totalSupply)
       expect(tx.from.toLowerCase()).toBe(ACCOUNTS[1].address)
       expect(tx.to.toLowerCase()).toBe(ACCOUNTS[0].address)
       expect(tx.state).toBe('processed')
@@ -323,27 +333,30 @@ describe('Transactions API Integration', () => {
   })
 
   it('Gets transactions by contract address', async () => {
-    const transactionsHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const transactionsHistory =
+      await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
     expect(transactionsHistory.status).toBe(HttpStatus.OK)
     const historicalTransactions = transactionsHistory.body
-    expect(historicalTransactions).toHaveLength( 6)
+    expect(historicalTransactions).toHaveLength(6)
   })
 
   it('Gets transactions by symbol and they match with those by contract address', async () => {
     const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}`)
     const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
     expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
-    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+    expect(historicalTransactionsBySymbol).toHaveLength(6)
 
-    const transactionsHistoryByContractAddress = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const transactionsHistoryByContractAddress =
+      await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
     expect(transactionsHistoryBySymbol.body).toEqual(transactionsHistoryByContractAddress.body)
   })
 
   it('Gets transactions by symbol with wallet filter', async () => {
-    const transactionsHistoryBySymbol = await request(app).get(`/transactions?symbol=${TOKEN.symbol}&wallet=${ACCOUNTS[0].address}`)
+    const transactionsHistoryBySymbol =
+      await request(app).get(`/transactions?symbol=${TOKEN.symbol}&wallet=${ACCOUNTS[0].address}`)
     const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
     expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
-    expect(historicalTransactionsBySymbol).toHaveLength( 6)
+    expect(historicalTransactionsBySymbol).toHaveLength(6)
   })
 
   it('Gets transactions by contract address with limit and offset', async () => {
@@ -353,13 +366,14 @@ describe('Transactions API Integration', () => {
       .get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}&offset=${offset}&limit=${limit}`)
     const historicalTransactions = transactionsHistory.body
     expect(transactionsHistory.status).toBe(HttpStatus.OK)
-    expect(historicalTransactions).toHaveLength( 2)
+    expect(historicalTransactions).toHaveLength(2)
 
-    const entireTransactionHistory = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const entireTransactionHistory =
+      await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
     expect(historicalTransactions).toEqual(entireTransactionHistory.body.slice(offset, offset + limit))
   })
 
-  it('Returns individual transaction by hash', async () =>{
+  it('Returns individual transaction by hash', async () => {
     const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
     const historicalTransactions = transactionsHistory.body
     const someTransaction = historicalTransactions[0]
@@ -374,6 +388,7 @@ describe('Transactions API Integration', () => {
     delete someTransaction.tokenId
     delete someTransaction.contractFunction
     delete someTransaction.txType
+    delete someTransaction.chainId
 
     // adjusted for proper comparison
     singleTx.from = singleTx.from.toLowerCase()
@@ -421,7 +436,8 @@ describe('Transactions API Integration', () => {
       offset: 1
     }
 
-    const transactionHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    const transactionHistory =
+      await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     const historicalTransactions = transactionHistory.body
     expect(historicalTransactions).toHaveLength(limitOffsetParams.limit)
   })
@@ -429,11 +445,12 @@ describe('Transactions API Integration', () => {
   it('Fails to return transaction history using invalid limit and offset', async () => {
 
     const limitOffsetParams = {
-      limit: "waza",
+      limit: 'waza',
       offset: 0
     }
 
-    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    const transactionsAfterResponse =
+      await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
     expect(transactionsAfterResponse.body.message).toContain('limit')
   })
@@ -451,7 +468,8 @@ describe('Transactions API Integration', () => {
       offset: 0
     }
 
-    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    const transactionsAfterResponse =
+      await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
 
     expect(transactionsAfterResponse.status).toBe(HttpStatus.OK)
   })
@@ -463,7 +481,8 @@ describe('Transactions API Integration', () => {
       offset: -1
     }
 
-    const transactionsAfterResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
+    const transactionsAfterResponse =
+      await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
     expect(transactionsAfterResponse.body.message).toContain('offset')
   })
@@ -632,26 +651,298 @@ describe('Transactions API Integration', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
   })
 
+  async function sendTransaction(rawTransactionParams) {
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+    const rawTransaction = rawTransactionResponse.body
+
+    expect(rawTransaction.from).toBe(rawTransactionParams.from)
+    expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    return sendTransactionResponse
+  }
+
+  it('Successfully processes exchange transaction', async () => {
+    const gasPrice = '0'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toFixed(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction with amount too low', async () => {
+    const gasPrice = '5'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toFixed(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction because of etherchain API failure', async () => {
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(500, {
+        message: 'etherchain - internal failure.'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toFixed(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(gasPriceScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects exchange transaction because of coinsuper API failure', async () => {
+    const gasPrice = '5'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(500, {
+        message: 'coinsuper - internal failure.'
+      })
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: TEMP_EXCHANGE_WALLET_ADDRESS,
+      transferAmount: '4000',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    estimateTxGasMock.mockImplementation(() => new BigNumber('1'))
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Rejects 1 transfer which sends funds to itself', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[0].address,
+      transferAmount: 10,
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+    expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+
+    const rawTransaction = rawTransactionResponse.body
+    const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+    const transaction = new Tx(rawTransaction)
+    transaction.sign(privateKey)
+    const serializedTx = transaction.serialize().toString('hex')
+
+    const postTransferParams = {
+      data: serializedTx
+    }
+
+    const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.BAD_REQUEST)
+  })
+
+  it('Successfully gets qbx exchange values', async () => {
+    const gasPrice = '1'
+    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+    const qbxToETHExchangeRate = new BigNumber('0.000000001')
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPrice.toString(),
+        standard : gasPrice.toString(),
+        fast: gasPrice.toString(),
+        fastest: '20'
+      })
+
+    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(1)
+      .reply(200, {
+        data: {
+          result: {
+            bids: [{
+              limitPrice: qbxToETHExchangeRate.toFixed(),
+              amount: '10000'
+            }]
+          }
+        }
+      })
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate: new BigNumber('1'),
+        generousGasEstimate: new BigNumber('2')
+      }
+    })
+
+    const transferAmount = '400000000000000000000'
+
+    const sendTransactionResponse =
+      await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+    expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
+    expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe('1000000000000000000')
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('40000000000000000')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('2960000000000000000')
+    expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBe(TOKEN.rate)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 4
+    const txCount = 7
 
     const expectedAddress = {
-      "transactionCount": txCount,
-      "balances": {
-        "private": {
+      transactionCount: txCount,
+      balances: {
+        private: {
         },
-        "public": {
-          "QBX": {
-            "balance": "0",
-            "contractAddress": Config.getQBXAddress()
+        public: {
+          QBX: {
+            balance: '0',
+            contractAddress: Config.getQBXAddress()
           }
         }
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      "balance": (privateChain.initialLoyaltyTokenAmount - 6).toString(), // assuming all value 1
-      "contractAddress": privateChain.loyaltyTokenContractAddress
+      balance: (new BigNumber(ACCOUNTS[0].balance).minus(new BigNumber(4006))).toFixed(), // assuming all value 1
+      contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
     const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)
@@ -659,4 +950,3 @@ describe('Transactions API Integration', () => {
     expect(r.body).toEqual(expectedAddress)
   })
 })
-

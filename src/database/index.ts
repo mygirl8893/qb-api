@@ -28,7 +28,7 @@ async function getTransactions(limit: number, offset: number, symbol: string,
 
   const transactions = await qbDB.models.transaction.findAll({
     where: {
-      txType: {$ne: 'migration'},
+      txType: {$ne: 'migration'}
 
     },
     order: [ ['blockNumber', 'DESC'] ],

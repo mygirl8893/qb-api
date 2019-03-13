@@ -7,10 +7,10 @@ import * as HttpStatus from 'http-status-codes'
 import * as nock from 'nock'
 import * as request from 'supertest'
 
+import database from '../../src/database'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import database from '../../src/database'
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
@@ -216,13 +216,14 @@ describe('Transactions API Integration', () => {
     }
     await database.addPendingTransaction(storeableTransaction)
 
-    const transactionsResponse = await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
-    const txHashes = transactionsResponse.body.map(tx => tx.hash)
+    const transactionsResponse =
+      await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const txHashes = transactionsResponse.body.map((tx) => tx.hash)
     // @ts-ignore
     expect(txHashes).toEqual(expect.not.arrayContaining([fakeTxHash]))
 
     const transactionsHistoryResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
-    const txHashesFromHistory = transactionsHistoryResponse.body.map(tx => tx.hash)
+    const txHashesFromHistory = transactionsHistoryResponse.body.map((tx) => tx.hash)
     // @ts-ignore
     expect(txHashesFromHistory).toEqual(expect.not.arrayContaining([fakeTxHash]))
   })

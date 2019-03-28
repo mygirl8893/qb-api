@@ -4,10 +4,10 @@ import * as path from 'path'
 const Config = {
   production: {
     rpc: {
-      private: process.env.RPC_HOST || 'http://10.0.10.250:28002',
-      public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
+      private: process.env.RPC_HOST,
+      public: 'https://mainnet.infura.io/<INFURA_TOKEN>',
+      oldPrivate: process.env.OLD_RPC_HOST || 'http://10.0.10.250:28002'
     },
-    chainID: 29746197,
     port: process.env.PORT,
     S3Url: 'http://tokens.qiibee.com',
     coinsuperAPIKeys: {

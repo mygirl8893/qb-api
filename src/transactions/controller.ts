@@ -14,7 +14,7 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-async function getTx(txHash) {
+async function getTx(txHash, web3) {
   const endBlockNumber = await web3.eth.getBlock('latest')
   const transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
 
@@ -73,7 +73,16 @@ async function getTransaction(req, res) {
   const storedTx = await database.getTransaction(req.params.hash)
 
   if (storedTx && storedTx.state !== 'pending') {
-    const tx = await getTx(req.params.hash)
+
+    const oldChainId = Config.getOldChainID()
+    if (oldChainId && storedTx.chainId && storedTx.chainId === oldChainId) {
+      log.info(`Fetching old chain transaction ${req.params.hash}`)
+      const tx = await getTx(req.params.hash, Config.getOldPrivateWeb3())
+      tx.state = 'processed'
+      return res.json(tx)
+    }
+
+    const tx = await getTx(req.params.hash, web3)
     tx.state = 'processed'
     return res.json(tx)
   } else {

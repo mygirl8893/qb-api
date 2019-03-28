@@ -77,9 +77,9 @@ async function getTransaction(req, res) {
     const oldChainId = Config.getOldChainID()
     if (oldChainId && storedTx.chainId && storedTx.chainId === oldChainId) {
       log.info(`Fetching old chain transaction ${req.params.hash}`)
-      const tx = await getTx(req.params.hash, Config.getOldPrivateWeb3())
-      tx.state = 'processed'
-      return res.json(tx)
+      const oldChainTx = await getTx(req.params.hash, Config.getOldPrivateWeb3())
+      oldChainTx.state = 'processed'
+      return res.json(oldChainTx)
     }
 
     const tx = await getTx(req.params.hash, web3)

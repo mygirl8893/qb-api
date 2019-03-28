@@ -7,6 +7,7 @@ import * as HttpStatus from 'http-status-codes'
 import * as nock from 'nock'
 import * as request from 'supertest'
 
+import database from '../../src/database'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
@@ -458,6 +459,31 @@ describe('Transactions API Integration', () => {
       await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`).query(limitOffsetParams)
     expect(transactionsAfterResponse.status).toBe(HttpStatus.BAD_REQUEST)
     expect(transactionsAfterResponse.body.message).toContain('offset')
+  })
+
+  it ('Filters out migration type of transaction from history and transactions list', async () => {
+
+    const fakeTxHash = '0x18e7c2739bab5ea18cb0d9123ba3fc16f9fb3ba039d4a8811089d9f2647d63e6'
+    const storeableTransaction = {
+      hash: fakeTxHash,
+      fromAddress: ACCOUNTS[0].address,
+      toAddress: ACCOUNTS[1].address,
+      contractAddress: privateChain.loyaltyTokenContractAddress,
+      state: 'pending',
+      txType: 'migration'
+    }
+    await database.addPendingTransaction(storeableTransaction)
+
+    const transactionsResponse =
+      await request(app).get(`/transactions?contractAddress=${privateChain.loyaltyTokenContractAddress}`)
+    const txHashes = transactionsResponse.body.map((tx) => tx.hash)
+    // @ts-ignore
+    expect(txHashes).toEqual(expect.not.arrayContaining([fakeTxHash]))
+
+    const transactionsHistoryResponse = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
+    const txHashesFromHistory = transactionsHistoryResponse.body.map((tx) => tx.hash)
+    // @ts-ignore
+    expect(txHashesFromHistory).toEqual(expect.not.arrayContaining([fakeTxHash]))
   })
 
   it('Rejects raw transaction request with missing contractAddress', async () => {

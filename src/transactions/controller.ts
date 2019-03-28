@@ -14,17 +14,17 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-async function getTx(txHash, web3) {
-  const endBlockNumber = await web3.eth.getBlock('latest')
-  const transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
+async function getTx(txHash, sourceWeb3) {
+  const endBlockNumber = await sourceWeb3.eth.getBlock('latest')
+  const transactionReceipt = await sourceWeb3.eth.getTransactionReceipt(txHash.toLowerCase())
 
-  const transaction = await web3.eth.getTransaction(txHash.toLowerCase())
+  const transaction = await sourceWeb3.eth.getTransaction(txHash.toLowerCase())
 
   if (transaction === null) {
     return transactionReceipt
   }
 
-  const blockInfo = await web3.eth.getBlock(transaction.blockNumber)
+  const blockInfo = await sourceWeb3.eth.getBlock(transaction.blockNumber)
   abiDecoder.addABI(Config.getTokenABI())
   const decoded = abiDecoder.decodeMethod(transaction.input)
 

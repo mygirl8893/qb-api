@@ -8,6 +8,7 @@ import * as nock from 'nock'
 import * as request from 'supertest'
 
 import database from '../../src/database'
+import utils from '../../src/lib/utils'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
@@ -15,6 +16,7 @@ import TestPrivateChain from './testPrivateChain'
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
 const TEMP_EXCHANGE_WALLET_ADDRESS = ACCOUNTS[2].address
+const PRE_MIGRATION_CHAIN_ID = '1234567'
 
 const INTEGRATION_TEST_CONFIGURATION = {
   rpc: {
@@ -26,7 +28,8 @@ const INTEGRATION_TEST_CONFIGURATION = {
     accessKey: '',
     secretKey: ''
   },
-  port: 3000
+  port: 3000,
+  oldChainId: PRE_MIGRATION_CHAIN_ID
 }
 
 const TOKEN = {
@@ -368,6 +371,54 @@ describe('Transactions API Integration', () => {
     singleTx.from = singleTx.from.toLowerCase()
     someTransaction.status = true
     expect(singleTx).toEqual(someTransaction)
+  })
+
+  it('Returns individual transaction belonging to pre-migration chain by hash', async () => {
+
+    const preMigrationTxHash = '0xa06cb35b0ce4fd06b3ad3467322c90989c2c6e85eed7c5edb07b8e9a78604ce8'
+    const value = '56'
+    const preMigrationContractAddress = '0x85F22526C9BfE749f7CD5e071B273B035EFD6aE1'
+    const confirmations = 23
+    const preMigrationTx = APITesting.makeTestTx(preMigrationTxHash, PRE_MIGRATION_CHAIN_ID, value,
+      preMigrationContractAddress, 1, confirmations)
+
+    const expectedTx = JSON.parse(JSON.stringify(preMigrationTx))
+
+    testDbConn.insertTransaction(preMigrationTx)
+
+    await utils.sleep(1000)
+
+    const txDataResponse = await request(app).get(`/transactions/${preMigrationTxHash}`)
+    const singleTx = txDataResponse.body
+
+    expectedTx.contract = expectedTx.contractAddress
+    expectedTx.status = true
+    expectedTx.from = expectedTx.fromAddress
+    expectedTx.to = expectedTx.toAddress
+    delete expectedTx.contractAddress
+    delete expectedTx.id
+    delete expectedTx.tokenId
+    delete expectedTx.contractFunction
+    delete expectedTx.txType
+    delete expectedTx.chainId
+    delete expectedTx.fromAddress
+    delete expectedTx.toAddress
+
+    expectedTx.token = {
+      contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B',
+      symbol: 'MCW',
+      name: 'MagicCarpetsWorld',
+      rate: 100,
+      totalSupply: '3000000000000000000000000000000',
+      decimals: 18,
+      description: 'Magic is in the air.',
+      website: 'otherworldlymagicalcarpets.com'
+    }
+
+    // adjusted for proper comparison
+    singleTx.from = singleTx.from.toLowerCase()
+
+    expect(singleTx).toEqual(expectedTx)
   })
 
   it('Pushes 1 extra transaction which before mining confirmation is NOT FOUND', async () => {

@@ -87,6 +87,30 @@ function makeStoreableTransaction(original, receipt, block) {
   return transaction
 }
 
+function makeTestTx(hash, chainId, value, contractAddress, tokenId, confirms) {
+  return {
+    hash,
+    nonce: 32,
+    blockHash: '0x557c39f6cad68f0790e10493300b7f1cf0b0ec0e5869a2f27ac45bdeb7abd099',
+    blockNumber: 2027,
+    transactionIndex: 0,
+    fromAddress: '0x91d48cc009bc27e712b356093d9f5088d8f81e3d',
+    toAddress: '0x91d48cc009bc27e712b356093d9f5088d8f81e3a',
+    value,
+    input: '0xa9059cbb00000000000000000000000091d48cc009bc27e712b356093d9f5088d8' +
+      'f81e3a000000000000000000000000000000000000000000000000000000000000000a',
+    status: '1',
+    timestamp: 1533293245,
+    confirms,
+    contractAddress,
+    state: 'processed',
+    tokenId,
+    txType: 'reward',
+    contractFunction: 'transfer',
+    chainId
+  }
+}
+
 class TestDatabaseConn {
   private testToken
 
@@ -137,6 +161,10 @@ class TestDatabaseConn {
     return r
   }
 
+  public async insertTransaction(tx) {
+    await qbDB.models.transaction.create(tx)
+  }
+
   public async close() {
     await qbDB.models.sequelize.close()
   }
@@ -146,5 +174,6 @@ export default {
   setupTestConfiguration,
   waitForAppToBeReady,
   TestDatabaseConn,
+  makeTestTx,
   ACCOUNTS
 }

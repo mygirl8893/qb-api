@@ -29,7 +29,7 @@ const INTEGRATION_TEST_CONFIGURATION = {
     secretKey: ''
   },
   port: 3000,
-  oldChainID: PRE_MIGRATION_CHAIN_ID
+  oldChainId: PRE_MIGRATION_CHAIN_ID
 }
 
 const TOKEN = {

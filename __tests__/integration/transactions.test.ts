@@ -8,10 +8,10 @@ import * as nock from 'nock'
 import * as request from 'supertest'
 
 import database from '../../src/database'
+import utils from '../../src/lib/utils'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import utils from '../../src/lib/utils'
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
@@ -405,14 +405,14 @@ describe('Transactions API Integration', () => {
     delete expectedTx.toAddress
 
     expectedTx.token = {
-      "contractAddress": "0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B",
-        "symbol": "MCW",
-        "name": "MagicCarpetsWorld",
-        "rate": 100,
-        "totalSupply": "3000000000000000000000000000000",
-        "decimals": 18,
-        "description": "Magic is in the air.",
-        "website": "otherworldlymagicalcarpets.com"
+      contractAddress: '0x988f24d8356bf7e3D4645BA34068a5723BF3ec6B',
+      symbol: 'MCW',
+      name: 'MagicCarpetsWorld',
+      rate: 100,
+      totalSupply: '3000000000000000000000000000000',
+      decimals: 18,
+      description: 'Magic is in the air.',
+      website: 'otherworldlymagicalcarpets.com'
     }
 
     // adjusted for proper comparison

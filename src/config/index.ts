@@ -10,7 +10,7 @@ const web3Private = new Web3(envtConfig.rpc.private)
 const web3Public = new Web3(envtConfig.rpc.public)
 let web3ConnectionsAreReady = false
 
-// @ts-ignore
+// tslint:disable-next-line
 ;(async () => {
   log.info(`Connecting to private: ${envtConfig.rpc.private} and public ${envtConfig.rpc.public}`)
   await Promise.all([

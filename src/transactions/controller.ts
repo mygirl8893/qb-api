@@ -9,9 +9,9 @@ import Config from '../config'
 import database from '../database'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
+import utils from '../lib/utils'
 import log from '../logging'
 import validation from '../validation'
-import utils from '../lib/utils'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -63,7 +63,6 @@ const txBelongsTo = (address, tx, decodedTx) => (
   decodedTx.params[0].value.toLowerCase() === address
 )
 
-
 function formatSingleTransaction(transaction) {
   transaction.dataValues.to = transaction.toAddress
   delete transaction.dataValues.toAddress
@@ -77,7 +76,7 @@ function formatSingleTransaction(transaction) {
     delete transaction.token.dataValues.hidden
   }
   if (transaction.status) {
-    transaction.dataValues.status = Boolean(parseInt(transaction.status))
+    transaction.dataValues.status = Boolean(parseInt(transaction.status, 10))
   }
 
   delete transaction.dataValues.contractAddress

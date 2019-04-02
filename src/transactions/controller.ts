@@ -9,22 +9,23 @@ import Config from '../config'
 import database from '../database'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
+import utils from '../lib/utils'
 import log from '../logging'
 import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-async function getTx(txHash) {
-  const endBlockNumber = await web3.eth.getBlock('latest')
-  const transactionReceipt = await web3.eth.getTransactionReceipt(txHash.toLowerCase())
+async function getTx(txHash, sourceWeb3) {
+  const endBlockNumber = await sourceWeb3.eth.getBlock('latest')
+  const transactionReceipt = await sourceWeb3.eth.getTransactionReceipt(txHash.toLowerCase())
 
-  const transaction = await web3.eth.getTransaction(txHash.toLowerCase())
+  const transaction = await sourceWeb3.eth.getTransaction(txHash.toLowerCase())
 
   if (transaction === null) {
     return transactionReceipt
   }
 
-  const blockInfo = await web3.eth.getBlock(transaction.blockNumber)
+  const blockInfo = await sourceWeb3.eth.getBlock(transaction.blockNumber)
   abiDecoder.addABI(Config.getTokenABI())
   const decoded = abiDecoder.decodeMethod(transaction.input)
 
@@ -62,6 +63,30 @@ const txBelongsTo = (address, tx, decodedTx) => (
   decodedTx.params[0].value.toLowerCase() === address
 )
 
+function formatSingleTransaction(transaction) {
+  transaction.dataValues.to = transaction.toAddress
+  delete transaction.dataValues.toAddress
+  transaction.dataValues.from = transaction.fromAddress
+  delete transaction.dataValues.fromAddress
+  transaction.dataValues.contract = transaction.contractAddress
+
+  if (transaction.token) {
+    delete transaction.token.dataValues.id
+    delete transaction.token.dataValues.brandId
+    delete transaction.token.dataValues.hidden
+  }
+  if (transaction.status) {
+    transaction.dataValues.status = Boolean(parseInt(transaction.status, 10))
+  }
+
+  delete transaction.dataValues.contractAddress
+  delete transaction.dataValues.id
+  delete transaction.dataValues.tokenId
+  delete transaction.dataValues.contractFunction
+  delete transaction.dataValues.txType
+  delete transaction.dataValues.chainId
+}
+
 const getTransactionSchema = Joi.object().keys({
   params: Joi.object().keys({
     hash: validation.ethereumHash().required()
@@ -73,7 +98,15 @@ async function getTransaction(req, res) {
   const storedTx = await database.getTransaction(req.params.hash)
 
   if (storedTx && storedTx.state !== 'pending') {
-    const tx = await getTx(req.params.hash)
+
+    const oldChainId = Config.getOldChainID()
+    if (oldChainId && storedTx.chainId && `${storedTx.chainId}` === oldChainId) {
+      log.info(`Fetching old chain transaction ${req.params.hash} from the database.`)
+      formatSingleTransaction(storedTx)
+      return res.json(storedTx)
+    }
+
+    const tx = await getTx(req.params.hash, web3)
     tx.state = 'processed'
     return res.json(tx)
   } else {

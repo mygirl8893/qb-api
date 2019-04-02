@@ -4,16 +4,16 @@ import * as path from 'path'
 const Config = {
   production: {
     rpc: {
-      private: process.env.RPC_HOST || 'http://10.0.10.250:28002',
+      private: process.env.RPC_HOST,
       public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
     },
-    chainID: 29746197,
     port: process.env.PORT,
     S3Url: 'http://tokens.qiibee.com',
     coinsuperAPIKeys: {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
-    }
+    },
+    oldChainId: process.env.OLD_CHAIN_ID || '29746197'
   },
   beta: {
     rpc: {
@@ -25,7 +25,8 @@ const Config = {
     coinsuperAPIKeys: {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
-    }
+    },
+    oldChainId: process.env.OLD_CHAIN_ID
   },
   testing: {
     rpc: {
@@ -37,7 +38,8 @@ const Config = {
     coinsuperAPIKeys: {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
-    }
+    },
+    oldChainId: process.env.OLD_CHAIN_ID
   },
   development: {
     rpc: {
@@ -49,7 +51,8 @@ const Config = {
     coinsuperAPIKeys: {
       accessKey: '',
       secretKey: ''
-    }
+    },
+    oldChainId: process.env.OLD_CHAIN_ID
   },
   qbxContract: process.env.ETH_NET_QBX_CONTRACT_ADDRESS || '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

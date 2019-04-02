@@ -10,8 +10,8 @@ const web3Private = new Web3(envtConfig.rpc.private)
 const web3Public = new Web3(envtConfig.rpc.public)
 let web3ConnectionsAreReady = false
 
-;
-(async () => {
+// tslint:disable-next-line
+;(async () => {
   log.info(`Connecting to private: ${envtConfig.rpc.private} and public ${envtConfig.rpc.public}`)
   await Promise.all([
     web3Private.eth.net.isListening().catch(() => {
@@ -24,8 +24,8 @@ let web3ConnectionsAreReady = false
   const chainID = await web3Private.eth.net.getId().catch(() => {
     throw new Error('Could not fetch private chainID')
   })
-
   envtConfig.chainID = chainID
+
   web3ConnectionsAreReady = true
 })().catch((e) => {
   log.error(`${e.stack}`)
@@ -35,6 +35,7 @@ let web3ConnectionsAreReady = false
 export default {
   getPort: () => envtConfig.port,
   getChainID: () => envtConfig.chainID,
+  getOldChainID: () => envtConfig.oldChainID,
   getQBXAddress: () => Config.qbxContract,
   getPrivateWeb3: () => web3Private,
   getPublicWeb3: () => web3Public,

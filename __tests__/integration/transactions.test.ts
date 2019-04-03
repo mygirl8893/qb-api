@@ -282,13 +282,17 @@ describe('Transactions API Integration', () => {
       expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
       await markTransactionAsMined(sendTransactionResponse.body.hash)
+      // wait 1.5 second to cause this to have different timestamps (timestamp granularity is 1s)
+      await utils.sleep(1500)
     }
 
     const transactionsHistory = await request(app).get(`/transactions/${ACCOUNTS[0].address}/history`)
     const historicalTransactions = transactionsHistory.body
     expect(historicalTransactions).toHaveLength(transactionCount + 1)
 
-    let previousBlockNumber = (await web3Conn.eth.getBlock('latest')).number
+    const latestBlock = await web3Conn.eth.getBlock('latest')
+    let previousTimestamp = latestBlock.timestamp
+    let previousBlockNumber = latestBlock.number
 
     for (let i = 0; i < transactionCount; i++) {
       const tx = historicalTransactions[i]
@@ -303,8 +307,12 @@ describe('Transactions API Integration', () => {
       expect(tx.txType).toBe('redeem')
       expect(tx.contractFunction).toBe('transfer')
 
-      // check that the transactions are ordered DESC by blockNumber
-      expect(tx.blockNumber).toBeLessThanOrEqual(previousBlockNumber)
+      // check that the transactions are ordered DESC by (timestamp, blockNumber)
+      expect(tx.timestamp).toBeLessThanOrEqual(previousTimestamp)
+      if (tx.timestamp === previousTimestamp) {
+        expect(tx.blockNumber).toBeLessThanOrEqual(previousBlockNumber)
+      }
+      previousTimestamp = tx.timestamp
       previousBlockNumber = tx.blockNumber
     }
   })

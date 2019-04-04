@@ -13,7 +13,7 @@ const getAddressSchema = Joi.object().keys({
     address: validation.ethereumAddress().required()
   }),
   query: Joi.object().keys({
-    public: Joi.boolean().optional()
+    public: Joi.boolean().optional().default(false)
   })
 })
 async function getAddress(req, res) {

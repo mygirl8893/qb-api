@@ -15,7 +15,7 @@ const INTEGRATION_TEST_CONFIGURATION = {
   },
   port: 3000,
   infuraApiKey: 'A secret API key',
-  aesEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
+  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
 }
 
 const TOKEN = {
@@ -88,7 +88,7 @@ describe('App endpoint', () => {
 
   it('Returns correct infura API key - decrypt and check', async () => {
 
-    const decryptionKey = JSON.parse(INTEGRATION_TEST_CONFIGURATION.aesEncryptionKey)
+    const decryptionKey = JSON.parse(INTEGRATION_TEST_CONFIGURATION.infuraEncryptionKey)
 
     // decrypt
     const aesCtr = new aesjs.ModeOfOperation.ctr(decryptionKey, new aesjs.Counter(5))

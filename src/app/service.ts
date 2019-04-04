@@ -9,7 +9,7 @@ import Config from '../config'
  * Returns encrypted text hex
  */
 async function encryptString(plainText): Promise<string> {
-  const encryptionDecryptionKey = JSON.parse(Config.getAesEncryptionKey())
+  const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
 
   const textBytes = aesjs.utils.utf8.toBytes(plainText)
 

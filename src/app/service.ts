@@ -1,6 +1,6 @@
 import * as aesjs from 'aes-js'
 
-import Config from '../config';
+import Config from '../config'
 
 /**
  *
@@ -22,7 +22,6 @@ async function encryptString(plainText): Promise<string> {
 
   return encryptedHex
 }
-
 
 export default {
   encryptString

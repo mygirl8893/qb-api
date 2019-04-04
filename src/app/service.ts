@@ -2,6 +2,8 @@ import * as aesjs from 'aes-js'
 
 import Config from '../config'
 
+const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
+
 /**
  *
  * @param plainText string to encrypt
@@ -9,7 +11,6 @@ import Config from '../config'
  * Returns encrypted text hex
  */
 async function encryptString(plainText): Promise<string> {
-  const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
 
   const textBytes = aesjs.utils.utf8.toBytes(plainText)
 

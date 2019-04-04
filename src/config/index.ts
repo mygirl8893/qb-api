@@ -35,6 +35,8 @@ let web3ConnectionsAreReady = false
 export default {
   getPort: () => envtConfig.port,
   getChainID: () => envtConfig.chainID,
+  getEncryptionKey: () => envtConfig.encryptionKey,
+  getInfuraApiKey: () => envtConfig.infuraApiKey,
   getOldChainID: () => envtConfig.oldChainId,
   getQBXAddress: () => Config.qbxContract,
   getPrivateWeb3: () => web3Private,

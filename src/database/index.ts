@@ -31,7 +31,7 @@ async function getTransactions(limit: number, offset: number, symbol: string,
       txType: {$ne: 'migration'}
 
     },
-    order: [ ['blockNumber', 'DESC'] ],
+    order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
     limit,
     offset,
     include: [{
@@ -56,7 +56,7 @@ async function getTransactionHistory(address: string, limit: number, offset: num
         }
       }
     },
-    order: [ ['blockNumber', 'DESC'] ],
+    order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
     limit,
     offset,
     include: [qbDB.models.token]

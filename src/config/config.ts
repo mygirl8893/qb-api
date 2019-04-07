@@ -13,7 +13,9 @@ const Config = {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
     },
-    oldChainId: process.env.OLD_CHAIN_ID || '29746197'
+    oldChainId: process.env.OLD_CHAIN_ID || '29746197',
+    infuraApiKey: process.env.INFURA_API_KEY,
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
   },
   beta: {
     rpc: {
@@ -26,7 +28,9 @@ const Config = {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
     },
-    oldChainId: process.env.OLD_CHAIN_ID
+    oldChainId: process.env.OLD_CHAIN_ID,
+    infuraApiKey: process.env.INFURA_API_KEY,
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
   },
   testing: {
     rpc: {
@@ -39,7 +43,9 @@ const Config = {
       accessKey: process.env.COINSUPER_ACCESS_KEY,
       secretKey: process.env.COINSUPER_SECRET_KEY
     },
-    oldChainId: process.env.OLD_CHAIN_ID
+    oldChainId: process.env.OLD_CHAIN_ID,
+    infuraApiKey: process.env.INFURA_API_KEY,
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
   },
   development: {
     rpc: {
@@ -52,7 +58,9 @@ const Config = {
       accessKey: '',
       secretKey: ''
     },
-    oldChainId: process.env.OLD_CHAIN_ID
+    oldChainId: process.env.OLD_CHAIN_ID,
+    infuraApiKey: process.env.INFURA_API_KEY,
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
   },
   qbxContract: process.env.ETH_NET_QBX_CONTRACT_ADDRESS || '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

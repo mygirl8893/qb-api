@@ -20,7 +20,7 @@ const router = express.Router()
  *         required: true
  *         type: string
  *       - name: public
- *         description: Includes balance of the QBX public token.
+ *         description: Include balance of QBX and ETH on public chain
  *         in: query
  *         required: false
  *         type: boolean

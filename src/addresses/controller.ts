@@ -23,6 +23,7 @@ async function getAddress(req, res) {
   let transactionCount = null
   const tokenBalances = {}
   let qbxBalance = null
+  let publicEthBalance = 0
   try {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const tokens = await database.getTokens()
@@ -37,6 +38,7 @@ async function getAddress(req, res) {
 
     if (req.query.public) {
       qbxBalance = await User.getQBXToken(address)
+      publicEthBalance = await User.getETHBalance(address)
     }
   } catch (e) {
     if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
@@ -58,9 +60,10 @@ async function getAddress(req, res) {
   if (req.query.public) {
     response.balances.public = {}
     response.balances.public[qbxBalance.symbol] = {
-        balance: qbxBalance.balance,
-        contractAddress: qbxBalance.contractAddress
-      }
+      balance: qbxBalance.balance,
+      contractAddress: qbxBalance.contractAddress
+    }
+    response.balances.public.ETH = publicEthBalance
   }
 
   res.json(response)

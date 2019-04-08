@@ -996,7 +996,8 @@ describe('Transactions API Integration', () => {
           QBX: {
             balance: '0',
             contractAddress: Config.getQBXAddress()
-          }
+          },
+          ETH: '0'
         }
       }
     }

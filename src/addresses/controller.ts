@@ -63,7 +63,7 @@ async function getAddress(req, res) {
       balance: qbxBalance.balance,
       contractAddress: qbxBalance.contractAddress
     }
-    response.balances.public.ETH = publicEthBalance
+    response.balances.public.ETH = { balance: publicEthBalance }
   }
 
   res.json(response)

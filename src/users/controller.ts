@@ -23,9 +23,7 @@ async function getQBXToken(from: string = null) {
   const QiibeeToken = new web3Pub.eth.Contract(Config.getTokenABI(), Config.getQBXAddress(), {}).methods
   const totalSupply = await QiibeeToken.totalSupply().call()
   let balance = 0
-  // ethBalance = 0
   if (from) {
-    // ethBalance = await web3Pub.eth.getBalance(from.toLowerCase())
     balance = await QiibeeToken.balanceOf(from.toLowerCase()).call()
   }
 
@@ -69,8 +67,14 @@ async function getInfo(req, res) {
   }
 }
 
+async function getETHBalance(from: string) {
+  const ethBal = await web3Pub.eth.getBalance(from.toLowerCase())
+  return ethBal
+}
+
 export default {
   getBalance,
+  getETHBalance,
   getQBXToken,
   getInfo
 }

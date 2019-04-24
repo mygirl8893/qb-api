@@ -52,6 +52,8 @@ async function getTx(txHash, sourceWeb3) {
   delete token.id
   delete token.brandId
   delete token.hidden
+  delete token.fiatBacked
+  delete token.fiatRate
 
   transaction.token = token || null
   return transaction
@@ -74,6 +76,8 @@ function formatSingleTransaction(transaction) {
     delete transaction.token.dataValues.id
     delete transaction.token.dataValues.brandId
     delete transaction.token.dataValues.hidden
+    delete transaction.token.dataValues.fiatRate
+    delete transaction.token.dataValues.fiatBacked
   }
   if (transaction.status) {
     transaction.dataValues.status = Boolean(parseInt(transaction.status, 10))

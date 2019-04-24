@@ -77,6 +77,8 @@ function formatTransactionsList(transactions) {
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
       delete t.token.dataValues.hidden
+      delete t.token.dataValues.fiatBacked
+      delete t.token.dataValues.fiatRate
     }
 
     delete t.dataValues.confirms

@@ -12,7 +12,6 @@ import utils from '../../src/lib/utils'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
-import Test = jest.Test
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545

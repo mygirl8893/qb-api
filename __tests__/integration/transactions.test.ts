@@ -12,6 +12,7 @@ import utils from '../../src/lib/utils'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'
+import Test = jest.Test
 
 const ACCOUNTS = APITesting.ACCOUNTS
 const PRIVATE_WEB3_PORT = 8545
@@ -52,7 +53,7 @@ jest.setTimeout(180000)
 
 describe('Transactions API Integration', () => {
   let app = null
-  let privateChain = null
+  let privateChain: TestPrivateChain = null
   let testDbConn = null
   let web3Conn: Web3Connection = null
   let apiDBConn = null
@@ -339,11 +340,31 @@ describe('Transactions API Integration', () => {
   })
 
   it('Gets transactions by symbol with wallet filter', async () => {
+
     const transactionsHistoryBySymbol =
       await request(app).get(`/transactions?symbol=${TOKEN.symbol}&wallet=${ACCOUNTS[0].address}`)
     const historicalTransactionsBySymbol = transactionsHistoryBySymbol.body
     expect(transactionsHistoryBySymbol.status).toBe(HttpStatus.OK)
     expect(historicalTransactionsBySymbol).toHaveLength(6)
+  })
+
+  it('Gets transactions with wallet filter only', async () => {
+
+    const rawTransactionParams = {
+      from: ACCOUNTS[0].address,
+      to: ACCOUNTS[3].address,
+      transferAmount: '54321',
+      contractAddress: privateChain.loyaltyTokenContractAddress
+    }
+
+    const sendTransactionResponse = await sendTransaction(rawTransactionParams)
+    await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    const transactionsHistoryByWallet =
+      await request(app).get(`/transactions?wallet=${ACCOUNTS[3].address}`)
+    const historicalTransactionsBySymbol = transactionsHistoryByWallet.body
+    expect(transactionsHistoryByWallet.status).toBe(HttpStatus.OK)
+    expect(historicalTransactionsBySymbol).toHaveLength(1)
   })
 
   it('Gets transactions by contract address with limit and offset', async () => {
@@ -419,7 +440,7 @@ describe('Transactions API Integration', () => {
       symbol: 'MCW',
       name: 'MagicCarpetsWorld',
       rate: 100,
-      totalSupply: '3000000000000000000000000000000',
+      totalSupply: privateChain.initialLoyaltyTokenAmount,
       decimals: 18,
       description: 'Magic is in the air.',
       website: 'otherworldlymagicalcarpets.com'
@@ -960,7 +981,7 @@ describe('Transactions API Integration', () => {
 
   it('Successfully gets address by hash', async () => {
 
-    const txCount = 7
+    const txCount = 0
 
     const expectedAddress = {
       transactionCount: txCount,
@@ -977,11 +998,11 @@ describe('Transactions API Integration', () => {
       }
     }
     expectedAddress.balances.private[TOKEN.symbol] = {
-      balance: (new BigNumber(ACCOUNTS[0].balance).minus(new BigNumber(4006))).toFixed(), // assuming all value 1
+      balance: (new BigNumber(ACCOUNTS[0].balance).plus(new BigNumber('54321'))).toFixed(), // assuming all value 1
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
-    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}?public=true`)
+    const r = await request(app).get(`/addresses/${ACCOUNTS[3].address}?public=true`)
     expect(r.status).toBe(HttpStatus.OK)
     expect(r.body).toEqual(expectedAddress)
   })

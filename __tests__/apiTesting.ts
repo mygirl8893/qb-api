@@ -18,6 +18,10 @@ const ACCOUNTS = [{
   address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
   secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
   balance: START_BALANCE
+},  {
+  address: '0xbe3128803d95484af5c160c65ad5a74a4729c6cf',
+  secretKey: '7319d2eaad81fae222fe3c0799bfde840c0df744d3aebea8bb48250956f04e61',
+  balance: START_BALANCE
 }]
 
 const setupTestConfiguration = (testConfiguration) => {

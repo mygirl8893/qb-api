@@ -27,9 +27,8 @@ async function getTransactions(limit: number, offset: number, symbol: string,
   }
 
   const transactions = await qbDB.models.transaction.findAll({
-    where: {
-      txFilters
-    },
+    where: txFilters
+    ,
     order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
     limit,
     offset,

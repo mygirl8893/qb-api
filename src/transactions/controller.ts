@@ -12,6 +12,7 @@ import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
 import log from '../logging'
 import validation from '../validation'
+import exchangeTxValidation from '../lib/exchangeTxValidation'
 
 const web3 = Config.getPrivateWeb3()
 
@@ -192,30 +193,10 @@ async function transfer(req, res) {
 
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
-    try {
-      const tempExchangeWallets = await database.getTempExchangeWallets()
-      if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
-        log.info(
-          `Transaction detected to be an exchange transaction
-           (sends to wallet ${toAddress}`)
-        const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
-        const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
-        const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
-        const qbxTxValueComputationData =
-          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
-        if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
-          const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
-          Estimated gas: ${conservativeGasEstimate.toString()}
-          computation results: ${JSON.stringify(qbxTxValueComputationData)}`
-          log.error(errMessage)
-          return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
-        } else {
-          log.info(`Exchange transaction is valid. Proceeding..`)
-        }
-      }
-    } catch (e) {
-      log.error(`Failed to process potential exchange transaction ${e.stack}`)
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
+    const validationResponse = await exchangeTxValidation.validateExchangeTx(loyaltyToken, txData.to, decodedTx)
+    if (!validationResponse.valid) {
+      return res.status(validationResponse.errorResponseCode)
+        .json({ message: validationResponse.errorResponseMessage })
     }
 
     if (!loyaltyToken ||

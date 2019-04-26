@@ -3,6 +3,9 @@ import { BigNumber } from 'bignumber.js'
 import * as qbDB from 'qb-db-migrations'
 import utils from '../src/lib/utils'
 import log from '../src/logging'
+import * as HttpStatus from 'http-status-codes'
+import * as request from 'supertest'
+import Tx = require('ethereumjs-tx')
 
 const START_BALANCE = '1000000000000000000000000000000'
 
@@ -174,10 +177,33 @@ class TestDatabaseConn {
   }
 }
 
+async function sendTransaction(rawTransactionParams, privateChain, app) {
+  const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+  expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+  const rawTransaction = rawTransactionResponse.body
+
+  expect(rawTransaction.from).toBe(rawTransactionParams.from)
+  expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+  const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+  const transaction = new Tx(rawTransaction)
+  transaction.sign(privateKey)
+  const serializedTx = transaction.serialize().toString('hex')
+
+  const postTransferParams = {
+    data: serializedTx
+  }
+
+  const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+  return sendTransactionResponse
+}
+
 export default {
   setupTestConfiguration,
   waitForAppToBeReady,
   TestDatabaseConn,
   makeTestTx,
+  sendTransaction,
   ACCOUNTS
 }

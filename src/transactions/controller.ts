@@ -319,8 +319,11 @@ async function getQBXExchangeValues(req, res) {
   const txLoyaltyTokenValue = new BigNumber(transferAmount)
   const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
   const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(activeTempExchangeWallet)
+
+  const rate = loyaltyToken.fiatBacked ? loyaltyToken.fiatRate : loyaltyToken.rate
   const qbxTxValueComputationData =
-    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
+    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, rate,
+      conservativeGasEstimate, loyaltyToken.fiatBacked)
   const values = {
     // percentage, qbxFeeAmount, gasFee and final receive value
     qbxFeeAmount: qbxTxValueComputationData.qbxTxValueAndFees.qbxFee.toFixed(),

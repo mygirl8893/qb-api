@@ -346,3 +346,102 @@ describe('Exchange Transactions API for qbx-backed tokens', () => {
     expect(coinsuperScope.isDone()).toBeTruthy()
   })
 })
+
+// describe('Exchange Transactions API for fiat-backed tokens', () => {
+//   TOKEN = {
+//     name: 'MagicCarpetsWorld',
+//     symbol: 'MCW',
+//     decimals: 18,
+//     rate: 100,
+//     description: 'Magic is in the air.',
+//     website: 'otherworldlymagicalcarpets.com',
+//     totalSupply: undefined,
+//     contractAddress: undefined,
+//     hidden: false,
+//     fiatBacked: true,
+//     fiatRate: 10
+//   }
+//
+//   const QBX_ETH_PAIR = 'QBX/ETH'
+//   const ETH_USD_PAIR = 'ETH/USD'
+//
+//   const FIAT_EXCHANGE_RATES: Record<string, BigNumber>  = {}
+//   FIAT_EXCHANGE_RATES[QBX_ETH_PAIR] =  new BigNumber('0.00000416')
+//   FIAT_EXCHANGE_RATES[ETH_USD_PAIR] =  new BigNumber('170')
+//
+//   it('Successfully processes exchange transaction', async () => {
+//     const gasPrice = '0'
+//     const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+//     const qbxToETHExchangeRate = new BigNumber('0.000000001')
+//
+//     const txRawAmountInLoyaltyToken = new BigNumber('1000000000000000000')
+//
+//     const tokenDecimals = 18
+//     const rate = new BigNumber('10').pow(tokenDecimals)
+//     const estimatedGasAmount = new BigNumber('38157')
+//
+//     const gasPriceInGwei = new BigNumber('3.0')
+//     const gasPriceInWei = gasPriceInGwei.multipliedBy(new BigNumber(Math.pow(10, 9)))
+//
+//     const gasPriceScope = nock(GASPRICE_API_HOST)
+//       .get('')
+//       .times(1)
+//       .reply(200, {
+//         safeLow: gasPriceInWei.toString(),
+//         standard : gasPriceInWei.toString(),
+//         fast: gasPriceInWei.toString(),
+//         fastest: '20'
+//       })
+//
+//     const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+//     const coinsuperScope = nock(coinsuperOrderBookURL)
+//       .post('')
+//       .times(2)
+//       .reply((uri, requestBody) => {
+//         requestBody = JSON.parse(requestBody)
+//         const limitPrice = FIAT_EXCHANGE_RATES[requestBody.data.symbol]
+//         if (!limitPrice) {
+//           return [500, {
+//             message: `No order book available for symbol ${requestBody.symbol}`
+//           }]
+//         }
+//         return [200, {
+//           data: {
+//             result: {
+//               bids: [{
+//                 limitPrice: limitPrice.toFixed(),
+//                 amount: '10000'
+//               }]
+//             }
+//           }
+//         }]
+//       })
+//
+//     const rawTransactionParams = {
+//       from: ACCOUNTS[0].address,
+//       to: TEMP_EXCHANGE_WALLET_ADDRESS,
+//       transferAmount: txRawAmountInLoyaltyToken.toFixed(),
+//       contractAddress: privateChain.loyaltyTokenContractAddress
+//     }
+//
+//     // add 10%
+//     const extraGas = estimatedGasAmount.multipliedBy(0.1)
+//     const conservativeGasEstimate = estimatedGasAmount.plus(extraGas).integerValue(BigNumber.ROUND_FLOOR)
+//     const generousGasEstimate = estimatedGasAmount.multipliedBy(2)
+//
+//     estimateTxGasMock.mockImplementation(() => {
+//       return {
+//         conservativeGasEstimate,
+//         generousGasEstimate
+//       }
+//     })
+//
+//     const sendTransactionResponse = await sendTransaction(rawTransactionParams, privateChain, app)
+//     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+//
+//     await markTransactionAsMined(sendTransactionResponse.body.hash)
+//
+//     expect(gasPriceScope.isDone()).toBeTruthy()
+//     expect(coinsuperScope.isDone()).toBeTruthy()
+//   })
+// })

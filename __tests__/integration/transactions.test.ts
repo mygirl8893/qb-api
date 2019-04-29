@@ -29,7 +29,9 @@ const INTEGRATION_TEST_CONFIGURATION = {
     secretKey: ''
   },
   port: 3000,
-  oldChainId: PRE_MIGRATION_CHAIN_ID
+  oldChainId: PRE_MIGRATION_CHAIN_ID,
+  infuraApiKey: 'A secret API key',
+  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
 }
 
 const TOKEN = {
@@ -994,7 +996,8 @@ describe('Transactions API Integration', () => {
           QBX: {
             balance: '0',
             contractAddress: Config.getQBXAddress()
-          }
+          },
+          ETH: { balance: '0' }
         }
       }
     }

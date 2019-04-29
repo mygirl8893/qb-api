@@ -13,6 +13,7 @@ import * as uuid from 'uuid'
 import Config from './src/config'
 
 import addressesRouter from './src/addresses/router'
+import appRouter from './src/app/router'
 import networkRouter from './src/network/router'
 import pricesRouter from './src/prices/router'
 import tokensRouter from './src/tokens/router'
@@ -50,6 +51,7 @@ app.use('/tokens', tokensRouter)
 app.use('/users', usersRouter)
 app.use('/prices', pricesRouter)
 app.use('/addresses', addressesRouter)
+app.use('/app', appRouter)
 app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
 app.use((req, res, next) => {

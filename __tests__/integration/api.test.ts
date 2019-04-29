@@ -11,7 +11,9 @@ const INTEGRATION_TEST_CONFIGURATION = {
     private: `http://localhost:${PRIVATE_WEB3_PORT}`,
     public: 'https://mainnet.infura.io/<INFURA_TOKEN>'
   },
-  port: 3000
+  port: 3000,
+  infuraApiKey: 'A secret API key',
+  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
 }
 
 const TOKEN = {

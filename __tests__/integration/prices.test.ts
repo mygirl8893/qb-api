@@ -24,7 +24,9 @@ const INTEGRATION_TEST_CONFIGURATION = {
     accessKey: '',
     secretKey: ''
   },
-  port: 3000
+  port: 3000,
+  infuraApiKey: 'A secret API key',
+  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
 }
 
 const TOKEN = {

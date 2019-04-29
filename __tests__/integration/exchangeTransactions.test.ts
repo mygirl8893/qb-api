@@ -35,89 +35,92 @@ const INTEGRATION_TEST_CONFIGURATION = {
   infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
 }
 
-const TOKEN = {
-  name: 'MagicCarpetsWorld',
-  symbol: 'MCW',
-  decimals: 18,
-  rate: 100,
-  description: 'Magic is in the air.',
-  website: 'otherworldlymagicalcarpets.com',
-  totalSupply: undefined,
-  contractAddress: undefined,
-  hidden: false
-}
+let TOKEN = null
 
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.setTimeout(180000)
 
-describe('Exchange Transactions API', () => {
-  let app = null
-  let privateChain: TestPrivateChain = null
-  let testDbConn = null
-  let web3Conn: Web3Connection = null
-  let apiDBConn = null
-  let totalTransactionsSoFar = 0
-  let Config = null
-  let estimateTxGasMock = null
+let app = null
+let privateChain: TestPrivateChain = null
+let testDbConn = null
+let web3Conn: Web3Connection = null
+let apiDBConn = null
+let totalTransactionsSoFar = 0
+let Config = null
+let estimateTxGasMock = null
 
-  /* this mimics the actions of a listener process which updates  */
-  async function markTransactionAsMined(txHash) {
 
-    const tx = await web3Conn.eth.getTransaction(txHash)
-    const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
-    const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
-    const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address], Config.getChainID())
-    log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
-    totalTransactionsSoFar++
+beforeAll(async () => {
+  try {
+    privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
+
+    await privateChain.setup()
+
+    TOKEN.totalSupply = privateChain.initialLoyaltyTokenAmount
+    TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
+
+    testDbConn = new APITesting.TestDatabaseConn()
+
+    await testDbConn.setup(TOKEN, TEMP_EXCHANGE_WALLET_ADDRESS, ACCOUNTS[0].address)
+
+    web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
+    await web3Conn.eth.net.isListening()
+    log.info('Web3 connection established.')
+
+    app = require('../../app').default
+    Config = require('../../src/config').default
+
+    apiDBConn = require('../../src/database').default
+
+    const publicBlockchain = require('../../src/lib/publicBlockchain')
+    estimateTxGasMock = jest.spyOn(publicBlockchain.default, 'estimateTxGas')
+
+    await APITesting.waitForAppToBeReady(Config)
+  } catch (e) {
+    log.error(`Failed setting up the test context ${e.stack}`)
+    throw e
   }
+})
 
-  beforeAll(async () => {
-    try {
-      privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)
+beforeEach(async () => {
+  nock.cleanAll()
+})
 
-      await privateChain.setup()
+afterAll(async () => {
+  try {
+    await privateChain.tearDown()
+    await testDbConn.close()
+    await apiDBConn.close()
+  } catch (e) {
+    log.error(`Failed to tear down the test context ${e.stack}`)
+    throw e
+  }
+})
 
-      TOKEN.totalSupply = privateChain.initialLoyaltyTokenAmount
-      TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
+/* this mimics the actions of a listener process which updates  */
+async function markTransactionAsMined(txHash) {
 
-      testDbConn = new APITesting.TestDatabaseConn()
+  const tx = await web3Conn.eth.getTransaction(txHash)
+  const txReceipt = await web3Conn.eth.getTransactionReceipt(txHash)
+  const block = await web3Conn.eth.getBlock(txReceipt.blockNumber)
+  const r = await testDbConn.updateMinedStatus(tx, txReceipt, block, [ACCOUNTS[0].address], Config.getChainID())
+  log.info(`Updated tx ${txHash} with its mined status from block ${txReceipt.blockNumber}`)
+  totalTransactionsSoFar++
+}
+describe('Exchange Transactions API for qbx-backed tokens', () => {
 
-      await testDbConn.setup(TOKEN, TEMP_EXCHANGE_WALLET_ADDRESS, ACCOUNTS[0].address)
-
-      web3Conn = new Web3(`http://localhost:${PRIVATE_WEB3_PORT}`)
-      await web3Conn.eth.net.isListening()
-      log.info('Web3 connection established.')
-
-      app = require('../../app').default
-      Config = require('../../src/config').default
-
-      apiDBConn = require('../../src/database').default
-
-      const publicBlockchain = require('../../src/lib/publicBlockchain')
-      estimateTxGasMock = jest.spyOn(publicBlockchain.default, 'estimateTxGas')
-
-      await APITesting.waitForAppToBeReady(Config)
-    } catch (e) {
-      log.error(`Failed setting up the test context ${e.stack}`)
-      throw e
-    }
-  })
-
-  beforeEach(async () => {
-    nock.cleanAll()
-  })
-
-  afterAll(async () => {
-    try {
-      await privateChain.tearDown()
-      await testDbConn.close()
-      await apiDBConn.close()
-    } catch (e) {
-      log.error(`Failed to tear down the test context ${e.stack}`)
-      throw e
-    }
-  })
+  TOKEN = {
+    name: 'MagicCarpetsWorld',
+    symbol: 'MCW',
+    decimals: 18,
+    rate: 100,
+    description: 'Magic is in the air.',
+    website: 'otherworldlymagicalcarpets.com',
+    totalSupply: undefined,
+    contractAddress: undefined,
+    hidden: false
+  }
 
   it('Successfully processes exchange transaction', async () => {
     const gasPrice = '0'

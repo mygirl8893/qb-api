@@ -1,9 +1,9 @@
+import { BigNumber } from 'bignumber.js'
+import * as HttpStatus from 'http-status-codes'
 import database from '../database'
 import log from '../logging'
-import { BigNumber } from 'bignumber.js'
 import publicBlockchain from './publicBlockchain'
 import qbxFeeCalculator from './qbxFeeCalculator'
-import * as HttpStatus from 'http-status-codes'
 
 interface ExchangeTxValidationResponse {
   valid: boolean
@@ -57,7 +57,6 @@ async function validateExchangeTx(loyaltyToken, toAddress: string, decodedTx): P
     }
   }
 }
-
 
 export default {
   validateExchangeTx

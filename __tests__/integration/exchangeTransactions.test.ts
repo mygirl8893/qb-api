@@ -50,7 +50,6 @@ let totalTransactionsSoFar = 0
 let Config = null
 let estimateTxGasMock = null
 
-
 beforeAll(async () => {
   try {
     privateChain = new TestPrivateChain(ACCOUNTS, TOKEN, PRIVATE_WEB3_PORT)

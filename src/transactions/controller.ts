@@ -7,12 +7,12 @@ import * as Joi from 'joi'
 
 import Config from '../config'
 import database from '../database'
+import exchangeTxValidation from '../lib/exchangeTxValidation'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
 import log from '../logging'
 import validation from '../validation'
-import exchangeTxValidation from '../lib/exchangeTxValidation'
 
 const web3 = Config.getPrivateWeb3()
 

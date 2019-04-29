@@ -1,11 +1,11 @@
 import * as abiDecoder from 'abi-decoder'
 import { BigNumber } from 'bignumber.js'
+import Tx = require('ethereumjs-tx')
+import * as HttpStatus from 'http-status-codes'
 import * as qbDB from 'qb-db-migrations'
+import * as request from 'supertest'
 import utils from '../src/lib/utils'
 import log from '../src/logging'
-import * as HttpStatus from 'http-status-codes'
-import * as request from 'supertest'
-import Tx = require('ethereumjs-tx')
 
 const START_BALANCE = '1000000000000000000000000000000'
 

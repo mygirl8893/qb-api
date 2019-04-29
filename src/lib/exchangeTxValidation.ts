@@ -37,12 +37,11 @@ async function validateExchangeTx(loyaltyToken, toAddress: string, decodedTx): P
       } else {
         log.info(`Exchange transaction is valid. Proceeding..`)
       }
-    } else {
-      return {
-        valid: true,
-        errorResponseMessage: null,
-        errorResponseCode: null
-      }
+    }
+    return {
+      valid: true,
+      errorResponseMessage: null,
+      errorResponseCode: null
     }
   } catch (e) {
     log.error(`Failed to process potential exchange transaction ${e.stack}`)

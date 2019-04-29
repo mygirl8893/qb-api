@@ -193,7 +193,7 @@ async function transfer(req, res) {
 
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
-    const validationResponse = await exchangeTxValidation.validateExchangeTx(loyaltyToken, txData.to, decodedTx)
+    const validationResponse = await exchangeTxValidation.validateExchangeTx(loyaltyToken, toAddress, decodedTx)
     if (!validationResponse.valid) {
       return res.status(validationResponse.errorResponseCode)
         .json({ message: validationResponse.errorResponseMessage })

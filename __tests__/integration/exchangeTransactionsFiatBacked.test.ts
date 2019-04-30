@@ -120,8 +120,18 @@ describe('Exchange Transactions API for fiat-backed tokens', () => {
     contractAddress: undefined,
     hidden: false,
     fiatBacked: true,
-    fiatRate: 10
+    fiatRate: 1
   }
+
+  const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
+  const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
+
+  const estimatedGasAmount = new BigNumber('38157')
+  const conservativeGasEstimate = estimatedGasAmount
+  const generousGasEstimate = estimatedGasAmount.multipliedBy(2)
+
+  const gasPriceInGwei = new BigNumber('3.0')
+  const gasPriceInWei = gasPriceInGwei.multipliedBy(new BigNumber(Math.pow(10, 9)))
 
   const QBX_ETH_PAIR = 'QBX/ETH'
   const ETH_USD_PAIR = 'ETH/USD'
@@ -131,28 +141,21 @@ describe('Exchange Transactions API for fiat-backed tokens', () => {
   FIAT_EXCHANGE_RATES[ETH_USD_PAIR] =  new BigNumber('170')
 
   it('Successfully processes exchange transaction', async () => {
-    const GASPRICE_API_HOST = 'https://www.etherchain.org/api/gasPriceOracle'
-
     const txRawAmountInLoyaltyToken = new BigNumber('1000000000000000000')
 
     const tokenDecimals = 18
     const rate = new BigNumber('10').pow(tokenDecimals)
-    const estimatedGasAmount = new BigNumber('38157')
-
-    const gasPriceInGwei = new BigNumber('3.0')
-    const gasPriceInWei = gasPriceInGwei.multipliedBy(new BigNumber(Math.pow(10, 9)))
 
     const gasPriceScope = nock(GASPRICE_API_HOST)
       .get('')
       .times(1)
       .reply(200, {
-        safeLow: gasPriceInWei.toString(),
-        standard : gasPriceInWei.toString(),
-        fast: gasPriceInWei.toString(),
+        safeLow: gasPriceInGwei.toString(),
+        standard : gasPriceInGwei.toString(),
+        fast: gasPriceInGwei.toString(),
         fastest: '20'
       })
 
-    const coinsuperOrderBookURL = 'https://api.coinsuper.com/api/v1/market/orderBook'
     const coinsuperScope = nock(coinsuperOrderBookURL)
       .post('')
       .times(2)
@@ -183,11 +186,6 @@ describe('Exchange Transactions API for fiat-backed tokens', () => {
       contractAddress: privateChain.loyaltyTokenContractAddress
     }
 
-    // add 10%
-    const extraGas = estimatedGasAmount.multipliedBy(0.1)
-    const conservativeGasEstimate = estimatedGasAmount.plus(extraGas).integerValue(BigNumber.ROUND_FLOOR)
-    const generousGasEstimate = estimatedGasAmount.multipliedBy(2)
-
     estimateTxGasMock.mockImplementation(() => {
       return {
         conservativeGasEstimate,
@@ -199,6 +197,65 @@ describe('Exchange Transactions API for fiat-backed tokens', () => {
     expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
 
     await markTransactionAsMined(sendTransactionResponse.body.hash)
+
+    expect(gasPriceScope.isDone()).toBeTruthy()
+    expect(coinsuperScope.isDone()).toBeTruthy()
+  })
+
+  it('Successfully gets qbx exchange values', async () => {
+    const gasPriceScope = nock(GASPRICE_API_HOST)
+      .get('')
+      .times(1)
+      .reply(200, {
+        safeLow: gasPriceInGwei.toString(),
+        standard : gasPriceInGwei.toString(),
+        fast: gasPriceInGwei.toString(),
+        fastest: '20'
+      })
+    const coinsuperScope = nock(coinsuperOrderBookURL)
+      .post('')
+      .times(2)
+      .reply((uri, requestBody) => {
+        requestBody = JSON.parse(requestBody)
+        const limitPrice = FIAT_EXCHANGE_RATES[requestBody.data.symbol]
+        if (!limitPrice) {
+          return [500, {
+            message: `No order book available for symbol ${requestBody.symbol}`
+          }]
+        }
+        return [200, {
+          data: {
+            result: {
+              bids: [{
+                limitPrice: limitPrice.toFixed(),
+                amount: '10000'
+              }]
+            }
+          }
+        }]
+      })
+
+    estimateTxGasMock.mockImplementation(() => {
+      return {
+        conservativeGasEstimate,
+        generousGasEstimate
+      }
+    })
+
+
+    const transferAmount = '1000000000000000000'
+
+    const costOfGasInQBX = (new BigNumber('114471000000000')).dividedBy(FIAT_EXCHANGE_RATES[QBX_ETH_PAIR])
+
+    const sendTransactionResponse =
+      await request(app).get(`/transactions/qbxExchangeValues?symbol=${TOKEN.symbol}&transferAmount=${transferAmount}`)
+    expect(sendTransactionResponse.status).toBe(HttpStatus.OK)
+    expect(sendTransactionResponse.body.qbxFeePercentage).toBe('1')
+    expect(sendTransactionResponse.body.exchangeWalletAddress).toBe(TEMP_EXCHANGE_WALLET_ADDRESS)
+    expect(sendTransactionResponse.body.qbxFeeAmount).toBe('14140271493212669683')
+    expect(sendTransactionResponse.body.qbxValueReceived).toBe('1372369810520361990949')
+    expect(sendTransactionResponse.body.costOfGasInQBX).toBe(costOfGasInQBX.toFixed())
+    expect(sendTransactionResponse.body.loyaltyTokenToQBXRate).toBeUndefined()
 
     expect(gasPriceScope.isDone()).toBeTruthy()
     expect(coinsuperScope.isDone()).toBeTruthy()

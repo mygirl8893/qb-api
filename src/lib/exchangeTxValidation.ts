@@ -22,7 +22,7 @@ async function validateExchangeTx(loyaltyToken, toAddress: string, decodedTx): P
       const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
       const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
 
-      const rate = loyaltyToken.fiatBacked ? loyaltyToken.fiatRate : loyaltyToken.rate
+      const rate = qbxFeeCalculator.getRate(loyaltyToken)
       const qbxTxValueComputationData =
         await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txLoyaltyTokenValue,
           rate, conservativeGasEstimate, loyaltyToken.fiatBacked)

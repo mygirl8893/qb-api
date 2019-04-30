@@ -239,7 +239,6 @@ describe('Exchange Transactions API for fiat-backed tokens', () => {
       }
     })
 
-
     const transferAmount = '1000000000000000000'
 
     const costOfGasInQBX = (new BigNumber('114471000000000')).dividedBy(FIAT_EXCHANGE_RATES[QBX_ETH_PAIR])

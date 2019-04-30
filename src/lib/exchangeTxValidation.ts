@@ -20,15 +20,14 @@ async function validateExchangeTx(loyaltyToken, toAddress: string, decodedTx): P
         for token that is ${loyaltyToken.fiatBacked ? 'fiat' : 'QBX' } - backed \
            (sends to wallet ${toAddress}`)
       const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
-      const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
       const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
 
       const rate = loyaltyToken.fiatBacked ? loyaltyToken.fiatRate : loyaltyToken.rate
       const qbxTxValueComputationData =
-        await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX,
+        await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txLoyaltyTokenValue,
           rate, conservativeGasEstimate, loyaltyToken.fiatBacked)
       if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
-        const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
+        const errMessage = `Exchange transaction value ${txLoyaltyTokenValue} ${loyaltyToken.symbol} is too low.
           Estimated gas: ${conservativeGasEstimate.toString()}
           computation results: ${JSON.stringify(qbxTxValueComputationData)}`
         log.error(errMessage)

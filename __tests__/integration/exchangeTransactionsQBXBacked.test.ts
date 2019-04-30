@@ -2,12 +2,9 @@ import Web3Connection from 'web3'
 // tslint:disable-next-line
 const Web3 = require('web3')
 import BigNumber from 'bignumber.js'
-import Tx = require('ethereumjs-tx')
 import * as HttpStatus from 'http-status-codes'
 import * as nock from 'nock'
 import * as request from 'supertest'
-import database from '../../src/database'
-import utils from '../../src/lib/utils'
 import log from '../../src/logging'
 import APITesting from '../apiTesting'
 import TestPrivateChain from './testPrivateChain'

@@ -5,8 +5,8 @@ import * as utf8 from 'utf8'
 import log from '../logging'
 import Config from './../config'
 
-const QBX_FEE_FRACTION = new BigNumber(0.01)
-const QBX_FEE_PERCENTAGE = QBX_FEE_FRACTION.multipliedBy(100)
+const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
+const QBX_FEE_DISPLAY_PERCENTAGE = new BigNumber(0.01).multipliedBy(100)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
 const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
@@ -175,5 +175,5 @@ export default {
   calculateQBXTxValue,
   pullDataAndCalculateQBXTxValue,
   getQBXToETHExchangeRate,
-  QBX_FEE_PERCENTAGE
+  QBX_FEE_DISPLAY_PERCENTAGE
 }

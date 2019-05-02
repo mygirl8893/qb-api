@@ -27,10 +27,7 @@ async function getTransactions(limit: number, offset: number, symbol: string,
   }
 
   const transactions = await qbDB.models.transaction.findAll({
-    where: {
-      txType: {$ne: 'migration'}
-
-    },
+    where: txFilters,
     order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
     limit,
     offset,
@@ -48,12 +45,9 @@ async function getTransactions(limit: number, offset: number, symbol: string,
 async function getTransactionHistory(address: string, limit: number, offset: number) {
   const transactions = await qbDB.models.transaction.findAll({
     where: {
-      $and: {
-        txType: {$ne: 'migration'},
-        $or: {
-          toAddress: { $eq: address},
-          fromAddress: { $eq: address}
-        }
+      $or: {
+        toAddress: { $eq: address},
+        fromAddress: { $eq: address}
       }
     },
     order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
@@ -77,6 +71,8 @@ function formatTransactionsList(transactions) {
       delete t.token.dataValues.id
       delete t.token.dataValues.brandId
       delete t.token.dataValues.hidden
+      delete t.token.dataValues.fiatBacked
+      delete t.token.dataValues.fiatRate
     }
 
     delete t.dataValues.confirms

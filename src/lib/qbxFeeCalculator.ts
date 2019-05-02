@@ -5,34 +5,37 @@ import * as utf8 from 'utf8'
 import log from '../logging'
 import Config from './../config'
 
-const QBX_FEE_FRACTION = new BigNumber(0.01)
-const QBX_FEE_PERCENTAGE = QBX_FEE_FRACTION.multipliedBy(100)
+const QBX_FEE_PERCENTAGE = new BigNumber(0.01)
+const QBX_FEE_DISPLAY_PERCENTAGE = new BigNumber(0.01).multipliedBy(100)
 const GAS_PRICE_API_URL = 'https://www.etherchain.org/api/gasPriceOracle'
 const COINSUPER_API_URL = 'https://api.coinsuper.com/api/v1'
 
 interface QBXTxValueAndFees {
-  qbxTxValue: BigNumber,
-  qbxFee: BigNumber,
+  qbxValueGross: BigNumber
+  qbxTxValue: BigNumber
+  qbxFee: BigNumber
   estimatedEthFee: BigNumber,
   costOfGasInQBX: BigNumber
 }
 
 interface QBXTxValueComputationData {
-  gasPrice: BigNumber,
+  gasPrice: BigNumber
   qbxToETHExchangeRate: BigNumber,
+  ethToUSDExchangeRate: BigNumber,
   qbxTxValueAndFees: QBXTxValueAndFees
 }
 
-function calculateQBXTxValue(txRawAmountInQBXWei: BigNumber,
+function calculateQBXTxValue(qbxValueGross: BigNumber,
                              estimatedGasAmount: BigNumber,
                              gasPrice: BigNumber,
                              qbxToETHExchangeRate: BigNumber): QBXTxValueAndFees {
-  const qbxFee = txRawAmountInQBXWei.multipliedBy(QBX_FEE_FRACTION)
+  const qbxFee = qbxValueGross.multipliedBy(QBX_FEE_PERCENTAGE).integerValue(BigNumber.ROUND_FLOOR)
   const estimatedEthFee = estimatedGasAmount.multipliedBy(gasPrice)
   const costOfGasInQBX = estimatedEthFee.dividedBy(qbxToETHExchangeRate)
-  const qbxTxValueRaw = txRawAmountInQBXWei.minus(qbxFee).minus(costOfGasInQBX)
+  const qbxTxValueRaw = qbxValueGross.minus(qbxFee).minus(costOfGasInQBX)
   const qbxTxValue = qbxTxValueRaw.integerValue(BigNumber.ROUND_FLOOR)
   return {
+    qbxValueGross,
     qbxTxValue,
     qbxFee,
     estimatedEthFee,
@@ -51,7 +54,11 @@ async function getGasPrice(): Promise<BigNumber> {
     // convert from gew to wei
     return new BigNumber(lastGasPrice).multipliedBy(gweiInWei)
   } catch (e) {
-    log.error(`Failed ${GAS_PRICE_API_URL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    if (e.response) {
+      log.error(`Failed ${GAS_PRICE_API_URL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    } else {
+      log.error(`Failed ${GAS_PRICE_API_URL} request: ${e.stack}`)
+    }
     throw e
   }
 
@@ -91,36 +98,94 @@ async function getQBXToETHExchangeRate(): Promise<BigNumber> {
   try {
     const response = await axios.post(postURL, requestData)
     const qbxToETH = new BigNumber(response.data.data.result.bids[0].limitPrice)
-    log.info(`Fetched QBX/ETH exchange rate from coinsuper: ${qbxToETH.toFixed()}`)
     return qbxToETH
   } catch (e) {
     if (e.response) {
-      log.error(`Failed ${postURL} request: ${e.stack} ${JSON.stringify(e.response.data)}`)
+      log.error(`Failed ${postURL} request: ${e} ${JSON.stringify(e.response.data)}`)
     } else {
       log.error(`Failed ${postURL} request: ${e.stack}`)
     }
+    throw e
+  }
+}
 
+async function getETHToUSDExchangeRate(): Promise<BigNumber> {
+  const requestData =  getCoinSuperRequestData({
+    num: 50,
+    symbol: 'ETH/USD'
+  })
+  const postURL = COINSUPER_API_URL + '/market/orderBook'
+  try {
+    const response = await axios.post(postURL, requestData)
+    const ethToUSD = new BigNumber(response.data.data.result.bids[0].limitPrice)
+    return ethToUSD
+  } catch (e) {
+    if (e.response) {
+      log.error(`Failed ${postURL} request: ${e} ${JSON.stringify(e.response.data)}`)
+    } else {
+      log.error(`Failed ${postURL} request: ${e.stack}`)
+    }
     throw e
   }
 }
 
 async function pullDataAndCalculateQBXTxValue(
-  txRawAmountInQBXWei: BigNumber,
-  estimatedGasAmount: BigNumber): Promise<QBXTxValueComputationData> {
-  const qbxToETHExchangeRate = await getQBXToETHExchangeRate()
-  const gasPrice = await getGasPrice()
+  privateChainTxValue: BigNumber,
+  rate: BigNumber,
+  estimatedGasAmount: BigNumber,
+  isFiatBacked: boolean): Promise<QBXTxValueComputationData> {
 
-  const qbxTxValueAndFees = calculateQBXTxValue(txRawAmountInQBXWei, estimatedGasAmount, gasPrice, qbxToETHExchangeRate)
+  if (!isFiatBacked) {
+    const qbxValueGross = privateChainTxValue.dividedBy(rate)
+    const qbxToETHExchangeRate = await getQBXToETHExchangeRate()
+    const gasPrice = await getGasPrice()
 
-  return {
-    gasPrice,
-    qbxToETHExchangeRate,
-    qbxTxValueAndFees
+    const qbxTxValueAndFees = calculateQBXTxValue(qbxValueGross, estimatedGasAmount, gasPrice, qbxToETHExchangeRate)
+
+    return {
+      gasPrice,
+      qbxToETHExchangeRate,
+      ethToUSDExchangeRate: null,
+      qbxTxValueAndFees
+    }
+  } else {
+    const txRawAmountInUSD = privateChainTxValue.dividedBy(rate)
+    const qbxToETHExchangeRate = await getQBXToETHExchangeRate()
+    const ethToUSDExchangeRate = await getETHToUSDExchangeRate()
+    const qbxToUSDExchangeRate = qbxToETHExchangeRate.multipliedBy(ethToUSDExchangeRate)
+
+    const decimalsMultiplier = (new BigNumber(10)).pow(18)
+    const qbxValueGross = txRawAmountInUSD.dividedBy(qbxToUSDExchangeRate)
+      .multipliedBy(decimalsMultiplier)
+      .integerValue(BigNumber.ROUND_FLOOR)
+    const gasPrice = await getGasPrice()
+
+    const qbxTxValueAndFees = calculateQBXTxValue(qbxValueGross, estimatedGasAmount, gasPrice, qbxToETHExchangeRate)
+
+    return {
+      gasPrice,
+      qbxToETHExchangeRate,
+      ethToUSDExchangeRate,
+      qbxTxValueAndFees
+    }
+  }
+}
+
+function getRate(token) {
+  if (token.fiatBacked) {
+    // calculate rate of 1 wei to the fiat currency
+    const multiplier = (new BigNumber(10)).pow(token.decimals)
+    const weiToFiatRate = (new BigNumber(token.fiatRate)).multipliedBy(multiplier)
+    return weiToFiatRate
+  } else {
+    return new BigNumber(token.rate)
   }
 }
 
 export default {
+  calculateQBXTxValue,
   pullDataAndCalculateQBXTxValue,
   getQBXToETHExchangeRate,
-  QBX_FEE_PERCENTAGE
+  getRate,
+  QBX_FEE_DISPLAY_PERCENTAGE
 }

@@ -1,6 +1,9 @@
 import * as abiDecoder from 'abi-decoder'
 import { BigNumber } from 'bignumber.js'
+import Tx = require('ethereumjs-tx')
+import * as HttpStatus from 'http-status-codes'
 import * as qbDB from 'qb-db-migrations'
+import * as request from 'supertest'
 import utils from '../src/lib/utils'
 import log from '../src/logging'
 
@@ -17,6 +20,10 @@ const ACCOUNTS = [{
 }, {
   address: '0x3f1776f56bc9e9585612fe7790f0dda5b299517f',
   secretKey: 'dc355b8dbd5a7fceb6e9278e01a4ec692c87e15706c40df8053867ee3dd76645',
+  balance: START_BALANCE
+},  {
+  address: '0xbe3128803d95484af5c160c65ad5a74a4729c6cf',
+  secretKey: '7319d2eaad81fae222fe3c0799bfde840c0df744d3aebea8bb48250956f04e61',
   balance: START_BALANCE
 }]
 
@@ -170,10 +177,33 @@ class TestDatabaseConn {
   }
 }
 
+async function sendTransaction(rawTransactionParams, privateChain, app) {
+  const rawTransactionResponse = await request(app).get(`/transactions/raw`).query(rawTransactionParams)
+
+  expect(rawTransactionResponse.status).toBe(HttpStatus.OK)
+  const rawTransaction = rawTransactionResponse.body
+
+  expect(rawTransaction.from).toBe(rawTransactionParams.from)
+  expect(rawTransaction.to).toBe(privateChain.loyaltyTokenContractAddress)
+
+  const privateKey = Buffer.from(ACCOUNTS[0].secretKey, 'hex')
+  const transaction = new Tx(rawTransaction)
+  transaction.sign(privateKey)
+  const serializedTx = transaction.serialize().toString('hex')
+
+  const postTransferParams = {
+    data: serializedTx
+  }
+
+  const sendTransactionResponse = await request(app).post(`/transactions/`).send(postTransferParams)
+  return sendTransactionResponse
+}
+
 export default {
   setupTestConfiguration,
   waitForAppToBeReady,
   TestDatabaseConn,
   makeTestTx,
+  sendTransaction,
   ACCOUNTS
 }

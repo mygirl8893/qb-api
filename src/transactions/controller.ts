@@ -7,6 +7,7 @@ import * as Joi from 'joi'
 
 import Config from '../config'
 import database from '../database'
+import exchangeTxValidation from '../lib/exchangeTxValidation'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
@@ -52,6 +53,8 @@ async function getTx(txHash, sourceWeb3) {
   delete token.id
   delete token.brandId
   delete token.hidden
+  delete token.fiatBacked
+  delete token.fiatRate
 
   transaction.token = token || null
   return transaction
@@ -74,6 +77,8 @@ function formatSingleTransaction(transaction) {
     delete transaction.token.dataValues.id
     delete transaction.token.dataValues.brandId
     delete transaction.token.dataValues.hidden
+    delete transaction.token.dataValues.fiatRate
+    delete transaction.token.dataValues.fiatBacked
   }
   if (transaction.status) {
     transaction.dataValues.status = Boolean(parseInt(transaction.status, 10))
@@ -188,30 +193,10 @@ async function transfer(req, res) {
 
     const loyaltyToken = await database.getTokenByContractAddress(txData.to)
 
-    try {
-      const tempExchangeWallets = await database.getTempExchangeWallets()
-      if (tempExchangeWallets.map((w) => w.address).includes(toAddress)) {
-        log.info(
-          `Transaction detected to be an exchange transaction
-           (sends to wallet ${toAddress}`)
-        const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
-        const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
-        const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
-        const qbxTxValueComputationData =
-          await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
-        if (qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.isLessThan(new BigNumber('0'))) {
-          const errMessage = `Exchange transaction value ${txValueInQBX} in QBX is too low.
-          Estimated gas: ${conservativeGasEstimate.toString()}
-          computation results: ${JSON.stringify(qbxTxValueComputationData)}`
-          log.error(errMessage)
-          return res.status(HttpStatus.BAD_REQUEST).json({ message: errMessage })
-        } else {
-          log.info(`Exchange transaction is valid. Proceeding..`)
-        }
-      }
-    } catch (e) {
-      log.error(`Failed to process potential exchange transaction ${e.stack}`)
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: `Failed to process exchange transaction.` })
+    const validationResponse = await exchangeTxValidation.validateExchangeTx(loyaltyToken, toAddress, decodedTx)
+    if (!validationResponse.valid) {
+      return res.status(validationResponse.errorResponseCode)
+        .json({ message: validationResponse.errorResponseMessage })
     }
 
     if (!loyaltyToken ||
@@ -332,18 +317,20 @@ async function getQBXExchangeValues(req, res) {
   const activeTempExchangeWallet = tempExchangeWallets[0].address
   log.info(`Active exchange wallet address is ${activeTempExchangeWallet}`)
   const txLoyaltyTokenValue = new BigNumber(transferAmount)
-  const txValueInQBX = txLoyaltyTokenValue.dividedBy(new BigNumber(loyaltyToken.rate))
   const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(activeTempExchangeWallet)
+
+  const rate = qbxFeeCalculator.getRate(loyaltyToken)
   const qbxTxValueComputationData =
-    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txValueInQBX, conservativeGasEstimate)
+    await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txLoyaltyTokenValue, rate,
+      conservativeGasEstimate, loyaltyToken.fiatBacked)
   const values = {
     // percentage, qbxFeeAmount, gasFee and final receive value
     qbxFeeAmount: qbxTxValueComputationData.qbxTxValueAndFees.qbxFee.toFixed(),
-    qbxFeePercentage: qbxFeeCalculator.QBX_FEE_PERCENTAGE.toFixed(),
+    qbxFeePercentage: qbxFeeCalculator.QBX_FEE_DISPLAY_PERCENTAGE.toFixed(),
     qbxValueReceived: qbxTxValueComputationData.qbxTxValueAndFees.qbxTxValue.toFixed(),
     costOfGasInQBX: qbxTxValueComputationData.qbxTxValueAndFees.costOfGasInQBX.toFixed(),
     exchangeWalletAddress: activeTempExchangeWallet,
-    loyaltyTokenToQBXRate: loyaltyToken.rate
+    loyaltyTokenToQBXRate: !loyaltyToken.fiatBacked ? loyaltyToken.rate : undefined
   }
 
   return res.json(values)

@@ -11,28 +11,17 @@ import exchangeTxValidation from '../lib/exchangeTxValidation'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
+import formatting from '../lib/formatting'
 import log from '../logging'
 import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
-function toAPIToken(token) {
-  return {
-    contractAddress: token.contractAddress,
-    decimals: token.decimals,
-    description: token.description,
-    name: token.name,
-    rate: token.rate,
-    symbol: token.symbol,
-    totalSupply: token.totalSupply,
-    website: token.website
-  }
-}
 
 function toAPITransaction(transaction) {
   const status = transaction.status ?  Boolean(parseInt(transaction.status, 10)) : null
 
-  const token = transaction.token ? toAPIToken(transaction.token) : null
+  const token = transaction.token ? formatting.toAPIToken(transaction.token) : null
 
   return {
     to: transaction.toAddress,
@@ -88,7 +77,7 @@ async function getTx(txHash, sourceWeb3) {
   delete transaction.s
 
   const token = await database.getTokenByContractAddress(transaction.contract)
-  transaction.token = token ? toAPIToken(token) : null
+  transaction.token = token ? formatting.toAPIToken(token) : null
   return transaction
 }
 

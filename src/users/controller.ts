@@ -9,8 +9,8 @@ import validation from '../validation'
 const web3 = Config.getPrivateWeb3()
 const web3Pub = Config.getPublicWeb3()
 
-const QBX_TOKEN_DESC = 'With qiibee, businesses around the world can run their loyalty programs on the blockchain.' +
-  ' Exchange loyalty tokens to QBX and enter the crypto world'
+const QBX_TOKEN_DESC = 'With qiibee, businesses around the world can run their loyalty programs on the blockchain.\
+Exchange loyalty tokens to QBX and enter the crypto world'
 
 async function getBalance(from: string = null, contractAddress: string): Promise<string> {
   const Token = TokenController.loyaltyToken(contractAddress.toLowerCase())

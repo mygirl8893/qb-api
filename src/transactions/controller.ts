@@ -16,6 +16,45 @@ import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
 
+function toAPIToken(token) {
+  return {
+    contractAddress: token.contractAddress,
+    decimals: token.decimals,
+    description: token.description,
+    name: token.name,
+    rate: token.rate,
+    symbol: token.symbol,
+    totalSupply: token.totalSupply,
+    website: token.website
+  }
+}
+
+function toAPITransaction(transaction) {
+  const status = transaction.status ?  Boolean(parseInt(transaction.status, 10)) : null
+
+  const token = transaction.token ? toAPIToken(transaction.token) : null
+
+  return {
+    to: transaction.toAddress,
+    from: transaction.fromAddress,
+    contract: transaction.contractAddress,
+    blockHash: transaction.blockHash,
+    blockNumber: transaction.blockNumber,
+    confirms: transaction.confirms,
+    hash: transaction.hash,
+    input: transaction.input,
+    nonce: transaction.nonce,
+    state: transaction.state,
+    status,
+    timestamp: transaction.timestamp,
+    transactionIndex: transaction.transactionIndex,
+    value: transaction.value,
+    txType: transaction.txType,
+    contractFunction: transaction.contractFunction,
+    token
+  }
+}
+
 async function getTx(txHash, sourceWeb3) {
   const endBlockNumber = await sourceWeb3.eth.getBlock('latest')
   const transactionReceipt = await sourceWeb3.eth.getTransactionReceipt(txHash.toLowerCase())
@@ -49,47 +88,8 @@ async function getTx(txHash, sourceWeb3) {
   delete transaction.s
 
   const token = await database.getTokenByContractAddress(transaction.contract)
-  delete token.balance
-  delete token.id
-  delete token.brandId
-  delete token.hidden
-  delete token.fiatBacked
-  delete token.fiatRate
-
-  transaction.token = token || null
+  transaction.token = token ? toAPIToken(token) : null
   return transaction
-}
-
-const txBelongsTo = (address, tx, decodedTx) => (
-  tx.from.toLowerCase() === address ||
-  tx.to.toLowerCase() === address ||
-  decodedTx.params[0].value.toLowerCase() === address
-)
-
-function formatSingleTransaction(transaction) {
-  transaction.dataValues.to = transaction.toAddress
-  delete transaction.dataValues.toAddress
-  transaction.dataValues.from = transaction.fromAddress
-  delete transaction.dataValues.fromAddress
-  transaction.dataValues.contract = transaction.contractAddress
-
-  if (transaction.token) {
-    delete transaction.token.dataValues.id
-    delete transaction.token.dataValues.brandId
-    delete transaction.token.dataValues.hidden
-    delete transaction.token.dataValues.fiatRate
-    delete transaction.token.dataValues.fiatBacked
-  }
-  if (transaction.status) {
-    transaction.dataValues.status = Boolean(parseInt(transaction.status, 10))
-  }
-
-  delete transaction.dataValues.contractAddress
-  delete transaction.dataValues.id
-  delete transaction.dataValues.tokenId
-  delete transaction.dataValues.contractFunction
-  delete transaction.dataValues.txType
-  delete transaction.dataValues.chainId
 }
 
 const getTransactionSchema = Joi.object().keys({
@@ -107,8 +107,10 @@ async function getTransaction(req, res) {
     const oldChainId = Config.getOldChainID()
     if (oldChainId && storedTx.chainId && `${storedTx.chainId}` === oldChainId) {
       log.info(`Fetching old chain transaction ${req.params.hash} from the database.`)
-      formatSingleTransaction(storedTx)
-      return res.json(storedTx)
+      const tx = toAPITransaction(storedTx)
+      delete tx.contractFunction
+      delete tx.txType
+      return res.json(tx)
     }
 
     const tx = await getTx(req.params.hash, web3)
@@ -141,7 +143,13 @@ async function getTransactions(req, res) {
   const { offset, symbol, contractAddress, wallet } = req.query
   let { limit } = req.query
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
-  const history = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
+  const dbHistory = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
+  const history = dbHistory.map(t => {
+    const apiTx = toAPITransaction(t)
+    apiTx['contractAddress'] = apiTx.contract
+    delete apiTx.contract
+    return apiTx
+  })
   return res.json(history)
 }
 
@@ -163,8 +171,13 @@ async function getHistory(req, res) {
   const address = req.params.address.toLowerCase()
   log.info(`Fetching transaction history for address ${address} with limit ${limit} and offset ${offset}`)
 
-  const history = await database.getTransactionHistory(address, limit, offset)
-
+  const dbHistory = await database.getTransactionHistory(address, limit, offset)
+  const history = dbHistory.map(t => {
+    const apiTx = toAPITransaction(t)
+    apiTx['contractAddress'] = apiTx.contract
+    delete apiTx.contract
+    return apiTx
+  })
   return res.json(history)
 }
 

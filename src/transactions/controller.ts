@@ -8,15 +8,14 @@ import * as Joi from 'joi'
 import Config from '../config'
 import database from '../database'
 import exchangeTxValidation from '../lib/exchangeTxValidation'
+import formatting from '../lib/formatting'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
-import formatting from '../lib/formatting'
 import log from '../logging'
 import validation from '../validation'
 
 const web3 = Config.getPrivateWeb3()
-
 
 function toAPITransaction(transaction) {
   const status = transaction.status ?  Boolean(parseInt(transaction.status, 10)) : null
@@ -96,10 +95,10 @@ async function getTransaction(req, res) {
     const oldChainId = Config.getOldChainID()
     if (oldChainId && storedTx.chainId && `${storedTx.chainId}` === oldChainId) {
       log.info(`Fetching old chain transaction ${req.params.hash} from the database.`)
-      const tx = toAPITransaction(storedTx)
-      delete tx.contractFunction
-      delete tx.txType
-      return res.json(tx)
+      const oldChainTx = toAPITransaction(storedTx)
+      delete oldChainTx.contractFunction
+      delete oldChainTx.txType
+      return res.json(oldChainTx)
     }
 
     const tx = await getTx(req.params.hash, web3)
@@ -133,9 +132,9 @@ async function getTransactions(req, res) {
   let { limit } = req.query
   limit = Math.min(limit, MAX_HISTORY_LIMIT) // cap it
   const dbHistory = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
-  const history = dbHistory.map(t => {
+  const history = dbHistory.map((t) => {
     const apiTx = toAPITransaction(t)
-    apiTx['contractAddress'] = apiTx.contract
+    apiTx.contractAddress = apiTx.contract
     delete apiTx.contract
     return apiTx
   })
@@ -161,9 +160,9 @@ async function getHistory(req, res) {
   log.info(`Fetching transaction history for address ${address} with limit ${limit} and offset ${offset}`)
 
   const dbHistory = await database.getTransactionHistory(address, limit, offset)
-  const history = dbHistory.map(t => {
+  const history = dbHistory.map((t) => {
     const apiTx = toAPITransaction(t)
-    apiTx['contractAddress'] = apiTx.contract
+    apiTx.contractAddress = apiTx.contract
     delete apiTx.contract
     return apiTx
   })

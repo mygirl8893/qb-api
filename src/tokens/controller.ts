@@ -2,10 +2,10 @@ import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
 import Config from '../config'
 import database from '../database'
+import formatting from '../lib/formatting'
 import log from '../logging'
 import User from '../users/controller'
 import validation from '../validation'
-import formatting from '../lib/formatting'
 
 const web3 = Config.getPrivateWeb3()
 

@@ -134,6 +134,7 @@ async function getTransactions(req, res) {
   const dbHistory = await database.getTransactions(limit, offset, symbol, contractAddress, wallet)
   const history = dbHistory.map((t) => {
     const apiTx = toAPITransaction(t)
+    // @ts-ignore
     apiTx.contractAddress = apiTx.contract
     delete apiTx.contract
     return apiTx
@@ -162,6 +163,7 @@ async function getHistory(req, res) {
   const dbHistory = await database.getTransactionHistory(address, limit, offset)
   const history = dbHistory.map((t) => {
     const apiTx = toAPITransaction(t)
+    // @ts-ignore
     apiTx.contractAddress = apiTx.contract
     delete apiTx.contract
     return apiTx

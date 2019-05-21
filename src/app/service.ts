@@ -1,5 +1,5 @@
 import * as aesjs from 'aes-js'
-
+import axios from 'axios'
 import Config from '../config'
 
 const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
@@ -24,6 +24,19 @@ async function encryptString(plainText): Promise<string> {
   return encryptedHex
 }
 
+async function getEthTxHistory(wallet: string) {
+  const etherscanUrl = `http://api.etherscan.io/api?module=account&action=txlist&address=${wallet}&sort=desc`
+  try {
+    // tslint:disable-next-line:no-string-literal
+    const transactionHistory = (await axios.get(etherscanUrl))['data']['result']
+    const transferTransactions = transactionHistory.filter((tx) => parseInt(tx.value, 10) > 0)
+    return transferTransactions
+  } catch (err) {
+    throw err
+  }
+}
+
 export default {
-  encryptString
+  encryptString,
+  getEthTxHistory
 }

@@ -1,7 +1,7 @@
-import Config from '../config'
-import { BigNumber } from 'bignumber.js'
-import database from '../database'
 import * as abiDecoder from 'abi-decoder'
+import { BigNumber } from 'bignumber.js'
+import Config from '../config'
+import database from '../database'
 
 import tokenHelpers from '../tokens/helpers'
 

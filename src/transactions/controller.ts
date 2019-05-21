@@ -8,7 +8,7 @@ import * as Joi from 'joi'
 import Config from '../config'
 import database from '../database'
 import exchangeTxValidation from '../lib/exchangeTxValidation'
-import formatting from '../lib/formatting'
+import tokenHelpers from '../tokens/helpers'
 import publicBlockchain from '../lib/publicBlockchain'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 import utils from '../lib/utils'
@@ -20,7 +20,7 @@ const web3 = Config.getPrivateWeb3()
 function toAPITransaction(transaction) {
   const status = transaction.status ?  Boolean(parseInt(transaction.status, 10)) : null
 
-  const token = transaction.token ? formatting.toAPIToken(transaction.token) : null
+  const token = transaction.token ? tokenHelpers.toAPIToken(transaction.token) : null
 
   return {
     to: transaction.toAddress,
@@ -76,7 +76,7 @@ async function getTx(txHash, sourceWeb3) {
   delete transaction.s
 
   const token = await database.getTokenByContractAddress(transaction.contract)
-  transaction.token = token ? formatting.toAPIToken(token) : null
+  transaction.token = token ? tokenHelpers.toAPIToken(token) : null
   return transaction
 }
 

@@ -2,7 +2,7 @@ import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
 import Config from '../config'
 import database from '../database'
-import formatting from '../lib/formatting'
+import helpers from './helpers'
 import log from '../logging'
 import User from '../users/controller'
 import validation from '../validation'
@@ -22,7 +22,7 @@ async function getTokens(req, res) {
   for (const token of tokens) {
     const balance = await User.getBalance(req.query.from, token.contractAddress)
 
-    const apiToken = formatting.toAPIToken(token)
+    const apiToken = helpers.toAPIToken(token)
     // @ts-ignore
     apiToken.balance = balance
     // @ts-ignore
@@ -71,7 +71,7 @@ async function getToken(req, res) {
     const token = await database.getTokenByContractAddress(contractAddress)
     if (token) {
       const balance = await User.getBalance(req.query.from, contractAddress)
-      const apiToken = formatting.toAPIToken(token)
+      const apiToken = helpers.toAPIToken(token)
       // @ts-ignore
       apiToken.balance = balance
       // @ts-ignore

@@ -23,10 +23,10 @@ async function getTokens(req, res) {
     const balance = await User.getBalance(req.query.from, token.contractAddress)
 
     const apiToken = helpers.toAPIToken(token)
-    // @ts-ignore
-    apiToken.balance = balance
-    // @ts-ignore
-    apiToken.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+    // tslint:disable-next-line
+    apiToken['balance'] = balance
+    // tslint:disable-next-line
+    apiToken['logoUrl'] = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
     apiTokens.push(apiToken)
   }
 
@@ -72,10 +72,10 @@ async function getToken(req, res) {
     if (token) {
       const balance = await User.getBalance(req.query.from, contractAddress)
       const apiToken = helpers.toAPIToken(token)
-      // @ts-ignore
-      apiToken.balance = balance
-      // @ts-ignore
-      apiToken.logoUrl = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
+      // tslint:disable-next-line
+      apiToken['balance'] = balance
+      // tslint:disable-next-line
+      apiToken['logoUrl'] = `${Config.getS3Url()}/${token.symbol.toLowerCase()}/logo.png`
       return res.json({ private: apiToken }) // TODO: we should remove the 'private' property from here
     } else {
       res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token has not been found'})

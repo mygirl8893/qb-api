@@ -142,8 +142,6 @@ describe('App endpoint', () => {
     const response = await request(app).get(
       '/app/mainnet/transactions')
 
-    encryptedHexSecret = response.body
-
     expect(response.status).toEqual(HttpStatus.BAD_REQUEST)
     expect(errorResponse).toEqual(response.body)
   })
@@ -159,8 +157,6 @@ describe('App endpoint', () => {
 
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=ETH')
-
-    encryptedHexSecret = response.body.key
 
     expect(response.status).toEqual(HttpStatus.OK)
     expect(response.body.length).toEqual(100)
@@ -181,8 +177,6 @@ describe('App endpoint', () => {
 
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=ETH&limit=3')
-
-    encryptedHexSecret = response.body.key
 
     expect(response.status).toEqual(HttpStatus.OK)
     expect(response.body.length).toEqual(3)

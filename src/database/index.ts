@@ -4,6 +4,21 @@ import * as sequelize from 'sequelize'
 const Token = qbDB.models.token
 const Op = sequelize.Op
 
+async function getQbxTransactionHistory(address: string, limit: number) {
+  const transactions = await qbDB.models.mainnetTransaction.findAll({
+    where: {
+      $or: {
+        toAddress: { $eq: address},
+        fromAddress: { $eq: address}
+      }
+    },
+    order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
+    limit
+  })
+  formatTransactionsList(transactions)
+  return transactions
+}
+
 async function getTransactions(limit: number, offset: number, symbol: string,
                                contractAddress: string,
                                walletAddress: string) {
@@ -149,6 +164,7 @@ async function close() {
 }
 
 export default {
+  getQbxTransactionHistory,
   getTransaction,
   getTransactions,
   getTransactionHistory,

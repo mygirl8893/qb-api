@@ -7,7 +7,7 @@
   "private": false,
   "main": "dist/index.js",
   "scripts": {
-    "test": "node_modules/jest/bin/jest.js __tests__/integration/*.test.ts --runInBand --detectOpenHandles",
+    "test": "node_modules/jest/bin/jest.js __tests__/integration/app.test.ts --runInBand --detectOpenHandles",
     "start": "ts-node server.ts",
     "build": "rm -rf dist && ./node_modules/.bin/tsc -p ./tsconfig.json && mkdir -p ./dist/src/contracts && cp ./src/contracts/* ./dist/src/contracts/",
     "serve": "pm2-runtime start dist/server.js --name qb-api",
@@ -61,7 +61,7 @@
     "mysql2": "^1.6.1",
     "node-cache": "^4.2.0",
     "pm2": "^3.3.1",
-    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#v1.6.0",
+    "qb-db-migrations": "git+ssh@github.com:qiibee/qb-db-migrations.git#3088c17821ab846842d72b3f1104db68750c1edc",
     "sequelize": "^4.38.0",
     "swagger": "^0.7.5",
     "swagger-jsdoc": "^1.9.7",

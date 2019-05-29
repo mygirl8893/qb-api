@@ -34,12 +34,12 @@ async function getTransactions(req, res) {
     // get both and combine
   } else if (symbol === 'ETH') {
     // get ETH
-    const ethHistory = await Service.getEthTxHistory(wallet)
-    return res.json(ethHistory.slice(0, limit))
+    const ethHistory = await Service.getEthTxHistory(wallet, limit)
+    return res.json(ethHistory)
   } else if (symbol === 'QBX') {
     // get QBX
-    const qbxHistory = await Service.getEthTxHistory(wallet)
-    return res.json(qbxHistory.slice(0, limit))
+    const qbxHistory = await Service.getQbxTxHistory(wallet, limit)
+    return res.json(qbxHistory)
   } else {
     logger.error(`'getTransactions' failed with symbol ${symbol}`)
     return errorResponse(res, 'Something went wrong', 500)

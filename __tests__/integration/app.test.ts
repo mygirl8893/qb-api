@@ -44,6 +44,7 @@ describe('App endpoint', () => {
   let privateChain = null
   let testDbConn = null
   let apiDbConn = null
+  let qbxHistoryDbCallMock = null
 
   const fakeEthHistory = Array(1000).fill(null).map((_, index) => ({
     blockNumber: (6389500 + index).toString(10),
@@ -64,6 +65,31 @@ describe('App endpoint', () => {
     cumulativeGasUsed: '7874881',
     gasUsed: '22484',
     confirmations: '1412055'
+  }))
+
+  const fakeQbxHistory = Array(1000).fill(null).map((_, index) => ({
+    id: index,
+    chainId: 2,
+    blockNumber: (6389500 + index).toString(10),
+    timeStamp: (1537775300 + index).toString(10),
+    hash: '0x45a5213c27bcbd2c51cdc3ef4840ee27e0ef98b29689fa6bb48fe1e5abbc8814',
+    nonce: '9',
+    blockHash: '0x40795f9968485b6c15558215cba3a7484507ef59964325778f52da191b1eea33',
+    transactionIndex: '22',
+    from: '0x9636de4952a215b1e69c8a777bee9bdc231c22c8',
+    to: '0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae',
+    value: (10 * Math.round(Math.random())).toString(10),
+    gas: '29229',
+    gasPrice: '8000000000',
+    isError: '0',
+    status: '1',
+    input: '0x',
+    contractAddress: '0xc736de4952a215b1e69c8a777bee9bdc231y68x9',
+    contractFunction: 'transfer',
+    cumulativeGasUsed: '7874881',
+    gasUsed: '22484',
+    createdAt: (1537775300 + index).toString(10),
+    updatedAt: (1537775300 + index).toString(10)
   }))
 
   const cryptoTransferHistory = fakeEthHistory.filter((tx) => parseInt(tx.value, 10) > 0)
@@ -88,6 +114,9 @@ describe('App endpoint', () => {
       apiDbConn = require('../../src/database').default
 
       await APITesting.waitForAppToBeReady(Config)
+
+      const dbService = require('../../src/database/index')
+      qbxHistoryDbCallMock = jest.spyOn(dbService.default, 'getQbxTransactionHistory')
     } catch (e) {
       log.error(`Failed setting up the test context ${e.stack}`)
       throw e
@@ -183,6 +212,30 @@ describe('App endpoint', () => {
     expect(ethHistoryScope.isDone()).toBeTruthy()
     // only TXs where crypto was transferred
     expect(response.body).toEqual(cryptoTransferHistory.slice(0, 3))
+    done()
+  })
+
+  it('Returns 200 and transaction history for QBX', async (done) => {
+
+    qbxHistoryDbCallMock.mockImplementation(() => fakeQbxHistory.slice(0, 100))
+
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX')
+
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(response.body).toEqual(fakeQbxHistory.slice(0, 100))
+    done()
+  })
+
+  it('Returns 200 and transaction history for QBX with limit 10', async (done) => {
+
+    qbxHistoryDbCallMock.mockImplementation(() => fakeQbxHistory.slice(0, 10))
+
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX&limit=10')
+
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(response.body).toEqual(fakeQbxHistory.slice(0, 10))
     done()
   })
 })

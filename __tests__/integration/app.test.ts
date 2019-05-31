@@ -1,4 +1,5 @@
 import * as aesjs from 'aes-js'
+import BigNumber from 'bignumber.js'
 import * as HttpStatus from 'http-status-codes'
 import * as nock from 'nock'
 import * as request from 'supertest'
@@ -78,7 +79,7 @@ describe('App endpoint', () => {
     transactionIndex: '22',
     from: '0x9636de4952a215b1e69c8a777bee9bdc231c22c8',
     to: '0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae',
-    value: (10 * Math.round(Math.random())).toString(10),
+    value: (10 * Math.round(Math.random() + 1)).toString(10),
     gas: '29229',
     gasPrice: '8000000000',
     isError: '0',
@@ -92,7 +93,7 @@ describe('App endpoint', () => {
     updatedAt: (1537775300 + index).toString(10)
   }))
 
-  const cryptoTransferHistory = fakeEthHistory.filter((tx) => parseInt(tx.value, 10) > 0)
+  const nonZeroEthHistory = fakeEthHistory.filter((tx) => parseInt(tx.value, 10) > 0)
 
   beforeAll(async () => {
 
@@ -191,7 +192,7 @@ describe('App endpoint', () => {
     expect(response.body.length).toEqual(100)
     expect(ethHistoryScope.isDone()).toBeTruthy()
     // only TXs where crypto was transferred
-    expect(response.body).toEqual(cryptoTransferHistory.slice(0, 100))
+    expect(response.body).toEqual(nonZeroEthHistory.slice(0, 100))
     done()
   })
 
@@ -211,13 +212,13 @@ describe('App endpoint', () => {
     expect(response.body.length).toEqual(3)
     expect(ethHistoryScope.isDone()).toBeTruthy()
     // only TXs where crypto was transferred
-    expect(response.body).toEqual(cryptoTransferHistory.slice(0, 3))
+    expect(response.body).toEqual(nonZeroEthHistory.slice(0, 3))
     done()
   })
 
   it('Returns 200 and transaction history for QBX', async (done) => {
 
-    qbxHistoryDbCallMock.mockImplementation(() => fakeQbxHistory.slice(0, 100))
+    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
 
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX')
@@ -229,13 +230,69 @@ describe('App endpoint', () => {
 
   it('Returns 200 and transaction history for QBX with limit 10', async (done) => {
 
-    qbxHistoryDbCallMock.mockImplementation(() => fakeQbxHistory.slice(0, 10))
+    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
 
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX&limit=10')
 
     expect(response.status).toEqual(HttpStatus.OK)
     expect(response.body).toEqual(fakeQbxHistory.slice(0, 10))
+    done()
+  })
+
+  it('Returns 200 and mixed transaction history in correct order for QBX and ETH', async (done) => {
+
+    const ethHistoryScope = nock(`http://api.etherscan.io`)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+      .times(1)
+      .reply(200, {
+        result: fakeEthHistory
+      })
+
+    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
+
+    // have to slice since the fake generated history has consecutive timestamps
+    // the contoller will take a default limit of 100 from each and then merge them
+    const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
+      .sort((h1, h2) => {
+        const a = new BigNumber(h1.timeStamp)
+        const b = new BigNumber(h2.timeStamp)
+        return a.minus(b).toNumber()
+      })
+
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(ethHistoryScope.isDone()).toBeTruthy()
+    expect(response.body).toEqual(mixedHistory.slice(0, 100))
+    done()
+  })
+
+  it('Returns 200 and mixed transaction history in correct order for QBX and ETH with limit 10', async (done) => {
+
+    const ethHistoryScope = nock(`http://api.etherscan.io`)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+      .times(1)
+      .reply(200, {
+        result: fakeEthHistory
+      })
+
+    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
+
+    const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
+      .sort((h1, h2) => {
+        const a = new BigNumber(h1.timeStamp)
+        const b = new BigNumber(h2.timeStamp)
+        return a.minus(b).toNumber()
+      })
+
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&limit=10')
+
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(ethHistoryScope.isDone()).toBeTruthy()
+    expect(response.body).toEqual(mixedHistory.slice(0, 10))
     done()
   })
 })

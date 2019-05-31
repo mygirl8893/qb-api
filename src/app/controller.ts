@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import * as Joi from 'joi'
 
 import Config from '../config/'
@@ -31,7 +32,16 @@ async function getTransactions(req, res) {
   const { wallet, limit, symbol } = req.query
 
   if (!symbol) {
-    // get both and combine
+    // get both and combine; while getting get 100 of each and combine
+    const ethHistory = await Service.getEthTxHistory(wallet, 100)
+    const qbxHistory = await Service.getQbxTxHistory(wallet, 100)
+    const mixedHistory = [...ethHistory, ...qbxHistory]
+      .sort((h1, h2) => {
+        const a = new BigNumber(h1.timeStamp)
+        const b = new BigNumber(h2.timeStamp)
+        return a.minus(b).toNumber()
+      })
+    return res.json(mixedHistory.slice(0, limit))
   } else if (symbol === 'ETH') {
     // get ETH
     const ethHistory = await Service.getEthTxHistory(wallet, limit)
@@ -44,8 +54,6 @@ async function getTransactions(req, res) {
     logger.error(`'getTransactions' failed with symbol ${symbol}`)
     return errorResponse(res, 'Something went wrong', 500)
   }
-
-  res.status(200).json({ key: 'encryptedKey' })
 }
 
 function errorResponse(res, message: string, status = 500) {

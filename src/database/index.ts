@@ -53,7 +53,6 @@ async function getTransactions(limit: number, offset: number, symbol: string,
       }
     }]
   })
-  formatTransactionsList(transactions)
   return transactions
 }
 
@@ -70,28 +69,7 @@ async function getTransactionHistory(address: string, limit: number, offset: num
     offset,
     include: [qbDB.models.token]
   })
-  formatTransactionsList(transactions)
   return transactions
-}
-
-function formatTransactionsList(transactions) {
-  transactions.forEach((t) => {
-    t.dataValues.to = t.toAddress
-    delete t.dataValues.toAddress
-
-    t.dataValues.from = t.fromAddress
-    delete t.dataValues.fromAddress
-
-    if (t.token) {
-      delete t.token.dataValues.id
-      delete t.token.dataValues.brandId
-      delete t.token.dataValues.hidden
-      delete t.token.dataValues.fiatBacked
-      delete t.token.dataValues.fiatRate
-    }
-
-    delete t.dataValues.confirms
-  })
 }
 
 async function getTransaction(hash: string) {

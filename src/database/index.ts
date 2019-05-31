@@ -15,7 +15,6 @@ async function getQbxTransactionHistory(address: string, limit: number) {
     order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
     limit
   })
-  formatTransactionsList(transactions)
   return transactions
 }
 

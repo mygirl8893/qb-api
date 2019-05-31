@@ -280,6 +280,7 @@ describe('App endpoint', () => {
 
     qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
 
+    // take 100 of each and combine and return `limit` number of entries
     const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
       .sort((h1, h2) => {
         const a = new BigNumber(h1.timeStamp)

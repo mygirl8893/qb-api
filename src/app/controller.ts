@@ -33,6 +33,7 @@ async function getTransactions(req, res) {
 
   if (!symbol) {
     // get both and combine; while getting get 100 of each and combine
+    // 100 since max is 100
     const ethHistory = await Service.getEthTxHistory(wallet, 100)
     const qbxHistory = await Service.getQbxTxHistory(wallet, 100)
     const mixedHistory = [...ethHistory, ...qbxHistory]

@@ -70,7 +70,6 @@ describe('App endpoint', () => {
 
   const fakeQbxHistory = Array(1000).fill(null).map((_, index) => ({
     id: index,
-    chainId: 2,
     blockNumber: (6389500 + index).toString(10),
     timeStamp: (1537775300 + index).toString(10),
     hash: '0x45a5213c27bcbd2c51cdc3ef4840ee27e0ef98b29689fa6bb48fe1e5abbc8814',

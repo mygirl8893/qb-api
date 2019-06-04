@@ -15,7 +15,17 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   {}
 ).methods
 
+
+const getTokensSchema = Joi.object().keys({
+  params: Joi.object().keys({
+    walletAddress: validation.ethereumAddress(),
+    from: validation.ethereumAddress()
+  })
+})
+
 async function getTokens(req, res) {
+  req = validation.validateRequestInput(req, getTokensSchema)
+
   let publicTokens
   const tokens = await database.getTokens()
   const apiTokens = []

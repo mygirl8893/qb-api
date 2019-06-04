@@ -94,15 +94,16 @@ function makeStoreableTransaction(original, receipt, block) {
   return transaction
 }
 
-function makeTestTx(hash, chainId, value, contractAddress, tokenId, confirms) {
+function makeTestTx(hash: string, chainId: any, value: string, contractAddress: string,
+                    tokenId: number, confirms: number, fromAddress: string = undefined, toAddress: string = undefined) {
   return {
     hash,
     nonce: 32,
     blockHash: '0x557c39f6cad68f0790e10493300b7f1cf0b0ec0e5869a2f27ac45bdeb7abd099',
     blockNumber: 2027,
     transactionIndex: 0,
-    fromAddress: '0x91d48cc009bc27e712b356093d9f5088d8f81e3d',
-    toAddress: '0x91d48cc009bc27e712b356093d9f5088d8f81e3a',
+    fromAddress: fromAddress || '0x91d48cc009bc27e712b356093d9f5088d8f81e3d',
+    toAddress: toAddress || '0x91d48cc009bc27e712b356093d9f5088d8f81e3a',
     value,
     input: '0xa9059cbb00000000000000000000000091d48cc009bc27e712b356093d9f5088d8' +
       'f81e3a000000000000000000000000000000000000000000000000000000000000000a',
@@ -120,6 +121,7 @@ function makeTestTx(hash, chainId, value, contractAddress, tokenId, confirms) {
 
 class TestDatabaseConn {
   private testToken
+  private brand
 
   public async setup(existingToken, tempWalletAddress: string, brandAddress: string): Promise<void> {
     log.info(`Adding test token ${existingToken.symbol}.`)
@@ -131,6 +133,7 @@ class TestDatabaseConn {
     }
     await qbDB.models.brand.create(firstBrand)
     const newBrand = await qbDB.models.brand.find({where: {legalName: firstBrand.legalName}})
+    this.brand = newBrand
     await qbDB.models.brandAddress.create({ address: brandAddress, brandId: newBrand.id })
 
     existingToken.brandId = newBrand.id
@@ -141,7 +144,7 @@ class TestDatabaseConn {
     delete nonDeployedToken.contractAddress
     nonDeployedToken.symbol = 'SDS'
     nonDeployedToken.name = 'Not deployed token'
-    await qbDB.models.token.create(nonDeployedToken)
+    const newNonDeployedToken = await qbDB.models.token.create(nonDeployedToken)
 
     await qbDB.models.tempExchangeWallet.create({
       address: tempWalletAddress
@@ -170,6 +173,18 @@ class TestDatabaseConn {
 
   public async insertTransaction(tx) {
     await qbDB.models.transaction.create(tx)
+  }
+
+  public async clearTransactions() {
+    await qbDB.models.transaction.destroy({ where: {} })
+  }
+
+  public async createToken(token) {
+    token.brandId = this.brand.id
+    await qbDB.models.token.create(token)
+
+    const created = await qbDB.models.token.find({ where: { symbol: token.symbol } })
+    return created
   }
 
   public async close() {

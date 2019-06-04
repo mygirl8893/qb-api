@@ -26,17 +26,21 @@ const getTokensSchema = Joi.object().keys({
 async function getTokens(req, res) {
   req = validation.validateRequestInput(req, getTokensSchema)
 
-  let ownedTokens = []
-  if (req.params.walletAddress) {
-    log.info(`Requesting tokens with walletAddress = ${req.params.walletAddress}`)
-    ownedTokens = await database.getOwnedTokens(req.params.walletAddress)
+  const walletAddress = req.query.walletAddress
+  let ownedTokenIds = []
+  if (walletAddress) {
+    log.info(`Requesting tokens with walletAddress = ${walletAddress}`)
+    const ownedTokens = await database.getOwnedTokens(walletAddress)
+    ownedTokenIds = ownedTokens.map(t => t.id)
   }
 
   let publicTokens
   const tokens = await database.getTokens()
   const apiTokens = []
   for (const token of tokens) {
-    if (token.hidden && !ownedTokens.includes(token.id)) {
+
+    // @ts-ignore
+    if (token.hidden && !ownedTokenIds.includes(token.id)) {
       continue
     }
 

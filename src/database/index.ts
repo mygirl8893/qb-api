@@ -126,7 +126,8 @@ async function getOwnedTokens(walletAddress: string) {
     `SELECT DISTINCT(tokens.id) FROM tokens LEFT JOIN transactions ON\
      (transactions.tokenId = tokens.id AND transactions.toAddress = ?)\
       where transactions.toAddress is not null;`, {
-      replacements: [walletAddress]
+      replacements: [walletAddress],
+      type: qbDB.models.sequelize.QueryTypes.SELECT
     })
 
   return response

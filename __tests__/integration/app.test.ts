@@ -1,7 +1,9 @@
 import * as aesjs from 'aes-js'
 import BigNumber from 'bignumber.js'
 import * as HttpStatus from 'http-status-codes'
+import * as _ from 'lodash'
 import * as nock from 'nock'
+import * as qbDB from 'qb-db-migrations'
 import * as request from 'supertest'
 
 import log from '../../src/logging'
@@ -45,9 +47,8 @@ describe('App endpoint', () => {
   let privateChain = null
   let testDbConn = null
   let apiDbConn = null
-  let qbxHistoryDbCallMock = null
 
-  const fakeEthHistory = Array(1000).fill(null).map((_, index) => ({
+  const fakeEthHistory = Array(1000).fill(null).map((val, index) => ({
     blockNumber: (6389500 + index).toString(10),
     timeStamp: (1537775300 + index).toString(10),
     hash: '0x45a5213c27bcbd2c51cdc3ef4840ee27e0ef98b29689fa6bb48fe1e5abbc8814',
@@ -66,33 +67,35 @@ describe('App endpoint', () => {
     cumulativeGasUsed: '7874881',
     gasUsed: '22484',
     confirmations: '1412055'
-  }))
+  })).reverse()
 
-  const fakeQbxHistory = Array(1000).fill(null).map((_, index) => ({
-    id: index,
-    blockNumber: (6389500 + index).toString(10),
-    timeStamp: (1537775300 + index).toString(10),
-    hash: '0x45a5213c27bcbd2c51cdc3ef4840ee27e0ef98b29689fa6bb48fe1e5abbc8814',
-    nonce: '9',
+  const fakeQbxHistory = Array(1000).fill(null).map((val, index) => ({
+    blockNumber: 6389500 + index,
+    timestamp: 1537775300 + index,
+    // `1000 + index` to fill up last 4 places with random
+    hash: '0x45a5213c27bcbd2c51cdc3ef4840ee27e0ef98b29689fa6bb48fe1e5abbc' + (1000 + index),
+    nonce: 9,
     blockHash: '0x40795f9968485b6c15558215cba3a7484507ef59964325778f52da191b1eea33',
-    transactionIndex: '22',
+    transactionIndex: 22,
     from: '0x9636de4952a215b1e69c8a777bee9bdc231c22c8',
     to: '0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae',
-    value: (10 * Math.round(Math.random() + 1)).toString(10),
-    gas: '29229',
-    gasPrice: '8000000000',
-    isError: '0',
+    value: (10 * Math.round(Math.random() + 1)).toString(),
     status: '1',
     input: '0x',
+    confirms: 123,
     contractAddress: '0xc736de4952a215b1e69c8a777bee9bdc231y68x9',
-    contractFunction: 'transfer',
-    cumulativeGasUsed: '7874881',
-    gasUsed: '22484',
-    createdAt: (1537775300 + index).toString(10),
-    updatedAt: (1537775300 + index).toString(10)
-  }))
+    contractFunction: 'transfer'
+  })).reverse() // reverse to make timestamp in desc order
 
-  const nonZeroEthHistory = fakeEthHistory.filter((tx) => parseInt(tx.value, 10) > 0)
+  const nonZeroEthHistory = fakeEthHistory
+    .filter((tx) => parseInt(tx.value, 10) > 0)
+    .map((tx) => {
+      const temp = { ...tx }  // so that main object does not get edited
+      // tslint:disable-next-line:no-string-literal
+      temp['timestamp'] = temp.timeStamp
+      delete temp.timeStamp
+      return temp
+    })
 
   beforeAll(async () => {
 
@@ -115,8 +118,24 @@ describe('App endpoint', () => {
 
       await APITesting.waitForAppToBeReady(Config)
 
-      const dbService = require('../../src/database/index')
-      qbxHistoryDbCallMock = jest.spyOn(dbService.default, 'getQbxTransactionHistory')
+      const allowedFields = ['blockNumber', 'timestamp', 'hash', 'nonce', 'blockHash', 'transactionIndex',
+        'fromAddress', 'toAddress', 'value', 'status', 'input', 'confirms', 'contractAddress', 'contractFunction']
+
+      const dbTXs = fakeQbxHistory.map((tx) => {
+        const histItem = { ...tx }
+        // tslint:disable-next-line:no-string-literal
+        histItem['toAddress'] = histItem.to
+        // tslint:disable-next-line:no-string-literal
+        histItem['fromAddress'] = histItem.from
+
+        return _.pick(histItem, allowedFields)
+      })
+
+      // for (const tx of dbTXs) {
+      //   await qbDB.models.mainnetTransaction.create(tx)
+      // }
+      await qbDB.models.mainnetTransaction.bulkCreate(dbTXs)
+
     } catch (e) {
       log.error(`Failed setting up the test context ${e.stack}`)
       throw e
@@ -217,8 +236,6 @@ describe('App endpoint', () => {
 
   it('Returns 200 and transaction history for QBX', async (done) => {
 
-    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
-
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX')
 
@@ -228,8 +245,6 @@ describe('App endpoint', () => {
   })
 
   it('Returns 200 and transaction history for QBX with limit 10', async (done) => {
-
-    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
 
     const response = await request(app).get(
       '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX&limit=10')
@@ -248,14 +263,14 @@ describe('App endpoint', () => {
         result: fakeEthHistory
       })
 
-    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
-
     // have to slice since the fake generated history has consecutive timestamps
     // the contoller will take a default limit of 100 from each and then merge them
     const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
       .sort((h1, h2) => {
-        const a = new BigNumber(h1.timeStamp)
-        const b = new BigNumber(h2.timeStamp)
+        // tslint:disable-next-line:no-string-literal
+        const a = new BigNumber(h1['timestamp'])
+        // tslint:disable-next-line:no-string-literal
+        const b = new BigNumber(h2['timestamp'])
         return a.minus(b).toNumber()
       })
 
@@ -277,13 +292,13 @@ describe('App endpoint', () => {
         result: fakeEthHistory
       })
 
-    qbxHistoryDbCallMock.mockImplementation((_, limit: number) => fakeQbxHistory.slice(0, limit))
-
     // take 100 of each and combine and return `limit` number of entries
     const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
       .sort((h1, h2) => {
-        const a = new BigNumber(h1.timeStamp)
-        const b = new BigNumber(h2.timeStamp)
+        // tslint:disable-next-line:no-string-literal
+        const a = new BigNumber(h1['timestamp'])
+        // tslint:disable-next-line:no-string-literal
+        const b = new BigNumber(h2['timestamp'])
         return a.minus(b).toNumber()
       })
 

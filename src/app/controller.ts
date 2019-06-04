@@ -38,8 +38,8 @@ async function getTransactions(req, res) {
     const qbxHistory = await Service.getQbxTxHistory(wallet, 100)
     const mixedHistory = [...ethHistory, ...qbxHistory]
       .sort((h1, h2) => {
-        const a = new BigNumber(h1.timeStamp)
-        const b = new BigNumber(h2.timeStamp)
+        const a = new BigNumber(h1.timestamp)
+        const b = new BigNumber(h2.timestamp)
         return a.minus(b).toNumber()
       })
     return res.json(mixedHistory.slice(0, limit))

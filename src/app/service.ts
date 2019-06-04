@@ -32,7 +32,16 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
     // tslint:disable-next-line:no-string-literal
     const transactionHistory = (await axios.get(etherscanUrl))['data']['result']
     const transferTransactions = transactionHistory.filter((tx) => parseInt(tx.value, 10) > 0)
-    return transferTransactions.slice(0, limit)
+
+    const ethHist = transferTransactions
+      .slice(0, limit)
+      .map((tx) => {
+        tx.timestamp = tx.timeStamp
+        delete tx.timeStamp
+        return tx
+      })
+
+    return ethHist
   } catch (err) {
     throw err
   }

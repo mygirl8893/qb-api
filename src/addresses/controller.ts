@@ -28,6 +28,10 @@ async function getAddress(req, res) {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const tokens = await database.getTokens()
     for (const token of tokens) {
+      if (token.hidden) {
+        continue
+      }
+
       const balance = await User.getBalance(address, token.contractAddress)
 
       tokenBalances[token.symbol] = {

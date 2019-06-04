@@ -107,8 +107,7 @@ async function getTokenBySymbol(symbol: string) {
 async function getTokens() {
   const tokens = await Token.findAll({
     where: {
-      contractAddress: { [Op.ne]: null },
-      hidden: false
+      contractAddress: { [Op.ne]: null }
     },
     raw: true }
   )
@@ -119,6 +118,17 @@ async function getTempExchangeWallets() {
   const response = await qbDB.models.tempExchangeWallet.findAll({
     order: [ ['id', 'DESC'] ]
   })
+  return response
+}
+
+async function getOwnedTokens(walletAddress: string) {
+  const response = await qbDB.models.sequelize.query(
+    `SELECT DISTINCT(tokens.id) FROM tokens LEFT JOIN transactions ON\
+     (transactions.tokenId = tokens.id AND transactions.toAddress = ?)\
+      where transactions.toAddress is not null;`, {
+      replacements: [walletAddress]
+    })
+
   return response
 }
 
@@ -135,5 +145,6 @@ export default {
   getTokenBySymbol,
   getTokens,
   getTempExchangeWallets,
+  getOwnedTokens,
   close
 }

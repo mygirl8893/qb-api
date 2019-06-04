@@ -27,8 +27,10 @@ async function getAddress(req, res) {
   try {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
     const tokens = await database.getTokens()
+    const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
+    const ownedTokenIds = ownedTokens.map(t => t.id)
     for (const token of tokens) {
-      if (token.hidden) {
+      if (token.hidden && !ownedTokenIds.includes(token.id)) {
         continue
       }
 

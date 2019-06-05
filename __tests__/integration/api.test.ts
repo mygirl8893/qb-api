@@ -231,7 +231,7 @@ describe('Network, Users, Tokens API', () => {
     expect(r.status).toBe(HttpStatus.OK)
 
     expect(r.body.private.length).toBe(2)
-    const tokenInResponse = r.body.private.find(t => t.symbol === HIDDEN_OWNED_TOKEN.symbol)
+    const tokenInResponse = r.body.private.find((t) => t.symbol === HIDDEN_OWNED_TOKEN.symbol)
     expect(tokenInResponse).toBeDefined()
   })
 

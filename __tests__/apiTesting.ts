@@ -95,7 +95,7 @@ function makeStoreableTransaction(original, receipt, block) {
 }
 
 function makeTestTx(hash: string, chainId: any, value: string, contractAddress: string,
-                    tokenId: number, confirms: number, fromAddress: string = undefined, toAddress: string = undefined) {
+                    tokenId: number, confirms: number, fromAddress?: string, toAddress?: string) {
   return {
     hash,
     nonce: 32,

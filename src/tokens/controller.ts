@@ -15,7 +15,6 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   {}
 ).methods
 
-
 const getTokensSchema = Joi.object().keys({
   params: Joi.object().keys({
     walletAddress: validation.ethereumAddress(),
@@ -31,7 +30,7 @@ async function getTokens(req, res) {
   if (walletAddress) {
     log.info(`Requesting tokens with walletAddress = ${walletAddress}`)
     const ownedTokens = await database.getOwnedTokens(walletAddress)
-    ownedTokenIds = ownedTokens.map(t => t.id)
+    ownedTokenIds = ownedTokens.map((t) => t.id)
   }
 
   let publicTokens

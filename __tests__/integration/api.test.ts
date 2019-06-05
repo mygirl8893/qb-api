@@ -234,4 +234,33 @@ describe('Network, Users, Tokens API', () => {
     const tokenInResponse = r.body.private.find(t => t.symbol === HIDDEN_OWNED_TOKEN.symbol)
     expect(tokenInResponse).toBeDefined()
   })
+
+  it('Fetches address balances leaving out hidden tokens', async () => {
+
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}`)
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.balances.private[TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[HIDDEN_OWNED_TOKEN.symbol]).toBeUndefined()
+    expect(r.body.balances.private[HIDDEN_UNOWNED_TOKEN.symbol]).toBeUndefined()
+  })
+
+  it('Fetches address balances including hidden owned tokens', async () => {
+
+    const fromAddress = ACCOUNTS[0].address
+    const toAddress = ACCOUNTS[3].address
+    const chainId = 13
+    const testHash = '0x557c39f6cad68f0790e10493300b7f1cf0b0ec0e5869a2f27ac45bdeb7abd099'
+    const confirms = 1
+    const tx = APITesting.makeTestTx(testHash, chainId, '10', HIDDEN_OWNED_TOKEN.contractAddress,
+      HIDDEN_OWNED_TOKEN.id, confirms, fromAddress, toAddress)
+    await testDbConn.insertTransaction(tx)
+
+    const r = await request(app).get(`/addresses/${toAddress}`)
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.balances.private[HIDDEN_OWNED_TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[HIDDEN_UNOWNED_TOKEN.symbol]).toBeUndefined()
+  })
 })

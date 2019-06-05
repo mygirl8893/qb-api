@@ -131,9 +131,6 @@ describe('App endpoint', () => {
         return _.pick(histItem, allowedFields)
       })
 
-      // for (const tx of dbTXs) {
-      //   await qbDB.models.mainnetTransaction.create(tx)
-      // }
       await qbDB.models.mainnetTransaction.bulkCreate(dbTXs)
 
     } catch (e) {

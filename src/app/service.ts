@@ -33,7 +33,7 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
     const transactionHistory = (await axios.get(etherscanUrl))['data']['result']
     const transferTransactions = transactionHistory.filter((tx) => parseInt(tx.value, 10) > 0)
 
-    const ethHist = transferTransactions
+    const ethHistory = transferTransactions
       .slice(0, limit)
       .map((tx) => {
         tx.timestamp = tx.timeStamp
@@ -41,7 +41,7 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
         return tx
       })
 
-    return ethHist
+    return ethHistory
   } catch (err) {
     throw err
   }

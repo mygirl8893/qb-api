@@ -37,9 +37,9 @@ async function getTransactions(req, res) {
     const ethHistory = await Service.getEthTxHistory(wallet, 100)
     const qbxHistory = await Service.getQbxTxHistory(wallet, 100)
     const mixedHistory = [...ethHistory, ...qbxHistory]
-      .sort((h1, h2) => {
-        const a = new BigNumber(h1.timestamp)
-        const b = new BigNumber(h2.timestamp)
+      .sort((history1, history2) => {
+        const a = new BigNumber(history1.timestamp)
+        const b = new BigNumber(history2.timestamp)
         return a.minus(b).toNumber()
       })
     return res.json(mixedHistory.slice(0, limit))

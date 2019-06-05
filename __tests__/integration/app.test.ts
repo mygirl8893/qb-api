@@ -266,11 +266,11 @@ describe('App endpoint', () => {
     // have to slice since the fake generated history has consecutive timestamps
     // the contoller will take a default limit of 100 from each and then merge them
     const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
-      .sort((h1, h2) => {
+      .sort((history1, history2) => {
         // tslint:disable-next-line:no-string-literal
-        const a = new BigNumber(h1['timestamp'])
+        const a = new BigNumber(history1['timestamp'])
         // tslint:disable-next-line:no-string-literal
-        const b = new BigNumber(h2['timestamp'])
+        const b = new BigNumber(history2['timestamp'])
         return a.minus(b).toNumber()
       })
 
@@ -294,11 +294,11 @@ describe('App endpoint', () => {
 
     // take 100 of each and combine and return `limit` number of entries
     const mixedHistory = [...nonZeroEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
-      .sort((h1, h2) => {
+      .sort((history1, history2) => {
         // tslint:disable-next-line:no-string-literal
-        const a = new BigNumber(h1['timestamp'])
+        const a = new BigNumber(history1['timestamp'])
         // tslint:disable-next-line:no-string-literal
-        const b = new BigNumber(h2['timestamp'])
+        const b = new BigNumber(history2['timestamp'])
         return a.minus(b).toNumber()
       })
 

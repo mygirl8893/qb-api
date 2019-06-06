@@ -1,12 +1,9 @@
 import * as HttpStatus from 'http-status-codes'
 import * as Joi from 'joi'
 import Config from '../config'
-import database from '../database'
 import log from '../logging'
-import User from '../users/controller'
 import validation from '../validation'
-
-const web3 = Config.getPrivateWeb3()
+import helpers from './helpers'
 
 const getAddressSchema = Joi.object().keys({
   params: Joi.object().keys({
@@ -20,32 +17,9 @@ async function getAddress(req, res) {
   req = validation.validateRequestInput(req, getAddressSchema)
   const address = req.params.address
 
-  let transactionCount = null
-  const tokenBalances = {}
-  let qbxBalance = null
-  let publicEthBalance = 0
   try {
-    transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
-    const tokens = await database.getTokens()
-    const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
-    const ownedTokenIds = ownedTokens.map((t) => t.id)
-    for (const token of tokens) {
-      if (token.hidden && !ownedTokenIds.includes(token.id)) {
-        continue
-      }
-
-      const balance = await User.getBalance(address, token.contractAddress)
-
-      tokenBalances[token.symbol] = {
-        balance,
-        contractAddress: token.contractAddress
-      }
-    }
-
-    if (req.query.public) {
-      qbxBalance = await User.getQBXToken(address)
-      publicEthBalance = await User.getETHBalance(address)
-    }
+    const response = await helpers.getAddress(address, req.params.public)
+    res.json(response)
   } catch (e) {
     if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {
       log.error(e.message)
@@ -54,25 +28,6 @@ async function getAddress(req, res) {
       throw e
     }
   }
-
-  const response = {
-    transactionCount,
-    balances: {
-      private: tokenBalances,
-      public: undefined
-    }
-  }
-
-  if (req.query.public) {
-    response.balances.public = {}
-    response.balances.public[qbxBalance.symbol] = {
-      balance: qbxBalance.balance,
-      contractAddress: qbxBalance.contractAddress
-    }
-    response.balances.public.ETH = { balance: publicEthBalance }
-  }
-
-  res.json(response)
 }
 
 export default {

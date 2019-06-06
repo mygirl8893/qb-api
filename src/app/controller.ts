@@ -1,5 +1,8 @@
 import Config from '../config/'
 import Service from './service'
+import * as HttpStatus from 'http-status-codes'
+import * as Joi from 'joi'
+import validation from '../validation'
 
 async function getInfuraApiKey(req, res) {
 
@@ -13,10 +16,21 @@ async function getInfuraApiKey(req, res) {
   }
 }
 
+
+const getAddressValuesSchema = Joi.object().keys({
+  params: Joi.object().keys({
+    address: validation.ethereumAddress().required()
+  })
+})
+async function getAddressValues(req, res) {
+
+}
+
 function errorResponse(res, message: string, status = 500) {
   return res.status(status).json({ message })
 }
 
 export default {
-  getInfuraApiKey
+  getInfuraApiKey,
+  getAddressValues
 }

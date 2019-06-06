@@ -187,5 +187,6 @@ export default {
   pullDataAndCalculateQBXTxValue,
   getQBXToETHExchangeRate,
   getRate,
+  getETHToUSDExchangeRate,
   QBX_FEE_DISPLAY_PERCENTAGE
 }

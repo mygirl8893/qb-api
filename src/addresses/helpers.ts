@@ -1,8 +1,4 @@
-import database from '../database'
 import User from '../users/controller'
-import Config from '../config'
-
-const web3 = Config.getPrivateWeb3()
 
 interface Balance {
   balance: string
@@ -17,13 +13,12 @@ interface Address {
   }
 }
 
-async function getAddress(address: string, includePublicBalances: boolean): Promise<Address> {
+async function getAddress(address: string, includePublicBalances: boolean,
+                          web3, tokens, ownedTokens): Promise<Address> {
   const tokenBalances = {}
   let qbxBalance = null
   let publicEthBalance = 0
   let transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
-  const tokens = await database.getTokens()
-  const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
   const ownedTokenIds = ownedTokens.map((t) => t.id)
   for (const token of tokens) {
     if (token.hidden && !ownedTokenIds.includes(token.id)) {

@@ -4,6 +4,9 @@ import Config from '../config'
 import log from '../logging'
 import validation from '../validation'
 import helpers from './helpers'
+import database from '../database'
+
+const web3 = Config.getPrivateWeb3()
 
 const getAddressSchema = Joi.object().keys({
   params: Joi.object().keys({
@@ -18,7 +21,9 @@ async function getAddress(req, res) {
   const address = req.params.address
 
   try {
-    const response = await helpers.getAddress(address, req.params.public)
+    const tokens = await database.getTokens()
+    const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
+    const response = await helpers.getAddress(address, req.params.public, web3, tokens, ownedTokens)
     res.json(response)
   } catch (e) {
     if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {

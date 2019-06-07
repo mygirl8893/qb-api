@@ -85,7 +85,6 @@ describe('Network, Users, Tokens API', () => {
       const hotResult = await testDbConn.createToken(HIDDEN_OWNED_TOKEN)
       HIDDEN_OWNED_TOKEN.id = hotResult.id
 
-
       app = require('../../app').default
       const Config = require('../../src/config').default
 

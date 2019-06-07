@@ -26,23 +26,16 @@ async function getTokens(req, res) {
   req = validation.validateRequestInput(req, getTokensSchema)
 
   const walletAddress = req.query.walletAddress
-  let ownedTokenIds = []
+  let tokens = []
   if (walletAddress) {
-    log.info(`Requesting tokens with walletAddress = ${walletAddress}`)
-    const ownedTokens = await database.getOwnedTokens(walletAddress)
-    ownedTokenIds = ownedTokens.map((t) => t.id)
+    log.info(`Requesting public or owned tokens with walletAddress = ${walletAddress}`)
+    tokens = await database.getPublicOrOwnedTokens(walletAddress)
+  } else {
+    tokens = await database.getTokens()
   }
 
-  let publicTokens
-  const tokens = await database.getTokens()
   const apiTokens = []
   for (const token of tokens) {
-
-    // @ts-ignore
-    if (token.hidden && !ownedTokenIds.includes(token.id)) {
-      continue
-    }
-
     const balance = await User.getBalance(req.query.from, token.contractAddress)
 
     const apiToken = helpers.toAPIToken(token)
@@ -53,6 +46,7 @@ async function getTokens(req, res) {
     apiTokens.push(apiToken)
   }
 
+  let publicTokens
   if (req.query.public) {
     publicTokens = [ await User.getQBXToken(req.query.from) ]
   }

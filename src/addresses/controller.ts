@@ -26,14 +26,8 @@ async function getAddress(req, res) {
   let publicEthBalance = 0
   try {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
-    const tokens = await database.getTokens()
-    const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
-    const ownedTokenIds = ownedTokens.map((t) => t.id)
+    const tokens = await database.getPublicOrOwnedTokens(address.toLowerCase())
     for (const token of tokens) {
-      if (token.hidden && !ownedTokenIds.includes(token.id)) {
-        continue
-      }
-
       const balance = await User.getBalance(address, token.contractAddress)
 
       tokenBalances[token.symbol] = {

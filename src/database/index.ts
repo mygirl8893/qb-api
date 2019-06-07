@@ -134,7 +134,7 @@ async function getTokens() {
       contractAddress: { [Op.ne]: null },
       hidden: false
     },
-    raw: true,
+    raw: true
   }
   )
   return tokens
@@ -150,8 +150,8 @@ async function getTempExchangeWallets() {
 async function getPublicOrOwnedTokens(walletAddress: string) {
   const response = await qbDB.models.sequelize.query(
     `SELECT tokens.* FROM tokens LEFT JOIN transactions ON
-      (transactions.tokenId = tokens.id AND transactions.toAddress = ?) 
-      WHERE (tokens.hidden = 0 OR transactions.id IS NOT NULL) 
+      (transactions.tokenId = tokens.id AND transactions.toAddress = ?)
+      WHERE (tokens.hidden = 0 OR transactions.id IS NOT NULL)
         AND tokens.contractAddress IS NOT NULL GROUP BY tokens.id;`, {
       replacements: [walletAddress],
       type: qbDB.models.sequelize.QueryTypes.SELECT

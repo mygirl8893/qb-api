@@ -1,19 +1,19 @@
 import BigNumber from 'bignumber.js'
 import qbxFeeCalculator from '../lib/qbxFeeCalculator'
 
-function computeWalletAggregateValueInUSD(address: string, tokens,
+function computeWalletAggregateValueInUSD(addressData, tokens,
                                           qbxToETHRate: BigNumber, ethToUSDRate: BigNumber): BigNumber {
   const qbxToUSDRate = qbxToETHRate.multipliedBy(ethToUSDRate)
-  const qbxAmount = new BigNumber(address.balances.public.QBX.balance)
+  const qbxAmount = new BigNumber(addressData.balances.public.QBX.balance)
   const qbxInUSD = qbxAmount.multipliedBy(qbxToUSDRate)
 
   let totalLoyaltyTokenValueInUSD = new BigNumber(0)
 
-  const ethAmount = new BigNumber(address.balances.public.ETH.balance)
+  const ethAmount = new BigNumber(addressData.balances.public.ETH.balance)
   const ethInUSD = ethAmount.multipliedBy(ethToUSDRate)
 
-  for (let tokenSymbol of address.balances.private) {
-    const tokenBalance = new BigNumber(address.balances.private[tokenSymbol].balance)
+  for (let tokenSymbol of addressData.balances.private) {
+    const tokenBalance = new BigNumber(addressData.balances.private[tokenSymbol].balance)
     const tokenRecord = tokens.find(t => t.symbol === tokenSymbol)
     let tokenValueInUSD
     if (tokenRecord.fiatBacked) {

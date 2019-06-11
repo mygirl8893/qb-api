@@ -19,11 +19,9 @@ const getAddressSchema = Joi.object().keys({
 async function getAddress(req, res) {
   req = validation.validateRequestInput(req, getAddressSchema)
   const address = req.params.address
-
   try {
-    const tokens = await database.getTokens()
-    const ownedTokens = await database.getOwnedTokens(address.toLowerCase())
-    const response = await helpers.getAddress(address, req.params.public, web3, tokens, ownedTokens)
+    const tokens = await database.getPublicOrOwnedTokens(address.toLowerCase())
+    const response = await helpers.getAddress(address, req.query.public, web3, tokens)
     res.json(response)
   } catch (e) {
     if (validation.isInvalidWeb3AddressMessage(e.message, address.toLowerCase())) {

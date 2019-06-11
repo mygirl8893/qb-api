@@ -14,17 +14,12 @@ interface Address {
 }
 
 async function getAddress(address: string, includePublicBalances: boolean,
-                          web3, tokens, ownedTokens): Promise<Address> {
+                          web3, tokens): Promise<Address> {
   const tokenBalances = {}
   let qbxBalance = null
   let publicEthBalance = 0
   let transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
-  const ownedTokenIds = ownedTokens.map((t) => t.id)
   for (const token of tokens) {
-    if (token.hidden && !ownedTokenIds.includes(token.id)) {
-      continue
-    }
-
     const balance = await User.getBalance(address, token.contractAddress)
 
     tokenBalances[token.symbol] = {

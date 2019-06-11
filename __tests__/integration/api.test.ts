@@ -50,7 +50,7 @@ const HIDDEN_OWNED_TOKEN = {
   description: 'Token is hidden and at someone owns it.',
   website: 'hottoken.com',
   totalSupply: '100000000',
-  contractAddress: '0x814332F1073a9830601A588fBEdd1D5608f1E548',
+  contractAddress: null,
   hidden: true
 }
 
@@ -76,6 +76,9 @@ describe('Network, Users, Tokens API', () => {
 
       testDbConn = new APITesting.TestDatabaseConn()
       await testDbConn.setup(TOKEN, ACCOUNTS[2].address, ACCOUNTS[0].address)
+
+      // pointing to the same chain contract for simplicity
+      HIDDEN_OWNED_TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
 
       const hutResult = await testDbConn.createToken(HIDDEN_UNOWNED_TOKEN)
       HIDDEN_UNOWNED_TOKEN.id = hutResult.id

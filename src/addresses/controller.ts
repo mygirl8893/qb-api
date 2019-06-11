@@ -26,7 +26,7 @@ async function getAddress(req, res) {
   let publicEthBalance = 0
   try {
     transactionCount = await web3.eth.getTransactionCount(address.toLowerCase())
-    const tokens = await database.getTokens()
+    const tokens = await database.getPublicOrOwnedTokens(address.toLowerCase())
     for (const token of tokens) {
       const balance = await User.getBalance(address, token.contractAddress)
 

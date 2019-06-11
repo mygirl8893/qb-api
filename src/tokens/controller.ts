@@ -15,9 +15,25 @@ const loyaltyToken = (contractAddress) => new web3.eth.Contract(
   {}
 ).methods
 
+const getTokensSchema = Joi.object().keys({
+  params: Joi.object().keys({
+    walletAddress: validation.ethereumAddress(),
+    from: validation.ethereumAddress()
+  })
+})
+
 async function getTokens(req, res) {
-  let publicTokens
-  const tokens = await database.getTokens()
+  req = validation.validateRequestInput(req, getTokensSchema)
+
+  const walletAddress = req.query.walletAddress
+  let tokens = []
+  if (walletAddress) {
+    log.info(`Requesting public or owned tokens with walletAddress = ${walletAddress}`)
+    tokens = await database.getPublicOrOwnedTokens(walletAddress)
+  } else {
+    tokens = await database.getTokens()
+  }
+
   const apiTokens = []
   for (const token of tokens) {
     const balance = await User.getBalance(req.query.from, token.contractAddress)
@@ -30,6 +46,7 @@ async function getTokens(req, res) {
     apiTokens.push(apiToken)
   }
 
+  let publicTokens
   if (req.query.public) {
     publicTokens = [ await User.getQBXToken(req.query.from) ]
   }

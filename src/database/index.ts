@@ -147,6 +147,19 @@ async function getTempExchangeWallets() {
   return response
 }
 
+async function getPublicOrOwnedTokens(walletAddress: string) {
+  const response = await qbDB.models.sequelize.query(
+    `SELECT tokens.* FROM tokens LEFT JOIN transactions ON
+      (transactions.tokenId = tokens.id AND transactions.toAddress = ?)
+      WHERE (tokens.hidden = 0 OR transactions.id IS NOT NULL)
+        AND tokens.contractAddress IS NOT NULL GROUP BY tokens.id;`, {
+      replacements: [walletAddress],
+      type: qbDB.models.sequelize.QueryTypes.SELECT
+    })
+
+  return response
+}
+
 async function close() {
   await qbDB.models.sequelize.close()
 }
@@ -161,5 +174,6 @@ export default {
   getTokenBySymbol,
   getTokens,
   getTempExchangeWallets,
+  getPublicOrOwnedTokens,
   close
 }

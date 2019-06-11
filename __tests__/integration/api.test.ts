@@ -28,6 +28,32 @@ const TOKEN = {
   hidden: false
 }
 
+const HIDDEN_UNOWNED_TOKEN = {
+  id: undefined,
+  name: 'HiddenUnownedToken',
+  symbol: 'HUT',
+  decimals: 18,
+  rate: 100,
+  description: 'Token is hidden and no one owns it.',
+  website: 'idgaftoken.com',
+  totalSupply: '100000000',
+  contractAddress: '0x7cD0C5436B4087E145387eBF3Da7401f8295bcb5',
+  hidden: true
+}
+
+const HIDDEN_OWNED_TOKEN = {
+  id: undefined,
+  name: 'HiddenOwnedToken',
+  symbol: 'HOT',
+  decimals: 18,
+  rate: 100,
+  description: 'Token is hidden and at someone owns it.',
+  website: 'hottoken.com',
+  totalSupply: '100000000',
+  contractAddress: null,
+  hidden: true
+}
+
 APITesting.setupTestConfiguration(INTEGRATION_TEST_CONFIGURATION)
 
 jest.setTimeout(180000)
@@ -51,6 +77,14 @@ describe('Network, Users, Tokens API', () => {
       testDbConn = new APITesting.TestDatabaseConn()
       await testDbConn.setup(TOKEN, ACCOUNTS[2].address, ACCOUNTS[0].address)
 
+      // pointing to the same chain contract for simplicity
+      HIDDEN_OWNED_TOKEN.contractAddress = privateChain.loyaltyTokenContractAddress
+
+      const hutResult = await testDbConn.createToken(HIDDEN_UNOWNED_TOKEN)
+      HIDDEN_UNOWNED_TOKEN.id = hutResult.id
+      const hotResult = await testDbConn.createToken(HIDDEN_OWNED_TOKEN)
+      HIDDEN_OWNED_TOKEN.id = hotResult.id
+
       app = require('../../app').default
       const Config = require('../../src/config').default
 
@@ -71,6 +105,14 @@ describe('Network, Users, Tokens API', () => {
     } catch (e) {
       log.error(`Failed to tear down the test context ${e.stack}`)
       throw e
+    }
+  })
+
+  beforeEach(async () => {
+    try {
+      await testDbConn.clearTransactions()
+    } catch (e) {
+      log.error(`Failed beforeEach`)
     }
   })
 
@@ -174,5 +216,54 @@ describe('Network, Users, Tokens API', () => {
     expect(r.status).toBe(HttpStatus.BAD_REQUEST)
 
     expect(r.body.message.includes(`Token has not been found`)).toBeTruthy()
+  })
+
+  it('Fetches owned hidden token successfully', async () => {
+
+    const fromAddress = ACCOUNTS[0].address
+    const toAddress = ACCOUNTS[3].address
+    const chainId = 13
+    const testHash = '0x557c39f6cad68f0790e10493300b7f1cf0b0ec0e5869a2f27ac45bdeb7abd099'
+    const confirms = 1
+    const tx = APITesting.makeTestTx(testHash, chainId, '10', HIDDEN_OWNED_TOKEN.contractAddress,
+      HIDDEN_OWNED_TOKEN.id, confirms, fromAddress, toAddress)
+    await testDbConn.insertTransaction(tx)
+
+    const r = await request(app).get(`/tokens?walletAddress=${toAddress}`)
+
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.private.length).toBe(2)
+    const tokenInResponse = r.body.private.find((t) => t.symbol === HIDDEN_OWNED_TOKEN.symbol)
+    expect(tokenInResponse).toBeDefined()
+  })
+
+  it('Fetches address balances leaving out hidden tokens', async () => {
+
+    const r = await request(app).get(`/addresses/${ACCOUNTS[0].address}`)
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.balances.private[TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[HIDDEN_OWNED_TOKEN.symbol]).toBeUndefined()
+    expect(r.body.balances.private[HIDDEN_UNOWNED_TOKEN.symbol]).toBeUndefined()
+  })
+
+  it('Fetches address balances including hidden owned tokens', async () => {
+
+    const fromAddress = ACCOUNTS[0].address
+    const toAddress = ACCOUNTS[3].address
+    const chainId = 13
+    const testHash = '0x557c39f6cad68f0790e10493300b7f1cf0b0ec0e5869a2f27ac45bdeb7abd099'
+    const confirms = 1
+    const tx = APITesting.makeTestTx(testHash, chainId, '10', HIDDEN_OWNED_TOKEN.contractAddress,
+      HIDDEN_OWNED_TOKEN.id, confirms, fromAddress, toAddress)
+    await testDbConn.insertTransaction(tx)
+
+    const r = await request(app).get(`/addresses/${toAddress}`)
+    expect(r.status).toBe(HttpStatus.OK)
+
+    expect(r.body.balances.private[HIDDEN_OWNED_TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[TOKEN.symbol]).toBeDefined()
+    expect(r.body.balances.private[HIDDEN_UNOWNED_TOKEN.symbol]).toBeUndefined()
   })
 })

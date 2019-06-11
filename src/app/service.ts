@@ -6,6 +6,7 @@ import Database from '../database'
 
 const baseEtherscanUrl = Config.getEtherscanUrl()
 const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
+const etherscanApiKey = Config.getEtherscanApiKey()
 
 /**
  *
@@ -28,7 +29,9 @@ async function encryptString(plainText): Promise<string> {
 }
 
 async function getEthTxHistory(wallet: string, limit: number = 1000) {
-  const etherscanUrl = baseEtherscanUrl + `/api?module=account&action=txlist&address=${wallet}&sort=desc`
+  const etherscanUrl = baseEtherscanUrl +
+    `/api?module=account&action=txlist&address=${wallet}&apikey=${etherscanApiKey}&sort=desc`
+
   try {
     // tslint:disable-next-line:no-string-literal
     const transactionHistory = (await axios.get(etherscanUrl))['data']['result']

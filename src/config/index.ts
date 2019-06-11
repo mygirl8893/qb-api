@@ -36,6 +36,7 @@ export default {
   getPort: () => envtConfig.port,
   getChainID: () => envtConfig.chainID,
   getEtherscanUrl: () => envtConfig.etherscanURL,
+  getEtherscanApiKey: () => envtConfig.etherscanAPIKey,
   getInfuraEncryptionKey: () => envtConfig.infuraEncryptionKey,
   getInfuraApiKey: () => envtConfig.infuraApiKey,
   getOldChainID: () => envtConfig.oldChainId,

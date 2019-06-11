@@ -35,6 +35,7 @@ let web3ConnectionsAreReady = false
 export default {
   getPort: () => envtConfig.port,
   getChainID: () => envtConfig.chainID,
+  getEtherscanUrl: () => envtConfig.etherscanURL,
   getInfuraEncryptionKey: () => envtConfig.infuraEncryptionKey,
   getInfuraApiKey: () => envtConfig.infuraApiKey,
   getOldChainID: () => envtConfig.oldChainId,

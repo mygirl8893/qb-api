@@ -23,7 +23,9 @@ const INTEGRATION_TEST_CONFIGURATION = {
   },
   port: 3000,
   infuraApiKey: 'A secret API key',
-  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]'
+  infuraEncryptionKey: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]',
+  etherscanURL: 'https://api-ropsten.etherscan.io',
+  etherscanAPIKey: 'etherscanApiKey'
 }
 
 const TOKEN = {
@@ -193,8 +195,9 @@ describe('App endpoint', () => {
 
   it('Returns 200 and transaction history for ETH', async (done) => {
 
-    const ethHistoryScope = nock(`http://api.etherscan.io`)
-      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+    const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
+      `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
       .times(1)
       .reply(200, {
         result: fakeEthHistory
@@ -213,8 +216,9 @@ describe('App endpoint', () => {
 
   it('Returns 200 and transaction history for ETH with limit 3', async (done) => {
 
-    const ethHistoryScope = nock(`http://api.etherscan.io`)
-      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+    const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
+      `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
       .times(1)
       .reply(200, {
         result: fakeEthHistory
@@ -253,8 +257,9 @@ describe('App endpoint', () => {
 
   it('Returns 200 and mixed transaction history in correct order for QBX and ETH', async (done) => {
 
-    const ethHistoryScope = nock(`http://api.etherscan.io`)
-      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+    const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
+      `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
       .times(1)
       .reply(200, {
         result: fakeEthHistory
@@ -282,8 +287,9 @@ describe('App endpoint', () => {
 
   it('Returns 200 and mixed transaction history in correct order for QBX and ETH with limit 10', async (done) => {
 
-    const ethHistoryScope = nock(`http://api.etherscan.io`)
-      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&sort=desc')
+    const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
+      `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
       .times(1)
       .reply(200, {
         result: fakeEthHistory

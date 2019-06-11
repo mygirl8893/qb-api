@@ -15,7 +15,9 @@ const Config = {
     },
     oldChainId: process.env.OLD_CHAIN_ID || '29746197',
     infuraApiKey: process.env.INFURA_API_KEY,
-    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY,
+    etherscanURL: 'https://api.etherscan.io',
+    etherscanAPIKey: process.env.ETHERSCAN_API_KEY
   },
   beta: {
     rpc: {
@@ -30,7 +32,9 @@ const Config = {
     },
     oldChainId: process.env.OLD_CHAIN_ID,
     infuraApiKey: process.env.INFURA_API_KEY,
-    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY,
+    etherscanURL: 'https://api.etherscan.io',
+    etherscanAPIKey: process.env.ETHERSCAN_API_KEY
   },
   testing: {
     rpc: {
@@ -45,7 +49,9 @@ const Config = {
     },
     oldChainId: process.env.OLD_CHAIN_ID,
     infuraApiKey: process.env.INFURA_API_KEY,
-    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY,
+    etherscanURL: 'https://api-ropsten.etherscan.io',
+    etherscanAPIKey: process.env.ETHERSCAN_API_KEY
   },
   development: {
     rpc: {
@@ -60,7 +66,9 @@ const Config = {
     },
     oldChainId: process.env.OLD_CHAIN_ID,
     infuraApiKey: process.env.INFURA_API_KEY,
-    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY
+    infuraEncryptionKey: process.env.INFURA_ENCRYPTION_KEY,
+    etherscanURL: 'https://api-ropsten.etherscan.io',
+    etherscanAPIKey: process.env.ETHERSCAN_API_KEY
   },
   qbxContract: process.env.ETH_NET_QBX_CONTRACT_ADDRESS || '0x2467aa6b5a2351416fd4c3def8462d841feeecec',
   tokenABI: JSON.parse(

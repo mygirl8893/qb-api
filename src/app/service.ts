@@ -48,7 +48,8 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
         tx.token = { symbol: 'ETH' }
         tx.timestamp = parseInt(tx.timeStamp, 10)
         tx.nonce = parseInt(tx.nonce, 10)
-        tx.status = tx.txreceipt_status
+        // tslint:disable-next-line:triple-equals
+        tx.status = tx.txreceipt_status == '1' ? true : false
 
         return _.pick(tx, publicHistoryAllowedFields)
       })
@@ -63,6 +64,9 @@ async function getQbxTxHistory(wallet: string, limit: number = 1000) {
   const qbxHistory = await Database.getQbxTransactionHistory(wallet, limit)
   return qbxHistory.map((tx) => {
     tx.token = { symbol: 'QBX' }
+    // tslint:disable-next-line:triple-equals
+    tx.status = tx.status == '1' ? true : false
+
     return _.pick(tx, publicHistoryAllowedFields)
   })
 }

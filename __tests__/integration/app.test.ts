@@ -97,6 +97,11 @@ describe('App endpoint', () => {
       const temp = { ...tx }  // so that main object does not get edited
       // tslint:disable-next-line:no-string-literal
       temp['token'] = { symbol: 'QBX' }
+
+      // @ts-ignore Type 'boolean' is not assignable to type 'string'
+      // tslint:disable-next-line:no-string-literal triple-equals
+      temp['status'] = temp.status == '1' ? true : false
+
       return _.pick(temp, publicHistoryAllowedFields)
     })
 
@@ -114,8 +119,8 @@ describe('App endpoint', () => {
       temp['token'] = { symbol: 'ETH' }
       // tslint:disable-next-line:no-string-literal
       temp['timestamp'] = parseInt(temp.timeStamp, 10)
-      // tslint:disable-next-line:no-string-literal
-      temp['status'] = temp.txreceipt_status
+      // tslint:disable-next-line:no-string-literal triple-equals
+      temp['status'] = temp.txreceipt_status == '1' ? true : false
 
       return _.pick(temp, publicHistoryAllowedFields)
     })

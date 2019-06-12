@@ -133,7 +133,7 @@ describe('App endpoint', () => {
       const a = new BigNumber(history1['timestamp'])
       // tslint:disable-next-line:no-string-literal
       const b = new BigNumber(history2['timestamp'])
-      return a.minus(b).toNumber()
+      return b.minus(a).toNumber()
     })
 
   beforeAll(async () => {

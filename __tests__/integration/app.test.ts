@@ -303,8 +303,6 @@ describe('App endpoint', () => {
     expect(response.status).toEqual(HttpStatus.OK)
     expect(ethHistoryScope.isDone()).toBeTruthy()
     expect(response.body).toEqual(mixedSortedHistory.slice(0, 100))
-    const fs = require('fs')
-    fs.writeFileSync('foo.json', JSON.stringify(response.body))
     done()
   })
 

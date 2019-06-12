@@ -122,7 +122,7 @@ describe('App endpoint', () => {
 
   // have to slice since the fake generated history has consecutive timestamps
   // the contoller will take a default limit of 100 from each and then merge them
-  const mixedHistory = [...formattedEthHistory.slice(0, 100), ...formattedQbxHistory.slice(0, 100)]
+  const mixedSortedHistory = [...formattedEthHistory.slice(0, 100), ...formattedQbxHistory.slice(0, 100)]
     .sort((history1, history2) => {
       // tslint:disable-next-line:no-string-literal
       const a = new BigNumber(history1['timestamp'])
@@ -302,7 +302,7 @@ describe('App endpoint', () => {
 
     expect(response.status).toEqual(HttpStatus.OK)
     expect(ethHistoryScope.isDone()).toBeTruthy()
-    expect(response.body).toEqual(mixedHistory.slice(0, 100))
+    expect(response.body).toEqual(mixedSortedHistory.slice(0, 100))
     const fs = require('fs')
     fs.writeFileSync('foo.json', JSON.stringify(response.body))
     done()
@@ -323,7 +323,7 @@ describe('App endpoint', () => {
 
     expect(response.status).toEqual(HttpStatus.OK)
     expect(ethHistoryScope.isDone()).toBeTruthy()
-    expect(response.body).toEqual(mixedHistory.slice(0, 10))
+    expect(response.body).toEqual(mixedSortedHistory.slice(0, 10))
     done()
   })
 })

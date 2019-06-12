@@ -1,8 +1,32 @@
+import * as _ from 'lodash'
 import * as qbDB from 'qb-db-migrations'
 import * as sequelize from 'sequelize'
 
 const Token = qbDB.models.token
 const Op = sequelize.Op
+
+async function getQbxTransactionHistory(address: string, limit: number) {
+  const allowedFields = ['blockNumber', 'timestamp', 'hash', 'nonce', 'blockHash', 'transactionIndex',
+      'from', 'to', 'value', 'status', 'input', 'confirms', 'contractAddress', 'contractFunction']
+
+  const dbHistory = await qbDB.models.mainnetTransaction.findAll({
+    where: {
+      $or: {
+        toAddress: { $eq: address },
+        fromAddress: { $eq: address }
+      }
+    },
+    order: [['timestamp', 'DESC']],
+    limit
+  })
+  const transactions = dbHistory.map((tx) => {
+    tx.to = tx.toAddress
+    tx.from = tx.fromAddress
+
+    return _.pick(tx, allowedFields)
+  })
+  return transactions
+}
 
 async function getTransactions(limit: number, offset: number, symbol: string,
                                contractAddress: string,
@@ -21,14 +45,14 @@ async function getTransactions(limit: number, offset: number, symbol: string,
   if (walletAddress) {
     // @ts-ignore
     txFilters.$or = {
-      toAddress: { $eq: walletAddress},
-      fromAddress: { $eq: walletAddress}
+      toAddress: { $eq: walletAddress },
+      fromAddress: { $eq: walletAddress }
     }
   }
 
   const transactions = await qbDB.models.transaction.findAll({
     where: txFilters,
-    order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
+    order: [['timestamp', 'DESC'], ['blockNumber', 'DESC']],
     limit,
     offset,
     include: [{
@@ -38,7 +62,6 @@ async function getTransactions(limit: number, offset: number, symbol: string,
       }
     }]
   })
-  formatTransactionsList(transactions)
   return transactions
 }
 
@@ -46,37 +69,16 @@ async function getTransactionHistory(address: string, limit: number, offset: num
   const transactions = await qbDB.models.transaction.findAll({
     where: {
       $or: {
-        toAddress: { $eq: address},
-        fromAddress: { $eq: address}
+        toAddress: { $eq: address },
+        fromAddress: { $eq: address }
       }
     },
-    order: [ ['timestamp', 'DESC'], ['blockNumber', 'DESC'] ],
+    order: [['timestamp', 'DESC'], ['blockNumber', 'DESC']],
     limit,
     offset,
     include: [qbDB.models.token]
   })
-  formatTransactionsList(transactions)
   return transactions
-}
-
-function formatTransactionsList(transactions) {
-  transactions.forEach((t) => {
-    t.dataValues.to = t.toAddress
-    delete t.dataValues.toAddress
-
-    t.dataValues.from = t.fromAddress
-    delete t.dataValues.fromAddress
-
-    if (t.token) {
-      delete t.token.dataValues.id
-      delete t.token.dataValues.brandId
-      delete t.token.dataValues.hidden
-      delete t.token.dataValues.fiatBacked
-      delete t.token.dataValues.fiatRate
-    }
-
-    delete t.dataValues.confirms
-  })
 }
 
 async function getTransaction(hash: string) {
@@ -110,9 +112,9 @@ async function addPendingTransaction(transaction: PendingTransaction) {
   const r = await qbDB.models.sequelize.query(`INSERT IGNORE INTO transactions
     (${keys.join(',')})
     VALUES (${Array(keys.length).fill('?').join(',')})`, {
-    replacements: keys.map((k) => transaction[k]),
-    type: qbDB.models.sequelize.QueryTypes.INSERT
-  })
+      replacements: keys.map((k) => transaction[k]),
+      type: qbDB.models.sequelize.QueryTypes.INSERT
+    })
   return r
 }
 
@@ -132,15 +134,29 @@ async function getTokens() {
       contractAddress: { [Op.ne]: null },
       hidden: false
     },
-    raw: true }
+    raw: true
+  }
   )
   return tokens
 }
 
 async function getTempExchangeWallets() {
   const response = await qbDB.models.tempExchangeWallet.findAll({
-    order: [ ['id', 'DESC'] ]
+    order: [['id', 'DESC']]
   })
+  return response
+}
+
+async function getPublicOrOwnedTokens(walletAddress: string) {
+  const response = await qbDB.models.sequelize.query(
+    `SELECT tokens.* FROM tokens LEFT JOIN transactions ON
+      (transactions.tokenId = tokens.id AND transactions.toAddress = ?)
+      WHERE (tokens.hidden = 0 OR transactions.id IS NOT NULL)
+        AND tokens.contractAddress IS NOT NULL GROUP BY tokens.id;`, {
+      replacements: [walletAddress],
+      type: qbDB.models.sequelize.QueryTypes.SELECT
+    })
+
   return response
 }
 
@@ -149,6 +165,7 @@ async function close() {
 }
 
 export default {
+  getQbxTransactionHistory,
   getTransaction,
   getTransactions,
   getTransactionHistory,
@@ -157,5 +174,6 @@ export default {
   getTokenBySymbol,
   getTokens,
   getTempExchangeWallets,
+  getPublicOrOwnedTokens,
   close
 }

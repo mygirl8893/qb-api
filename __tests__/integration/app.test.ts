@@ -74,7 +74,7 @@ describe('App endpoint', () => {
     confirmations: '1412055'
   })).reverse()
 
-  const fakeQbxHistory = Array(1000).fill(null).map((val, index) => ({
+  const fakeQbxHistoryDB = Array(1000).fill(null).map((val, index) => ({
     blockNumber: 6389500 + index,
     timestamp: 1537775300 + index,
     // `1000 + index` to fill up last 4 places with random
@@ -92,14 +92,18 @@ describe('App endpoint', () => {
     contractFunction: 'transfer'
   })).reverse() // reverse to make timestamp in desc order
 
+  const formattedQbxHistory = fakeQbxHistoryDB
+    .map((tx) => {
+      const temp = { ...tx }  // so that main object does not get edited
+      // tslint:disable-next-line:no-string-literal
+      temp['token'] = { symbol: 'QBX' }
+      return _.pick(temp, publicHistoryAllowedFields)
+    })
+
   const formattedEthHistory = fakeEthHistoryResponse
     .filter((tx) => parseInt(tx.value, 10) > 0)
     .map((tx) => {
       const temp = { ...tx }  // so that main object does not get edited
-      // // tslint:disable-next-line:no-string-literal
-      // temp['timestamp'] = temp.timeStamp
-      // delete temp.timeStamp
-      // return temp
 
       // @ts-ignore - Type 'number' is not assignable to type 'string'
       temp.blockNumber = parseInt(temp.blockNumber, 10)
@@ -114,6 +118,17 @@ describe('App endpoint', () => {
       temp['status'] = temp.txreceipt_status
 
       return _.pick(temp, publicHistoryAllowedFields)
+    })
+
+  // have to slice since the fake generated history has consecutive timestamps
+  // the contoller will take a default limit of 100 from each and then merge them
+  const mixedHistory = [...formattedEthHistory.slice(0, 100), ...formattedQbxHistory.slice(0, 100)]
+    .sort((history1, history2) => {
+      // tslint:disable-next-line:no-string-literal
+      const a = new BigNumber(history1['timestamp'])
+      // tslint:disable-next-line:no-string-literal
+      const b = new BigNumber(history2['timestamp'])
+      return a.minus(b).toNumber()
     })
 
   beforeAll(async () => {
@@ -140,7 +155,7 @@ describe('App endpoint', () => {
       const allowedFields = ['blockNumber', 'timestamp', 'hash', 'nonce', 'blockHash', 'transactionIndex',
         'fromAddress', 'toAddress', 'value', 'status', 'input', 'confirms', 'contractAddress', 'contractFunction']
 
-      const dbTXs = fakeQbxHistory.map((tx) => {
+      const dbTXs = formattedQbxHistory.map((tx) => {
         const histItem = { ...tx }
         // tslint:disable-next-line:no-string-literal
         histItem['toAddress'] = histItem.to
@@ -252,57 +267,27 @@ describe('App endpoint', () => {
     done()
   })
 
-  // it('Returns 200 and transaction history for QBX', async (done) => {
+  it('Returns 200 and transaction history for QBX', async (done) => {
 
-  //   const response = await request(app).get(
-  //     '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX')
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX')
 
-  //   expect(response.status).toEqual(HttpStatus.OK)
-  //   expect(response.body).toEqual(fakeQbxHistory.slice(0, 100))
-  //   done()
-  // })
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(response.body).toEqual(formattedQbxHistory.slice(0, 100))
+    done()
+  })
 
-  // it('Returns 200 and transaction history for QBX with limit 10', async (done) => {
+  it('Returns 200 and transaction history for QBX with limit 10', async (done) => {
 
-  //   const response = await request(app).get(
-  //     '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX&limit=10')
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae&symbol=QBX&limit=10')
 
-  //   expect(response.status).toEqual(HttpStatus.OK)
-  //   expect(response.body).toEqual(fakeQbxHistory.slice(0, 10))
-  //   done()
-  // })
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(response.body).toEqual(formattedQbxHistory.slice(0, 10))
+    done()
+  })
 
-  // it('Returns 200 and mixed transaction history in correct order for QBX and ETH', async (done) => {
-
-  //   const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
-  //     .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
-  //       `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
-  //     .times(1)
-  //     .reply(200, {
-  //       result: fakeEthHistoryResponse
-  //     })
-
-  //   // have to slice since the fake generated history has consecutive timestamps
-  //   // the contoller will take a default limit of 100 from each and then merge them
-  //   const mixedHistory = [...formattedEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
-  //     .sort((history1, history2) => {
-  //       // tslint:disable-next-line:no-string-literal
-  //       const a = new BigNumber(history1['timestamp'])
-  //       // tslint:disable-next-line:no-string-literal
-  //       const b = new BigNumber(history2['timestamp'])
-  //       return a.minus(b).toNumber()
-  //     })
-
-  //   const response = await request(app).get(
-  //     '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
-
-  //   expect(response.status).toEqual(HttpStatus.OK)
-  //   expect(ethHistoryScope.isDone()).toBeTruthy()
-  //   expect(response.body).toEqual(mixedHistory.slice(0, 100))
-  //   done()
-  // })
-
-  it('Returns 200 and mixed transaction history in correct order for QBX and ETH with limit 10', async (done) => {
+  it('Returns 200 and mixed transaction history in correct order for QBX and ETH', async (done) => {
 
     const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
       .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
@@ -312,14 +297,25 @@ describe('App endpoint', () => {
         result: fakeEthHistoryResponse
       })
 
-    // take 100 of each and combine and return `limit` number of entries
-    const mixedHistory = [...formattedEthHistory.slice(0, 100), ...fakeQbxHistory.slice(0, 100)]
-      .sort((history1, history2) => {
-        // tslint:disable-next-line:no-string-literal
-        const a = new BigNumber(history1['timestamp'])
-        // tslint:disable-next-line:no-string-literal
-        const b = new BigNumber(history2['timestamp'])
-        return a.minus(b).toNumber()
+    const response = await request(app).get(
+      '/app/mainnet/transactions?wallet=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae')
+
+    expect(response.status).toEqual(HttpStatus.OK)
+    expect(ethHistoryScope.isDone()).toBeTruthy()
+    expect(response.body).toEqual(mixedHistory.slice(0, 100))
+    const fs = require('fs')
+    fs.writeFileSync('foo.json', JSON.stringify(response.body))
+    done()
+  })
+
+  it('Returns 200 and mixed transaction history in correct order for QBX and ETH with limit 10', async (done) => {
+
+    const ethHistoryScope = nock(INTEGRATION_TEST_CONFIGURATION.etherscanURL)
+      .get('/api?module=account&action=txlist&address=0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae' +
+        `&apikey=${INTEGRATION_TEST_CONFIGURATION.etherscanAPIKey}&sort=desc`)
+      .times(1)
+      .reply(200, {
+        result: fakeEthHistoryResponse
       })
 
     const response = await request(app).get(

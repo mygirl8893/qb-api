@@ -40,7 +40,7 @@ async function getTransactions(req, res) {
       .sort((history1, history2) => {
         const a = new BigNumber(history1.timestamp)
         const b = new BigNumber(history2.timestamp)
-        return a.minus(b).toNumber()
+        return b.minus(a).toNumber()
       })
     return res.json(mixedHistory.slice(0, limit))
   } else if (symbol === 'ETH') {

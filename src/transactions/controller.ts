@@ -14,6 +14,7 @@ import log from '../logging'
 import validation from '../validation'
 
 import helpers from './helpers'
+import tokenHelpers from '../tokens/helpers'
 const { getTx, toAPITransaction } = helpers
 
 const web3 = Config.getPrivateWeb3()
@@ -260,7 +261,7 @@ async function getQBXExchangeValues(req, res) {
   const txLoyaltyTokenValue = new BigNumber(transferAmount)
   const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(activeTempExchangeWallet)
 
-  const rate = qbxFeeCalculator.getRate(loyaltyToken)
+  const rate = tokenHelpers.getRate(loyaltyToken)
   const qbxTxValueComputationData =
     await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txLoyaltyTokenValue, rate,
       conservativeGasEstimate, loyaltyToken.fiatBacked)

@@ -4,6 +4,7 @@ import database from '../database'
 import log from '../logging'
 import publicBlockchain from './publicBlockchain'
 import qbxFeeCalculator from './qbxFeeCalculator'
+import tokenHelpers from '../tokens/helpers'
 
 interface ExchangeTxValidationResponse {
   valid: boolean
@@ -22,7 +23,7 @@ async function validateExchangeTx(loyaltyToken, toAddress: string, decodedTx): P
       const txLoyaltyTokenValue = new BigNumber(decodedTx.params[1].value)
       const { conservativeGasEstimate } = await publicBlockchain.estimateTxGas(toAddress)
 
-      const rate = qbxFeeCalculator.getRate(loyaltyToken)
+      const rate = tokenHelpers.getRate(loyaltyToken)
       const qbxTxValueComputationData =
         await qbxFeeCalculator.pullDataAndCalculateQBXTxValue(txLoyaltyTokenValue,
           rate, conservativeGasEstimate, loyaltyToken.fiatBacked)

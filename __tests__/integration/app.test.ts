@@ -313,4 +313,14 @@ describe('App endpoint', () => {
     expect(response.body).toEqual(mixedHistory.slice(0, 10))
     done()
   })
+
+  it('Returns wallet value in USD for a certain wallet address', async () => {
+
+    const response = await request(app).get(
+      `/app/addresses/${ACCOUNTS[0].address}`)
+
+    expect(response.status).toBe(HttpStatus.OK)
+
+    expect(response.body.balances.private[TOKEN.symbol]).toBeDefined()
+  })
 })

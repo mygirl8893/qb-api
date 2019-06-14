@@ -103,18 +103,12 @@ interface PendingTransaction {
   Security NOTE: sequelize escapes the inputs if the '?' placeholder is used
  */
 
+/**
+ *  insert if the primary key (transaction hash) is not present; do nothing otherwise.
+ *  if it's already there it means it was already synched to the database.
+ */
 async function addPendingTransaction(transaction: PendingTransaction) {
-  const keys = Object.keys(transaction)
-
-  /* insert if the primary key (transaction hash) is not present; do nothing otherwise.
-     if it's already there it means it was already synched to the database.
-   */
-  const r = await qbDB.models.sequelize.query(`INSERT IGNORE INTO transactions
-    (${keys.join(',')})
-    VALUES (${Array(keys.length).fill('?').join(',')})`, {
-      replacements: keys.map((k) => transaction[k]),
-      type: qbDB.models.sequelize.QueryTypes.INSERT
-    })
+  const r = await qbDB.models.transaction.create(transaction, { ignoreDuplicates: true })
   return r
 }
 

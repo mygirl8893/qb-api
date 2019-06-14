@@ -1,5 +1,6 @@
 import * as aesjs from 'aes-js'
 import axios from 'axios'
+import * as _ from 'lodash'
 
 import Config from '../config'
 import Database from '../database'
@@ -7,6 +8,9 @@ import Database from '../database'
 const baseEtherscanUrl = Config.getEtherscanUrl()
 const encryptionDecryptionKey = JSON.parse(Config.getInfuraEncryptionKey())
 const etherscanApiKey = Config.getEtherscanApiKey()
+
+const publicHistoryAllowedFields = ['blockNumber', 'timestamp', 'hash', 'nonce', 'blockHash',
+  'from', 'to', 'value', 'status', 'contractAddress', 'token.symbol']
 
 /**
  *
@@ -40,9 +44,14 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
     const ethHistory = transferTransactions
       .slice(0, limit)
       .map((tx) => {
-        tx.timestamp = tx.timeStamp
-        delete tx.timeStamp
-        return tx
+        tx.blockNumber = parseInt(tx.blockNumber, 10)
+        tx.token = { symbol: 'ETH' }
+        tx.timestamp = parseInt(tx.timeStamp, 10)
+        tx.nonce = parseInt(tx.nonce, 10)
+        // tslint:disable-next-line:triple-equals
+        tx.status = tx.txreceipt_status == '1' ? true : false
+
+        return _.pick(tx, publicHistoryAllowedFields)
       })
 
     return ethHistory
@@ -53,7 +62,13 @@ async function getEthTxHistory(wallet: string, limit: number = 1000) {
 
 async function getQbxTxHistory(wallet: string, limit: number = 1000) {
   const qbxHistory = await Database.getQbxTransactionHistory(wallet, limit)
-  return qbxHistory
+  return qbxHistory.map((tx) => {
+    tx.token = { symbol: 'QBX' }
+    // tslint:disable-next-line:triple-equals
+    tx.status = tx.status == '1' ? true : false
+
+    return _.pick(tx, publicHistoryAllowedFields)
+  })
 }
 
 export default {
